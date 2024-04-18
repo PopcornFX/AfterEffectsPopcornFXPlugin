@@ -1,0 +1,57 @@
+-D_DEBUG
+-D_CRT_SECURE_NO_WARNINGS
+-DPK_PARTICLES_UPDATER_USE_D3D11=1
+-DPK_COMPILER_BUILD_COMPILER_D3D11=1
+-DPK_PARTICLES_UPDATER_USE_D3D12=1
+-DPK_COMPILER_BUILD_COMPILER_D3D12=1
+-DMSWindows
+-DWIN32
+-D_WINDOWS
+-DPK_BUILD_WITH_FMODEX_SUPPORT=0
+-DPK_BUILD_WITH_SDL=0
+-DPK_BUILD_WITH_METAL_SUPPORT=0
+-DQT_NO_KEYWORDS
+-DQT_NO_SIGNALS_SLOTS_KEYWORDS
+-DPK_BUILD_WITH_D3D11_SUPPORT=1
+-DPK_BUILD_WITH_D3D12_SUPPORT=1
+-DPK_BUILD_WITH_OGL_SUPPORT=1
+-DGL_GLEXT_PROTOTYPES
+-DGLEW_STATIC
+-DGLEW_NO_GLU
+-DPK_BUILD_WITH_VULKAN_SUPPORT=0
+-DQT_CORE_LIB
+-DQT_WIDGETS_LIB
+-DQT_NETWORK_LIB
+-DQT_XML_LIB
+-DQT_GUI_LIB
+-I../../AE_GeneralPlugin/Sources
+-I../../AE_GeneralPlugin/Include
+-I../../AE_GeneralPlugin/Precompiled
+-I../../AE_Suites
+-I../../External/AE SDK/Resources
+-I../../External/AE SDK/Headers
+-I../../External/AE SDK/Util
+-I../../External/AE SDK/Headers/SP
+-I../../External/AE SDK/Headers/adobesdk
+-I../../External/AE SDK/Headers/SP/artemis
+-I../../External/AE SDK/Headers/SP/photoshop
+-I../../External/AE SDK/Headers/SP/artemis/config
+-I../../External/AE SDK/Headers/SP/photoshop/config
+-I../../External/AE SDK/Headers/adobesdk/config
+-I../../External/AE SDK/Headers/adobesdk/drawbotsuite
+-I../../ExternalLibs/fmodex/inc
+-I../../ExternalLibs/Runtime
+-I../../ExternalLibs/Runtime/include
+-I../../ExternalLibs/Runtime/include/license/AfterEffects
+-I../../ExternalLibs
+-I../../Samples
+-I../../ExternalLibs/DX/include
+-I../../ExternalLibs/GL/include
+-I$(QTDIR)/include
+-I$(QTDIR)/include/QtCore
+-I$(QTDIR)/include/QtWidgets
+-I$(QTDIR)/include/QtNetwork
+-I$(QTDIR)/include/QtXml
+-I$(QTDIR)/include/QtGui
+-D__AEGP_PK_BEGIN=namespace AEGPPk {
+-D__AEGP_PK_END=}

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="AfterEffects SDK">
+      <UniqueIdentifier>{B9DA08E5-A5D3-2737-CE05-0DBCBA5D0743}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AfterEffects SDK\Util">
+      <UniqueIdentifier>{A68DAE81-12FA-697C-DBED-01DA47198CE4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PopcornFX Suites">
+      <UniqueIdentifier>{21F99ECB-0DF2-BD1D-3624-A3A2227C9D29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Precompiled">
+      <UniqueIdentifier>{99BE8D1E-0574-0614-8E68-00EBFA1CFD17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{89565304-F535-D29F-FE4D-5D766AAC3801}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External">
+      <UniqueIdentifier>{07CD4F05-7337-047C-BC75-B521281FE2D0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\FMODex">
+      <UniqueIdentifier>{19228C0E-051B-AB60-2E4D-90E51AA58A6C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\FMODex\Headers">
+      <UniqueIdentifier>{C439D9BA-B05E-283B-D9A9-0DCBC52D2759}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Natvis">
+      <UniqueIdentifier>{D972AB51-4552-2AED-4E6A-B5C3BAC8904E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_Main.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_ParamDefine.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_PluginInterface.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_SequenceData.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Effect_Attribute\Precompiled\ae_precompiled.h">
+      <Filter>Precompiled</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_BasePluginInterface.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Define.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Define_Version.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Suite.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_UID.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_ArbParseHelper.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_ChannelDepthTpl.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_SuiteHelper.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEGP_SuiteHandler.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEGP_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\DuckSuite.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\Param_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\Smart_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\String_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\entry.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.hpp">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_codec.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_dsp.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_errors.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_memoryinfo.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_output.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\AE_Effect_Attribute\Precompiled\ae_precompiled.cpp">
+      <Filter>Precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_Main.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_ParamDefine.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_PluginInterface.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_SequenceData.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEFX_ArbParseHelper.c">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEFX_SuiteHelper.c">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEGP_SuiteHandler.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEGP_Utils.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\MissingSuiteError.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\Smart_Utils.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\intermediate\AfterEffects\VC142\AE_Effect_Attribute_PiPL.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\AE_Effect_Attribute\Sources\AE_Effect_Attribute_PiPL.r">
+      <Filter>Sources</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\PopcornFX\documentation\debugger\PopcornFX.natvis">
+      <Filter>_Natvis</Filter>
+    </Natvis>
+  </ItemGroup>
+</Project>

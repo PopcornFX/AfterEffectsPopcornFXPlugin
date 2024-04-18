@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{71E14036-5ABF-5C62-69BF-5CFF185CCCCA}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>AE_Effect_Attribute</RootNamespace>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+    <OutDir>..\..\PopcornFX\</OutDir>
+    <IntDir>..\intermediate\AfterEffects\VC142\x64\Debug\AE_Effect_Attribute\</IntDir>
+    <TargetName>AE_Effect_Attribute_d</TargetName>
+    <TargetExt>.aex</TargetExt>
+    <ExecutablePath>$(WDKBinRoot)\$(TargetPlatformVersion)\$(PlatformTarget);$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+    <OutDir>..\..\PopcornFX\</OutDir>
+    <IntDir>..\intermediate\AfterEffects\VC142\x64\Release\AE_Effect_Attribute\</IntDir>
+    <TargetName>AE_Effect_Attribute_r</TargetName>
+    <TargetExt>.aex</TargetExt>
+    <ExecutablePath>$(WDKBinRoot)\$(TargetPlatformVersion)\$(PlatformTarget);$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>ae_precompiled.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
+      <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Attribute\Sources;..\..\AE_Effect_Attribute\Include;..\..\AE_Effect_Attribute\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Attribute\Sources;..\..\AE_Effect_Attribute\Include;..\..\AE_Effect_Attribute\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>fmodex64_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\ExternalLibs\fmodex\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>ae_precompiled.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Attribute\Sources;..\..\AE_Effect_Attribute\Include;..\..\AE_Effect_Attribute\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Attribute\Sources;..\..\AE_Effect_Attribute\Include;..\..\AE_Effect_Attribute\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>fmodex64_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\ExternalLibs\fmodex\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_Main.h" />
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_ParamDefine.h" />
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_PluginInterface.h" />
+    <ClInclude Include="..\..\AE_Effect_Attribute\Include\AEAttribute_SequenceData.h" />
+    <ClInclude Include="..\..\AE_Effect_Attribute\Precompiled\ae_precompiled.h" />
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_BasePluginInterface.h" />
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Define.h" />
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Define_Version.h" />
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Suite.h" />
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_UID.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_ArbParseHelper.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_ChannelDepthTpl.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_SuiteHelper.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\AEGP_SuiteHandler.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\AEGP_Utils.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\DuckSuite.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\Param_Utils.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\Smart_Utils.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\String_Utils.h" />
+    <ClInclude Include="..\..\External\AE SDK\Util\entry.h" />
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.h" />
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.hpp" />
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_codec.h" />
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_dsp.h" />
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_errors.h" />
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_memoryinfo.h" />
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_output.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\AE_Effect_Attribute\Precompiled\ae_precompiled.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_Main.cpp" />
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_ParamDefine.cpp" />
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_PluginInterface.cpp" />
+    <ClCompile Include="..\..\AE_Effect_Attribute\Sources\AEAttribute_SequenceData.cpp" />
+    <ClCompile Include="..\..\External\AE SDK\Util\AEFX_ArbParseHelper.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEFX_SuiteHelper.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEGP_SuiteHandler.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEGP_Utils.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\MissingSuiteError.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\Smart_Utils.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\intermediate\AfterEffects\VC142\AE_Effect_Attribute_PiPL.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\AE_Effect_Attribute\Sources\AE_Effect_Attribute_PiPL.r">
+      <FileType>Document</FileType>
+      <Command>cl /nologo /I "../../External/AE SDK//Headers" /EP "%(Identity)" &gt; "$(IntDir)/%(Filename).rr"
+"../../External/AE SDK//Resources/PiPLTool" "$(IntDir)/%(Filename).rr" "$(IntDir)/%(Filename).rrc"
+cl /nologo /D "MSWindows" /EP "$(IntDir)/%(Filename).rrc" &gt; "../../projects/intermediate/AfterEffects/VC142/%(Filename).rc"</Command>
+      <Outputs>../intermediate/AfterEffects/VC142/AE_Effect_Attribute_PiPL.rc</Outputs>
+      <Message>PiPL %(Filename).r</Message>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\PopcornFX\documentation\debugger\PopcornFX.natvis" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

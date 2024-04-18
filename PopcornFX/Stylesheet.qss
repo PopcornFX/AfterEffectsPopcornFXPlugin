@@ -1,0 +1,146 @@
+/*---- Main app font ----*/
+/*-------- NOTE: We do that in code before loading the stylesheet, but we can override it here:
+	* { font-family: Roboto;}
+--------*/
+
+/*--------*/
+QWidget:window {
+	background: #202020;
+}
+
+/*---AE---*/
+
+QWidget {
+	background: #303030;
+	border: none;
+}
+
+/*---- Tabs used by QTabWidget ----*/
+
+QTabWidget::pane {
+	margin-right: -1px;
+}
+
+QTabWidget QTabBar::tab {
+	color: #808080;
+	background: #303030;
+	border: none;
+	margin: 0px;
+	padding: 8px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+QTabWidget QTabBar::tab:selected {
+	color: #E0E0E0;
+	background: #434343;
+	margin-left: 0px;
+}
+QTabWidget QTabBar::tab:selected:top {
+	border-bottom: 0px;
+	margin-top: 1px;
+}
+QTabWidget QTabBar::tab:selected:bottom {
+	border-top: 0px;
+	margin-bottom: 1px;
+}
+QTabWidget QTabBar::tab:!selected:top {
+	border-bottom: 1px solid #5A5A5A;
+	margin-bottom: 0px;
+	margin-top: 2px;
+}
+QTabWidget QTabBar::tab:!selected:bottom {
+	border-top: 1px solid #5A5A5A;
+	margin-top: 0px;
+	margin-bottom: 2px;
+}
+QTabWidget QTabBar::tab:!selected:hover:top {
+	color: #AAA;
+	background: #383838;
+	margin: 0px;
+	padding-top: 4px;
+}
+QTabWidget QTabBar::tab:!selected:hover:bottom {
+	color: #AAA;
+	background: #383838;
+	margin: 0px;
+	padding-bottom: 4px;
+}
+
+/*--------*/
+QComboBox::drop-down {
+}
+
+QComboBox QAbstractItemView {
+}
+
+
+/*--------*/
+QTreeView {
+	background: #303030;
+	padding-left: 2px;
+	spacing: 0px;
+}
+
+
+QTreeView::item {
+    color: white;
+}
+
+QTreeView::branch:open:has-children {
+    image: url(:/icons/branch-open.png);
+}
+
+QTreeView::branch:closed:has-children {
+    image: url(:/icons/branch-closed.png);
+}
+
+/*--------*/
+QHeaderView::section {
+    background-color: #303030;
+    color: white;
+	border: 1px solid #5A5A5A;
+}
+
+/*--------*/
+QScrollBar {
+	border: none;
+	background: none;
+	padding: 1px;
+}
+QScrollBar:vertical {
+	width: 10px;
+}
+QScrollBar:horizontal {
+	height: 10px;
+}
+QScrollBar::handle {
+	background: #505050;
+	min-width: 8px;
+	min-height: 8px;
+	border: none;
+	border-radius: 4px; /** (width - padding-left) / 2 */
+}
+QScrollBar::handle:hover {
+	background: #707070;
+}
+QScrollBar::handle:disabled {
+	background: #383838;
+}
+QScrollBar::sub-line, QScrollBar::add-line {
+	border: none;
+	background: none;
+	height:0px; /** IMPORTANT : remove arrow button logic at the edges of the scrollbar */
+	width:0px; /** IMPORTANT : remove arrow button logic at the edges of the scrollbar */
+}
+QScrollBar::left-arrow, QScrollBar::right-arrow,
+QScrollBar::top-arrow, QScrollBar::bottom-arrow {
+	border: none;
+	background: none;
+	height:0px; /** IMPORTANT : remove arrow button logic at the edges of the scrollbar */
+	width:0px; /** IMPORTANT : remove arrow button logic at the edges of the scrollbar */
+}
+
+/*--------*/
+QAbstractItemView::item:!selected:hover {
+    background: #404040;
+}

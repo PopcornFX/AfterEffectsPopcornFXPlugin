@@ -1,0 +1,18 @@
+#!/bin/bash
+
+case "`uname`" in
+    CYGWIN*|MINGW*) python_bin=python ;;
+esac
+
+command="`dirname "$0"`/../../../../../Python/gen_shader_header.py"
+
+if [ $# -ne 0 ]; then
+    ${python_bin} "${command}" "$@"
+else
+    out_dir="./generated"
+
+    mkdir -p "${out_dir}"
+
+    ${python_bin} ${command} `ls sources/*` "-o${out_dir}"
+fi
+

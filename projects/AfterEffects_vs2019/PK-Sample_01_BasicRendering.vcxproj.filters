@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Precompiled">
+      <UniqueIdentifier>{99BE8D1E-0574-0614-8E68-00EBFA1CFD17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{89565304-F535-D29F-FE4D-5D766AAC3801}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Common">
+      <UniqueIdentifier>{CD0EFC38-39EE-7AD4-4206-06ABAE64E135}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Common\Gl">
+      <UniqueIdentifier>{2F899A6F-1B41-DCBC-8448-B518701F77AD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External">
+      <UniqueIdentifier>{07CD4F05-7337-047C-BC75-B521281FE2D0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\DX">
+      <UniqueIdentifier>{B2545DA7-9EB7-EC4B-473D-2502337FB8CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\DX\include">
+      <UniqueIdentifier>{250E8582-119D-0E4C-BABB-2247A6291FF2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\GL">
+      <UniqueIdentifier>{09555DA7-F5B7-EC4B-9E3D-25028A7FB8CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\GL\include">
+      <UniqueIdentifier>{7C75CF18-6804-59E2-1123-6DDDFD906988}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\GL\include\GL">
+      <UniqueIdentifier>{5E25DCDA-CA5C-2472-D366-88953F1D4B6B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Natvis">
+      <UniqueIdentifier>{D972AB51-4552-2AED-4E6A-B5C3BAC8904E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\SDK\Samples\Common\Gl\gl_utils.h">
+      <Filter>_Common\Gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SDK\Samples\Common\Gl\printf_utils.h">
+      <Filter>_Common\Gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_1.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_2.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_3.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_4.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11sdklayers.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11shader.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12sdklayers.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12shader.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcommon.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcompiler.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_2.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_3.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_4.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgitype.h">
+      <Filter>_External\DX\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\eglew.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glew.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glext.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glfw.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glfw3.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glfw3native.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glxew.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\wglew.h">
+      <Filter>_External\GL\include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicBatchDrawer_Billboard.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicBatchDrawer_Mesh.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicBatchDrawer_Ribbon.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicRendererCache.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Samples\PK-Sample_01_BasicRendering\PK-Sample_01_BasicRendering_ShaderCode.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Samples\precompiled\precompiled.h">
+      <Filter>Precompiled</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\SDK\Samples\Common\Gl\gl_utils.cpp">
+      <Filter>_Common\Gl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicBatchDrawer_Billboard.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicBatchDrawer_Mesh.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicBatchDrawer_Ribbon.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Samples\PK-Sample_01_BasicRendering\BasicRendererCache.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Samples\PK-Sample_01_BasicRendering\PK-Sample_01_BasicRendering.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Samples\precompiled\precompiled.cpp">
+      <Filter>Precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\SDK\Samples\ParticleSampleGL\ParticleSampleGLglfw3.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\PopcornFX\documentation\debugger\PopcornFX.natvis">
+      <Filter>_Natvis</Filter>
+    </Natvis>
+  </ItemGroup>
+</Project>

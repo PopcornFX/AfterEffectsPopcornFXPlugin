@@ -1,0 +1,65 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+    "settings": {
+        "C_Cpp.default.defines": [ "PK_BUILD_WITH_METAL_SUPPORT=1" ],
+        "C_Cpp.default.includePath": [
+            "../../Runtime",
+            "../../Runtime/include",
+            "../../Runtime/include/license/AfterEffects",
+            "../../Integrations/AfterEffects/PK-AfterEffects__Main/Sources",
+            "../../Integrations/AfterEffects/PK-AfterEffects__Main/Include",
+            "../../Integrations/AfterEffects/PK-AfterEffects__Main/Precompiled",
+            "../../Integrations/AfterEffects/AE_Suites",
+            "../../Integrations/AfterEffects/External/AE SDK/Util",
+            "../../Integrations/AfterEffects/External/AE SDK/Resources",
+            "../../Integrations/AfterEffects/External/AE SDK/Headers",
+            "../../Integrations/AfterEffects/External/AE SDK/Headers/SP",
+            "../../Integrations/AfterEffects/External/AE SDK/Headers/adobesdk",
+            "../../Integrations/AfterEffects/External/AE SDK/Headers/adobesdk/config",
+            "../../Integrations/AfterEffects/External/AE SDK/Headers/adobesdk/drawbotsuite",
+            "../../SDK/Samples/PK-Samples",
+            "../../SDK/Samples/External/imgui",
+            "../../SDK/Samples/External/GL/include",
+            "/usr/local/include/SDL2",
+        ],
+        "lldb.launch.env": {
+            "AEBin": "\"/Applications/Adobe After Effects 2022/Adobe After Effects 2022.app/Contents/MacOS/After Effects\""
+        },
+        "terminal.integrated.env.osx": {
+            "AEBin": "\"/Applications/Adobe After Effects 2022/Adobe After Effects 2022.app/Contents/MacOS/After Effects\""
+        },
+        "files.associations": {
+            "array": "cpp",
+            "iterator": "cpp",
+            "string": "cpp",
+            "string_view": "cpp",
+            "vector": "cpp",
+            "__locale": "cpp"
+        },
+    },
+    "launch": {
+        // Use IntelliSense to learn about possible attributes.
+        // Hover to view descriptions of existing attributes.
+        // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "(lldb) Launch",
+                "type": "cppdbg",
+                "request": "launch",
+                "program": "/Applications/Adobe After Effects 2022/Adobe After Effects 2022.app/Contents/MacOS/After Effects",
+                "args": ["--debug"],
+                "stopAtEntry": false,
+                "cwd": "${workspaceFolder}",
+                "environment": [],
+                "externalConsole": false,
+                "MIMode": "lldb",
+                "visualizerFile": "${workspaceRoot}/../../../configurations/visual studio/debugger/PopcornFX.natvis",
+            }
+        ]
+    }
+}

@@ -1,0 +1,35 @@
+//----------------------------------------------------------------------------
+//
+//		_pksi_GBuffer_ProjectToPosition
+//
+//----------------------------------------------------------------------------
+
+float3    DepthToWorldPos(float depth, float2 screenUVs)
+{
+	float2	clipSpace = screenUVs * 2 - 1;
+	float4	projPos = float4(clipSpace, depth, 1);
+
+	projPos = mul(InvViewProj, projPos);
+	return projPos.xyz / projPos.w;
+}
+
+//----------------------------------------------------------------------------
+
+// Outputs the SceneDepth map value at projected world position
+float3	Ext__pksi_GBuffer_ProjectToPosition_f32x3_CX(float3 position, inout int4 sceneCtx)
+{
+	float4	clipPosition = mul(ViewProj, float4(position, 1.0f));
+	float2	screenPosition = clipPosition.xy / clipPosition.w;
+	float2	screenUV = screenPosition * 0.5f + 0.5f;
+
+	// Return forwarded input position if input position is outside of view
+	float3	worldPos = position;
+	if (all(abs(screenPosition.xy) <= float2(1, 1)))
+	{
+		float	sampledDepth = SceneDepth.SampleLevel(SceneTexturesSampler, screenUV, 0).r;
+		worldPos = DepthToWorldPos(sampledDepth, screenUV);
+	}
+	return worldPos;
+}
+
+//----------------------------------------------------------------------------

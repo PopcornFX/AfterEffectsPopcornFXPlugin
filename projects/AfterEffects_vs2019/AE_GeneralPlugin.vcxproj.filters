@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="AfterEffects SDK">
+      <UniqueIdentifier>{B9DA08E5-A5D3-2737-CE05-0DBCBA5D0743}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AfterEffects SDK\Util">
+      <UniqueIdentifier>{A68DAE81-12FA-697C-DBED-01DA47198CE4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Panels">
+      <UniqueIdentifier>{F3833128-DF51-252E-C8E5-9554B4520193}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\RenderApi">
+      <UniqueIdentifier>{6ADB18E6-D6F1-167C-1F69-A29D8BBEE703}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Integrations">
+      <UniqueIdentifier>{FC4D5FA6-E8B0-EE4A-9136-27017D78BACD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Integrations\AfterEffects">
+      <UniqueIdentifier>{9D627D44-0925-B1CE-52D5-3F5BBED689AC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Integrations\AfterEffects\AE_GeneralPlugin">
+      <UniqueIdentifier>{9ED424D3-8A3C-EBA0-F3A7-FFB6DF2E028D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PopcornFX Suites">
+      <UniqueIdentifier>{21F99ECB-0DF2-BD1D-3624-A3A2227C9D29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Precompiled">
+      <UniqueIdentifier>{99BE8D1E-0574-0614-8E68-00EBFA1CFD17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Qt">
+      <UniqueIdentifier>{2A755900-1601-880B-7FAF-880B6B5A880B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Qt\x64">
+      <UniqueIdentifier>{9BC51FCD-8767-4AA3-7022-5EF75C63D1F3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Qt\x64\Debug">
+      <UniqueIdentifier>{51584C87-3DBB-DB2B-E640-14E2D282A7AE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Qt\x64\Release">
+      <UniqueIdentifier>{CB271FC2-B7F5-12C8-A089-83EE8CF6EE2C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{89565304-F535-D29F-FE4D-5D766AAC3801}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Panels">
+      <UniqueIdentifier>{BBB258F9-A780-4CFF-9014-BD257C812864}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\RenderApi">
+      <UniqueIdentifier>{32F58693-9E0B-8529-E782-104B53D855B1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External">
+      <UniqueIdentifier>{07CD4F05-7337-047C-BC75-B521281FE2D0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\DX">
+      <UniqueIdentifier>{B2545DA7-9EB7-EC4B-473D-2502337FB8CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\DX\Headers">
+      <UniqueIdentifier>{5DF51B81-4984-A54A-F2A2-B945DE10B6F0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\FMODex">
+      <UniqueIdentifier>{19228C0E-051B-AB60-2E4D-90E51AA58A6C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\FMODex\Headers">
+      <UniqueIdentifier>{C439D9BA-B05E-283B-D9A9-0DCBC52D2759}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\GL">
+      <UniqueIdentifier>{09555DA7-F5B7-EC4B-9E3D-25028A7FB8CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\GL\Headers">
+      <UniqueIdentifier>{B45C6617-A0EB-EFE0-490A-04DC35780087}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Natvis">
+      <UniqueIdentifier>{D972AB51-4552-2AED-4E6A-B5C3BAC8904E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_AEPKConversion.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_AssetBaker.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_Attribute.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_Define.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_FileDialog.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_FileDialogMac.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_FileWatcher.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_FrameCollector.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_LayerHolder.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_Log.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_Main.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_PackExplorer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_ParticleScene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_PopcornFXPlugins.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_RenderContext.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_Scene.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_SkinnedMesh.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_SkinnedMeshInstance.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_System.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_UpdateAEState.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_VaultHandler.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_WinFileDialog.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_WinSystem.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\AEGP_World.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\RenderApi\AEGP_BaseContext.h">
+      <Filter>Headers\RenderApi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\RenderApi\AEGP_CopyPixels.h">
+      <Filter>Headers\RenderApi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\RenderApi\AEGP_CopyTask.h">
+      <Filter>Headers\RenderApi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\RenderApi\AEGP_D3D11Context.h">
+      <Filter>Headers\RenderApi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\RenderApi\AEGP_D3D12Context.h">
+      <Filter>Headers\RenderApi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Include\RenderApi\AEGP_MetalContext.h">
+      <Filter>Headers\RenderApi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_GeneralPlugin\Precompiled\ae_precompiled.h">
+      <Filter>Precompiled</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_BasePluginInterface.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Define.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Define_Version.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_Suite.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\AE_Suites\PopcornFX_UID.h">
+      <Filter>PopcornFX Suites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_ArbParseHelper.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_ChannelDepthTpl.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEFX_SuiteHelper.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEGP_SuiteHandler.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\AEGP_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\DuckSuite.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\Param_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\Smart_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\String_Utils.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\AE SDK\Util\entry.h">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_1.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_2.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_3.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_4.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11sdklayers.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11shader.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12sdklayers.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12shader.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcommon.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcompiler.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_2.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_3.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_4.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgitype.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\eglew.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glew.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glext.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glfw.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glfw3.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glfw3native.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\glxew.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\GL\include\GL\wglew.h">
+      <Filter>_External\GL\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.hpp">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_codec.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_dsp.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_errors.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_memoryinfo.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_output.h">
+      <Filter>_External\FMODex\Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Precompiled\ae_precompiled.cpp">
+      <Filter>Precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_AEPKConversion.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_AssetBaker.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_Attribute.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_FileDialog.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_FileWatcher.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_FrameCollector.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_LayerHolder.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_Log.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_Main.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_PackExplorer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_ParticleScene.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_PopcornFXPlugins.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_RenderContext.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_Scene.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_SkinnedMesh.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_SkinnedMeshInstance.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_System.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_UpdateAEState.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_VaultHandler.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_WinFileDialog.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_WinSystem.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\AEGP_World.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\Panels\AEGP_GraphicalResourcesTreeModel.cpp">
+      <Filter>Sources\Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\Panels\AEGP_PanelQT.cpp">
+      <Filter>Sources\Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\RenderApi\AEGP_BaseContext.cpp">
+      <Filter>Sources\RenderApi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\RenderApi\AEGP_CopyPixels.cpp">
+      <Filter>Sources\RenderApi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\RenderApi\AEGP_D3D11Context.cpp">
+      <Filter>Sources\RenderApi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\AE_GeneralPlugin\Sources\RenderApi\AEGP_D3D12Context.cpp">
+      <Filter>Sources\RenderApi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEFX_ArbParseHelper.c">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEFX_SuiteHelper.c">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEGP_SuiteHandler.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\AEGP_Utils.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\MissingSuiteError.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\AE SDK\Util\Smart_Utils.cpp">
+      <Filter>AfterEffects SDK\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Qt\x64\Debug\moc_AEGP_GraphicalResourcesTreeModel.cpp">
+      <Filter>Qt\x64\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Qt\x64\Debug\moc_AEGP_PanelQT.cpp">
+      <Filter>Qt\x64\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Qt\x64\Release\moc_AEGP_GraphicalResourcesTreeModel.cpp">
+      <Filter>Qt\x64\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="Qt\x64\Release\moc_AEGP_PanelQT.cpp">
+      <Filter>Qt\x64\Release</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\AE_GeneralPlugin\GeneralPlugin.manifest">
+      <Filter>Integrations\AfterEffects\AE_GeneralPlugin</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\intermediate\AfterEffects\VC142\AE_GeneralPlugin_PiPL.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\AE_GeneralPlugin\Include\Panels\AEGP_GraphicalResourcesTreeModel.h">
+      <Filter>Headers\Panels</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\AE_GeneralPlugin\Include\Panels\AEGP_PanelQT.h">
+      <Filter>Headers\Panels</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\AE_GeneralPlugin\Sources\AE_GeneralPlugin_PiPL.r">
+      <Filter>Sources</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\Native\debugger\qt5.natvis">
+      <Filter>_Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\PopcornFX\documentation\debugger\PopcornFX.natvis">
+      <Filter>_Natvis</Filter>
+    </Natvis>
+  </ItemGroup>
+</Project>
