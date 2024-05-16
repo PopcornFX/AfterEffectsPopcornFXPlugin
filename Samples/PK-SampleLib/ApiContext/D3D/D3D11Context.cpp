@@ -41,8 +41,8 @@
 
 #if defined(PK_DEBUG)
 #	define		USE_DEBUG_DXGI			1
-#	define		BREAK_ON_D3D_ERROR		0 // disabled by default, enable for break on D3D errors during API calls
-#	define		BREAK_ON_D3D_WARN		0 // disabled by default, enable for break on D3D errors during API calls
+#	define		BREAK_ON_D3D_ERROR		0 // does not work anyway because "SetBreakOnSeverity" is ignored with dll-loaded libs
+#	define		BREAK_ON_D3D_WARN		0 // does not work anyway because "SetBreakOnSeverity" is ignored with dll-loaded libs
 #else
 #	define		USE_DEBUG_DXGI			0
 #	define		BREAK_ON_D3D_ERROR		0
