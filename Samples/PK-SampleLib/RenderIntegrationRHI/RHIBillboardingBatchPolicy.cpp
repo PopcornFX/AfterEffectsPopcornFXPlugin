@@ -867,10 +867,11 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 	}
 
 	// Additional inputs:
-	if (!toMap.m_AdditionalGeneratedInputs.Empty())
+	PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
+	if (!m_AdditionalFields.Empty())
 	{
-		PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
-		if (!PK_VERIFY(m_MappedAdditionalFields.Resize(m_AdditionalFields.Count())))
+		m_MappedAdditionalFields.Clear();
+		if (!PK_VERIFY(m_MappedAdditionalFields.Reserve(m_AdditionalFields.Count())))
 			return false;
 		for (u32 i = 0; i < m_AdditionalFields.Count(); ++i)
 		{
@@ -880,14 +881,17 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 				if (!PK_VERIFY(mappedValue != null))
 					return false;
 
-				m_MappedAdditionalFields[i].m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
-				m_MappedAdditionalFields[i].m_Storage.m_Count = m_TotalVertexCount;
-				m_MappedAdditionalFields[i].m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
-				m_MappedAdditionalFields[i].m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				Drawers::SCopyFieldDesc	mappedAdditionnalField;
+				mappedAdditionnalField.m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
+				mappedAdditionnalField.m_Storage.m_Count = m_TotalVertexCount;
+				mappedAdditionnalField.m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
+				mappedAdditionnalField.m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				m_MappedAdditionalFields.PushBackUnsafe(mappedAdditionnalField);
 			}
 		}
 		billboardBatch->m_Exec_CopyField.m_FieldsToCopy = m_MappedAdditionalFields.View();
 	}
+
 	return true;
 }
 
@@ -1182,10 +1186,11 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 	}
 
 	// Additional inputs:
-	if (!toMap.m_AdditionalGeneratedInputs.Empty())
+	PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
+	if (!m_AdditionalFields.Empty())
 	{
-		PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
-		if (!PK_VERIFY(m_MappedAdditionalFields.Resize(m_AdditionalFields.Count())))
+		m_MappedAdditionalFields.Clear();
+		if (!PK_VERIFY(m_MappedAdditionalFields.Reserve(m_AdditionalFields.Count())))
 			return false;
 		for (u32 i = 0; i < m_AdditionalFields.Count(); ++i)
 		{
@@ -1195,14 +1200,17 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 				if (!PK_VERIFY(mappedValue != null))
 					return false;
 
-				m_MappedAdditionalFields[i].m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
-				m_MappedAdditionalFields[i].m_Storage.m_Count = m_TotalParticleCount;
-				m_MappedAdditionalFields[i].m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
-				m_MappedAdditionalFields[i].m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				Drawers::SCopyFieldDesc	mappedAdditionnalField;
+				mappedAdditionnalField.m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
+				mappedAdditionnalField.m_Storage.m_Count = m_TotalParticleCount;
+				mappedAdditionnalField.m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
+				mappedAdditionnalField.m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				m_MappedAdditionalFields.PushBackUnsafe(mappedAdditionnalField);
 			}
 		}
 		billboardGeomBatch->m_Exec_CopyAdditionalFields.m_FieldsToCopy = m_MappedAdditionalFields.View();
 	}
+
 	return true;
 }
 
@@ -1757,10 +1765,11 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 	}
 
 	// Additional inputs:
-	if (!toMap.m_AdditionalGeneratedInputs.Empty())
+	PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
+	if (!m_AdditionalFields.Empty())
 	{
-		PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
-		if (!PK_VERIFY(m_MappedAdditionalFields.Resize(m_AdditionalFields.Count())))
+		m_MappedAdditionalFields.Clear();
+		if (!PK_VERIFY(m_MappedAdditionalFields.Reserve(m_AdditionalFields.Count())))
 			return false;
 		for (u32 i = 0; i < m_AdditionalFields.Count(); ++i)
 		{
@@ -1770,14 +1779,17 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 				if (!PK_VERIFY(mappedValue != null))
 					return false;
 
-				m_MappedAdditionalFields[i].m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
-				m_MappedAdditionalFields[i].m_Storage.m_Count = m_TotalVertexCount;
-				m_MappedAdditionalFields[i].m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
-				m_MappedAdditionalFields[i].m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				Drawers::SCopyFieldDesc	mappedAdditionnalField;
+				mappedAdditionnalField.m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
+				mappedAdditionnalField.m_Storage.m_Count = m_TotalVertexCount;
+				mappedAdditionnalField.m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
+				mappedAdditionnalField.m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				m_MappedAdditionalFields.PushBackUnsafe(mappedAdditionnalField);
 			}
 		}
 		billboardBatch->m_Exec_CopyField.m_FieldsToCopy = m_MappedAdditionalFields.View();
 	}
+
 	return true;
 }
 
@@ -1931,13 +1943,12 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 	}
 
 	// Additional inputs:
-	if (!toMap.m_AdditionalGeneratedInputs.Empty())
+	PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
+	if (!m_AdditionalFields.Empty())
 	{
-		PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
-
-		if (!PK_VERIFY(m_MappedAdditionalFields.Resize(m_AdditionalFields.Count())))
+		m_MappedAdditionalFields.Clear();
+		if (!PK_VERIFY(m_MappedAdditionalFields.Reserve(m_AdditionalFields.Count())))
 			return false;
-
 		for (u32 i = 0; i < m_AdditionalFields.Count(); ++i)
 		{
 			if (m_AdditionalFields[i].m_Buffer.Used())
@@ -1946,16 +1957,17 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 				if (!PK_VERIFY(mappedValue != null))
 					return false;
 
-				m_MappedAdditionalFields[i].m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
-
-				// We either render each sub mesh id with the same vertex buffer, or we have a single sub mesh id to render
-				m_MappedAdditionalFields[i].m_Storage.m_Count = m_TotalParticleCount;
-				m_MappedAdditionalFields[i].m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
-				m_MappedAdditionalFields[i].m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				Drawers::SCopyFieldDesc	mappedAdditionnalField;
+				mappedAdditionnalField.m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
+				mappedAdditionnalField.m_Storage.m_Count = m_TotalParticleCount;
+				mappedAdditionnalField.m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
+				mappedAdditionnalField.m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				m_MappedAdditionalFields.PushBackUnsafe(mappedAdditionnalField);
 			}
 		}
 		meshBatch->m_Exec_CopyField.m_FieldsToCopy = m_MappedAdditionalFields.View();
 	}
+
 	return true;
 }
 
@@ -1991,13 +2003,12 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 	}
 
 	// Additional inputs:
-	if (!toMap.m_AdditionalGeneratedInputs.Empty())
+	PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
+	if (!m_AdditionalFields.Empty())
 	{
-		PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
-
-		if (!PK_VERIFY(m_MappedAdditionalFields.Resize(m_AdditionalFields.Count())))
+		m_MappedAdditionalFields.Clear();
+		if (!PK_VERIFY(m_MappedAdditionalFields.Reserve(m_AdditionalFields.Count())))
 			return false;
-
 		for (u32 i = 0; i < m_AdditionalFields.Count(); ++i)
 		{
 			if (m_AdditionalFields[i].m_Buffer.Used())
@@ -2006,16 +2017,17 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 				if (!PK_VERIFY(mappedValue != null))
 					return false;
 
-				m_MappedAdditionalFields[i].m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
-
-				// We either render each sub mesh id with the same vertex buffer, or we have a single sub mesh id to render
-				m_MappedAdditionalFields[i].m_Storage.m_Count = m_TotalParticleCount;
-				m_MappedAdditionalFields[i].m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
-				m_MappedAdditionalFields[i].m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				Drawers::SCopyFieldDesc	mappedAdditionnalField;
+				mappedAdditionnalField.m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
+				mappedAdditionnalField.m_Storage.m_Count = m_TotalParticleCount;
+				mappedAdditionnalField.m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
+				mappedAdditionnalField.m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				m_MappedAdditionalFields.PushBackUnsafe(mappedAdditionnalField);
 			}
 		}
 		m_CopyAdditionalFieldsTask.m_FieldsToCopy = m_MappedAdditionalFields.View();
 	}
+
 	return true;
 }
 
@@ -2090,10 +2102,11 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 	}
 
 	// Additional inputs:
-	if (!toMap.m_AdditionalGeneratedInputs.Empty())
+	PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
+	if (!m_AdditionalFields.Empty())
 	{
-		PK_ASSERT(toMap.m_AdditionalGeneratedInputs.Count() >= m_AdditionalFields.Count());
-		if (!PK_VERIFY(m_MappedAdditionalFields.Resize(m_AdditionalFields.Count())))
+		m_MappedAdditionalFields.Clear();
+		if (!PK_VERIFY(m_MappedAdditionalFields.Reserve(m_AdditionalFields.Count())))
 			return false;
 		for (u32 i = 0; i < m_AdditionalFields.Count(); ++i)
 		{
@@ -2103,14 +2116,17 @@ bool	CRHIBillboardingBatchPolicy::MapBuffers(SRenderContext &ctx, const TMemoryV
 				if (!PK_VERIFY(mappedValue != null))
 					return false;
 
-				m_MappedAdditionalFields[i].m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
-				m_MappedAdditionalFields[i].m_Storage.m_Count = m_TotalVertexCount;
-				m_MappedAdditionalFields[i].m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
-				m_MappedAdditionalFields[i].m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				Drawers::SCopyFieldDesc	mappedAdditionnalField;
+				mappedAdditionnalField.m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
+				mappedAdditionnalField.m_Storage.m_Count = m_TotalVertexCount;
+				mappedAdditionnalField.m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
+				mappedAdditionnalField.m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				m_MappedAdditionalFields.PushBackUnsafe(mappedAdditionnalField);
 			}
 		}
 		triangleBatch->m_Exec_CopyField.m_FieldsToCopy = m_MappedAdditionalFields.View();
 	}
+
 	return true;
 }
 
@@ -3161,11 +3177,11 @@ bool	CRHIBillboardingBatchPolicy::LaunchCustomTasks(SRenderContext &ctx, const T
 	// We feed the mapped buffer to our custom task (it just copies the positions in the mapped buffer):
 	m_LightDataCopyTask.m_Positions = TMemoryView<CFloat3>(mappedPos, m_TotalParticleCount);
 
-	// Then we map the additional fields:
 	// Additional inputs:
 	if (!m_AdditionalFields.Empty())
 	{
-		if (!PK_VERIFY(m_MappedAdditionalFields.Resize(m_AdditionalFields.Count())))
+		m_MappedAdditionalFields.Clear();
+		if (!PK_VERIFY(m_MappedAdditionalFields.Reserve(m_AdditionalFields.Count())))
 			return false;
 		for (u32 i = 0; i < m_AdditionalFields.Count(); ++i)
 		{
@@ -3175,10 +3191,12 @@ bool	CRHIBillboardingBatchPolicy::LaunchCustomTasks(SRenderContext &ctx, const T
 				if (!PK_VERIFY(mappedValue != null))
 					return false;
 
-				m_MappedAdditionalFields[i].m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
-				m_MappedAdditionalFields[i].m_Storage.m_Count = m_TotalParticleCount;
-				m_MappedAdditionalFields[i].m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
-				m_MappedAdditionalFields[i].m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				Drawers::SCopyFieldDesc	mappedAdditionnalField;
+				mappedAdditionnalField.m_AdditionalInputIndex = m_AdditionalFields[i].m_AdditionalInputIndex;
+				mappedAdditionnalField.m_Storage.m_Count = m_TotalParticleCount;
+				mappedAdditionnalField.m_Storage.m_RawDataPtr = static_cast<u8*>(mappedValue);
+				mappedAdditionnalField.m_Storage.m_Stride = m_AdditionalFields[i].m_ByteSize;
+				m_MappedAdditionalFields.PushBackUnsafe(mappedAdditionnalField);
 			}
 		}
 		m_CopyAdditionalFieldsTask.m_FieldsToCopy = m_MappedAdditionalFields.View();
