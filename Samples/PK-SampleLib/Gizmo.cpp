@@ -367,8 +367,7 @@ CFloat3	CGizmo::UnprojectPointToWorld(const CFloat3 &pixelCoords, const CFloat4x
 
 	unproj.xy() = unproj.xy() * 2.0f - 1.0f;
 	unproj = inverseMVP.TransformVector(unproj);
-	unproj /= unproj.w();
-	return unproj.xyz();
+	return unproj.xyz() / unproj.w();
 }
 
 //----------------------------------------------------------------------------
