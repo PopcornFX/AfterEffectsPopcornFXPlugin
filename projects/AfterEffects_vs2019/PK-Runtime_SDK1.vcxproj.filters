@@ -91,6 +91,9 @@
     <Filter Include="Particles\Headers\Kernels\D3D12">
       <UniqueIdentifier>{078FAF36-7372-BE76-7C75-ECB2E8D784C7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Particles\Headers\Kernels\D3D12U">
+      <UniqueIdentifier>{3C70A10C-28C1-8C4E-5125-7B103DD51FB8}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Particles\Headers\Renderers">
       <UniqueIdentifier>{B026337A-1C34-6160-A51A-5D4B11272D17}</UniqueIdentifier>
     </Filter>
@@ -106,6 +109,9 @@
     <Filter Include="Particles\Headers\Samplers\D3D12">
       <UniqueIdentifier>{9A276702-8678-5244-AFDC-40069B8CE5AD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Particles\Headers\Samplers\D3D12U">
+      <UniqueIdentifier>{2F1B4C4F-9B89-A1CE-E472-5CCE5020976A}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Particles\Headers\Samplers\GPU">
       <UniqueIdentifier>{E8FF2D7F-D425-F8E5-BD6B-7DB1A9301DB2}</UniqueIdentifier>
     </Filter>
@@ -120,6 +126,9 @@
     </Filter>
     <Filter Include="Particles\Headers\Storage\D3D12">
       <UniqueIdentifier>{8839146B-F41C-23AB-FD1F-51E76982E9FB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Particles\Headers\Storage\D3D12U">
+      <UniqueIdentifier>{DD6A9BCD-C9BB-860F-F21F-75D1DECF1979}</UniqueIdentifier>
     </Filter>
     <Filter Include="Particles\Headers\Storage\GPU">
       <UniqueIdentifier>{56BEF1A7-C2D6-D8D1-8B83-686BF75A6D6B}</UniqueIdentifier>
@@ -141,6 +150,9 @@
     </Filter>
     <Filter Include="Particles\Headers\Updaters\D3D12">
       <UniqueIdentifier>{3BCBD0B6-271C-BCF8-5080-AABA3C304F62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Particles\Headers\Updaters\D3D12U">
+      <UniqueIdentifier>{F032EA90-5CA1-3F10-A58A-FA0F113835AC}</UniqueIdentifier>
     </Filter>
     <Filter Include="Particles\Headers\Updaters\GPU">
       <UniqueIdentifier>{4947E81B-356D-B282-1EB3-374E0A78D74E}</UniqueIdentifier>
@@ -265,6 +277,18 @@
       <Filter>EngineUtils\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_engine_utils\include\eu_init.h">
+      <Filter>EngineUtils\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_engine_utils\include\eu_probability_function_1d.h">
+      <Filter>EngineUtils\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_engine_utils\include\eu_probability_function_1d_sampling.h">
+      <Filter>EngineUtils\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_engine_utils\include\eu_probability_function_1d_sampling.inl">
+      <Filter>EngineUtils\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_engine_utils\include\eu_probability_function_2d.h">
       <Filter>EngineUtils\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_engine_utils\include\eu_random.h">
@@ -415,6 +439,9 @@
       <Filter>Imaging\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_imaging\include\im_config_dump.h">
+      <Filter>Imaging\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_imaging\include\im_density.h">
       <Filter>Imaging\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_imaging\include\im_downsampling.h">
@@ -1005,6 +1032,9 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Kernels\D3D12\kernel_d3d12.h">
       <Filter>Particles\Headers\Kernels\D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Kernels\D3D12U\kernel_d3d12U.h">
+      <Filter>Particles\Headers\Kernels\D3D12U</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Renderers\ps_renderer_base.h">
       <Filter>Particles\Headers\Renderers</Filter>
     </ClInclude>
@@ -1065,6 +1095,9 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12\sampler_d3d12.h">
       <Filter>Particles\Headers\Samplers\D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12U\sampler_d3d12U.h">
+      <Filter>Particles\Headers\Samplers\D3D12U</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\GPU\sampler_gpu.h">
       <Filter>Particles\Headers\Samplers\GPU</Filter>
     </ClInclude>
@@ -1091,6 +1124,12 @@
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12\storage_spatial_d3d12.h">
       <Filter>Particles\Headers\Storage\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12U\storage_d3d12U.h">
+      <Filter>Particles\Headers\Storage\D3D12U</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12U\storage_d3d12U_stream.h">
+      <Filter>Particles\Headers\Storage\D3D12U</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\GPU\storage_gpu.h">
       <Filter>Particles\Headers\Storage\GPU</Filter>
@@ -1121,6 +1160,9 @@
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\D3D12\updater_d3d12.h">
       <Filter>Particles\Headers\Updaters\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\D3D12U\updater_d3d12U.h">
+      <Filter>Particles\Headers\Updaters\D3D12U</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\GPU\updater_gpu.h">
       <Filter>Particles\Headers\Updaters\GPU</Filter>
@@ -1183,6 +1225,9 @@
       <Filter>Particles\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\ps_font_metrics_resource.h">
+      <Filter>Particles\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\ps_gpu_d3d12.h">
       <Filter>Particles\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\ps_init.h">
@@ -1261,6 +1306,9 @@
       <Filter>Particles\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\ps_samplers_image.h">
+      <Filter>Particles\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\ps_samplers_image_atlas.h">
       <Filter>Particles\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\ps_samplers_shape.h">

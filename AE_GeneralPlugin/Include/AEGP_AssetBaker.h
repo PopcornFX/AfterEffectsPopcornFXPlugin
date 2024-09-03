@@ -182,7 +182,7 @@ public:
 	void				CancelAllFileChanges();
 	int					PopFileChanges();
 	bool				IsChangeRegistered(const CString &path, EAssetChangesType type);
-	void				ReimportAssets(TArray<CString> &paths, bool importPkri = true);
+	void				ReimportAssets(TArray<CString> &paths);
 	void				ReimportAllAssets(bool refesh);
 	void				GetAllAssetPath();
 	const CString		&GetSourcePackRootPath() const { return m_RootDir; }

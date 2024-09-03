@@ -851,6 +851,7 @@ namespace	MaterialToRHI
 													bool								atlas,
 													bool								normal,
 													bool								tangent,
+													bool								rawUV0,
 													u32									&shaderLocationBinding,
 													u32									&vBufferLocationBinding,
 													RHI::SShaderBindings				&outShaderBindings,
@@ -893,12 +894,16 @@ namespace	MaterialToRHI
 			++shaderLocationBinding;
 			++vBufferLocationBinding;
 			outVertexInputBuffer.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat2)));
-			success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("AtlasID", shaderLocationBinding, RHI::TypeFloat, vBufferLocationBinding)).Valid();
+		}
+
+		if (rawUV0)
+		{
+			success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("RawUV0", shaderLocationBinding, RHI::TypeFloat2, vBufferLocationBinding)).Valid();
 			if (outShaderDesc != null)
-				success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth, shaderLocationBinding)).Valid();
+				success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth, shaderLocationBinding)).Valid();
 			++shaderLocationBinding;
 			++vBufferLocationBinding;
-			outVertexInputBuffer.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(float)));
+			outVertexInputBuffer.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat2)));
 		}
 
 		return success;
@@ -938,6 +943,7 @@ namespace	MaterialToRHI
 		bool	tangent = false;
 		bool	uv1 = false;
 		bool	atlas = false;
+		bool	rawUV0 = false;
 		bool	opaque = false;
 		bool	vertexColor0 = false;
 		bool	vertexColor1 = false;
@@ -955,6 +961,8 @@ namespace	MaterialToRHI
 //		const CStringId		strIdFeature_TransformUVs = BasicRendererProperties::SID_TransformUVs();
 		const CStringId		strIdFeature_CustomTextureU = BasicRendererProperties::SID_CustomTextureU();
 		const CStringId		strIdFeature_Opaque = BasicRendererProperties::SID_Opaque();
+		const CStringId		strIdFeature_UVDistortions = BasicRendererProperties::SID_UVDistortions();
+		const CStringId		strIdFeature_AlphaMasks = BasicRendererProperties::SID_AlphaMasks();
 
 		for (const SToggledRenderingFeature &settings : args.m_FeaturesSettings)
 		{
@@ -968,6 +976,9 @@ namespace	MaterialToRHI
 
 			correctDeformation |= settings.m_FeatureName == strIdFeature_CorrectDeformation;
 			atlas |= settings.m_FeatureName == strIdFeature_Atlas;
+			// Distortion and Noise need basic UVs when atlas is on.
+			rawUV0 |= settings.m_FeatureName == strIdFeature_AlphaMasks || settings.m_FeatureName == strIdFeature_UVDistortions;
+
 			opaque |= settings.m_FeatureName == strIdFeature_Opaque;
 //			transformUVs |= settings.m_FeatureName == strIdFeature_TransformUVs;
 			customTextureU |= settings.m_FeatureName == strIdFeature_CustomTextureU;
@@ -984,6 +995,8 @@ namespace	MaterialToRHI
 			sampleDiffuse |= !!featureSettings->SampleDiffuse();
 			useLightingInfo |= !!featureSettings->UseSceneLightingInfo();
 		}
+
+		rawUV0 &= atlas;
 
 		// Create the shader vertex inputs and outputs
 		if (vertexBB)
@@ -1156,6 +1169,10 @@ namespace	MaterialToRHI
 							success &= outShaderDesc->m_GeometryOutput.m_GeometryOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 							success &= outShaderDesc->m_GeometryOutput.m_GeometryOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth)).Valid();
 						}
+						if (rawUV0)
+						{
+							success &= outShaderDesc->m_GeometryOutput.m_GeometryOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
+						}
 					}
 					else
 					{
@@ -1170,6 +1187,8 @@ namespace	MaterialToRHI
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth)).Valid();
 						}
+						if (rawUV0)
+							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 					}
 				}
 
@@ -1235,7 +1254,7 @@ namespace	MaterialToRHI
 			}
 			else // No geom billboard
 			{
-				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas, normal, tangent, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
+				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas, normal, tangent, rawUV0, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
 			}
 		}
 		else if (args.m_RendererType == Renderer_Ribbon)
@@ -1266,6 +1285,8 @@ namespace	MaterialToRHI
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth)).Valid();
 						}
+						if (rawUV0)
+							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 						if (correctDeformation)
 						{
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
@@ -1284,7 +1305,7 @@ namespace	MaterialToRHI
 			}
 			else
 			{
-				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas, normal, tangent, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
+				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas, normal, tangent, rawUV0, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
 				if (correctDeformation)
 				{
 					success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("UVScaleAndOffset", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding)).Valid();
@@ -1421,7 +1442,7 @@ namespace	MaterialToRHI
 			}
 			else
 			{
-				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas, normal, tangent, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
+				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas, normal, tangent, rawUV0, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
 			}
 		}
 		else if (args.m_RendererType == Renderer_Decal)

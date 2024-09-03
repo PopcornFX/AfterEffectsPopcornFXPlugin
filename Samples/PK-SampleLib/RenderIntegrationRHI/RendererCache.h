@@ -12,9 +12,9 @@
 
 #include "PK-SampleLib/PKSample.h"
 #include "PK-SampleLib/RenderIntegrationRHI/RHIGraphicResources.h"
-#include "PK-SampleLib/RenderIntegrationRHI/FeatureRenderingSettings.h"
-#include <pk_render_helpers/include/frame_collector/rh_particle_render_data_factory.h>
 #include "PK-SampleLib/ShaderLoader.h"
+
+#include <pk_render_helpers/include/frame_collector/rh_particle_render_data_factory.h>
 
 __PK_SAMPLE_API_BEGIN
 

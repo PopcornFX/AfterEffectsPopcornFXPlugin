@@ -31,6 +31,7 @@ PK_PLUGIN_DECLARE(CCompilerBackendGPU_D3D);
 
 
 #	if defined(USE_IMAGE_PLUGINS)
+PK_PLUGIN_DECLARE(CImagePKIMCodec);
 PK_PLUGIN_DECLARE(CImageDDSCodec);
 PK_PLUGIN_DECLARE(CImagePNGCodec);
 PK_PLUGIN_DECLARE(CImageTGACodec);
@@ -100,6 +101,13 @@ bool	PopcornRegisterPlugins(u32 selected /*= 0*/)
 	}
 #	endif
 #	ifdef USE_IMAGE_PLUGINS
+	if (selected & EPlugin_ImageCodecPKIM)
+	{
+		const char		*codecPathPKIM = "Plugins/image_codec_pkim" PK_PLUGIN_POSTFIX_BUILD PK_PLUGIN_POSTFIX_EXT;
+		IPluginModule	*codecPKIM = StartupPlugin_CImagePKIMCodec();
+		success &= (codecPKIM != null && PopcornFX::CPluginManager::PluginRegister(codecPKIM, true, codecPathPKIM));
+	}
+
 	if (selected & EPlugin_ImageCodecDDS)
 	{
 		const char		*codecPathDDS = "Plugins/image_codec_dds" PK_PLUGIN_POSTFIX_BUILD PK_PLUGIN_POSTFIX_EXT;
@@ -203,6 +211,13 @@ void		PopcornUnregisterPlugins()
 	}
 #	endif
 #	ifdef USE_IMAGE_PLUGINS
+	if (g_LoadedPlugins & EPlugin_ImageCodecPKIM)
+	{
+		IPluginModule		*codecPKIM = GetPlugin_CImagePKIMCodec();
+		(codecPKIM != null && PopcornFX::CPluginManager::PluginRelease(codecPKIM));
+		ShutdownPlugin_CImagePKIMCodec();
+	}
+
 	if (g_LoadedPlugins & EPlugin_ImageCodecDDS)
 	{
 		IPluginModule		*codecDDS = GetPlugin_CImageDDSCodec();

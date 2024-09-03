@@ -45,6 +45,17 @@ struct	SSceneInfoData;
 
 //----------------------------------------------------------------------------
 
+// Overdraw push constants:
+struct	SOverdrawInfo
+{
+	float		m_ScaleFactor;
+
+	SOverdrawInfo(float scaleFactor)
+	:	m_ScaleFactor(scaleFactor)
+	{
+	}
+};
+
 struct	SGizmoFlags
 {
 	bool					m_Enabled;
@@ -175,6 +186,18 @@ struct	SParticleSceneOptions
 					m_LumaInAlpha == oth.m_LumaInAlpha;
 		}
 	}	m_FXAA;
+
+	struct	SOverdraw
+	{
+		u32			m_OverdrawUpperRange = 50;
+		CString		m_OverdrawTexturePath;
+
+		bool	operator == (const SOverdraw &oth) const
+		{
+			return	m_OverdrawUpperRange == oth.m_OverdrawUpperRange &&
+				m_OverdrawTexturePath == oth.m_OverdrawTexturePath;
+		}
+	}	m_Overdraw;
 
 	bool	m_Dithering = false;
 
@@ -357,6 +380,7 @@ public:
 	bool						SetupPostFX_ToneMapping(const SParticleSceneOptions::SToneMapping &config, const SParticleSceneOptions::SVignetting &configVignetting, bool dithering, bool firstInit, bool precomputeLuma = true);
 	bool						SetupPostFX_ColorRemap(const SParticleSceneOptions::SColorRemap &config,  bool firstInit);
 	bool						SetupPostFX_FXAA(const SParticleSceneOptions::SFXAA &config, bool firstInit, bool lumaInAlpha = true);
+	bool						SetupPostFX_Overdraw(const SParticleSceneOptions::SOverdraw &config, bool firstInit);
 	bool						SetupShadows();
 
 	void						EnablePostFX(bool enabled) { m_EnablePostFX = enabled; }
@@ -488,6 +512,8 @@ protected:
 	bool								m_EnableFXAA;
 	CPostFxFXAA							m_FXAA;
 
+	float								m_OverdrawScaleFactor = 1.0f / 50;
+
 	struct	SBrushInfo
 	{
 		CFloat4		m_TopColor;
@@ -560,6 +586,7 @@ protected:
 	RHI::PTexture					m_DummyBlack;
 	RHI::PConstantSet				m_DummyBlackConstantSet;
 	RHI::PTexture					m_DummyNormal;
+	RHI::PTexture					m_HeatmapTexture;
 
 	CConstantAtlas					m_DummyAtlas;
 

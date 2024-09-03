@@ -41,6 +41,7 @@
 #	include <pk_particles/include/Kernels/D3D11/kernel_d3d11.h>
 #	include <pk_particles/include/Updaters/D3D11/updater_d3d11.h>
 #	include <pk_particles/include/Updaters/D3D12/updater_d3d12.h>
+#	include <pk_particles/include/Updaters/D3D12U/updater_d3d12U.h>
 
 #	include <pk_rhi/include/D3D11/D3D11Texture.h>
 #	include <pk_rhi/include/D3D12/D3D12Texture.h>
@@ -179,6 +180,20 @@ namespace	SimInterfaces
 			return true;
 		}
 #endif // (PK_PARTICLES_UPDATER_USE_D3D11 != 0)
+#if (PK_PARTICLES_UPDATER_USE_D3D12U != 0)
+		if (context.m_ContextType == ContextD3D12U)
+		{
+			SBindingContextD3D12U	&d3d12UContext = const_cast<SBindingContextD3D12U&>(context.ToD3D12U());
+			SBindingHeapD3D12U		&bindingHeap = d3d12UContext.m_Heap;
+			RHI::PD3D12GpuBuffer	d3d12Buffer = CastD3D12(buffer);
+			ID3D12Resource			*_d3d12UBuffer = d3d12Buffer->D3D12GetResource();
+
+			if (!PK_VERIFY(_d3d12UBuffer != null))
+				return false;
+			return	bindingHeap.BindConstantBufferView(d3d12UContext.m_Device, _d3d12UBuffer, context.m_Location) &&
+					bindingHeap.KeepResourceReference(_d3d12UBuffer);
+		}
+#endif // (PK_PARTICLES_UPDATER_USE_D3D12U != 0)
 #if (PK_PARTICLES_UPDATER_USE_D3D12 != 0)
 		if (context.m_ContextType == ContextD3D12)
 		{
@@ -218,6 +233,32 @@ namespace	SimInterfaces
 			return true;
 		}
 #endif // (PK_PARTICLES_UPDATER_USE_D3D11 != 0)
+#if (PK_PARTICLES_UPDATER_USE_D3D12U != 0)
+		if (context.m_ContextType == ContextD3D12U)
+		{
+			SBindingContextD3D12U	&d3d12UContext = const_cast<SBindingContextD3D12U&>(context.ToD3D12U());
+			SBindingHeapD3D12U		&bindingHeap = d3d12UContext.m_Heap;
+			RHI::PD3D12Texture		d3d12Texture = CastD3D12(texture);
+			ID3D12Resource			*_d3d12UTexture = d3d12Texture->D3D12GetResource();
+
+			if (!PK_VERIFY(_d3d12UTexture != null) ||
+				!PK_VERIFY(d3d12UContext.m_DynamicBarrier != null))
+				return false;
+
+			// Note: can be used to transition a resource before/after the associated CS is dispatched
+#if 0
+			const D3D12_RESOURCE_STATES	stateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			const D3D12_RESOURCE_STATES	stateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+			if (!PK_VERIFY(d3d12Context.m_DynamicBarrier->AddBarrier(_d3d12UTexture, stateBefore, stateAfter)) ||
+				!PK_VERIFY(d3d12Context.m_DynamicBarrier_PostUpdate->AddBarrier(_d3d12UTexture, stateAfter, stateBefore)))
+				return false;
+#endif
+
+			const DXGI_FORMAT	dxgiFormat = RHI::D3DConversion::PopcornToD3DPixelFormat(texture->GetFormat());
+			return	bindingHeap.BindTextureShaderResourceView(d3d12UContext.m_Device, _d3d12UTexture, context.m_Location, dxgiFormat, D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING) &&
+					bindingHeap.KeepResourceReference(_d3d12UTexture);
+		}
+#endif // (PK_PARTICLES_UPDATER_USE_D3D12U != 0)
 #if (PK_PARTICLES_UPDATER_USE_D3D12 != 0)
 		if (context.m_ContextType == ContextD3D12)
 		{

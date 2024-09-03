@@ -102,6 +102,7 @@ GENERATED += $(OBJDIR)/DownSampleTexture.o
 GENERATED += $(OBJDIR)/EGLContext.o
 GENERATED += $(OBJDIR)/EditorShaderDefinitions.o
 GENERATED += $(OBJDIR)/EnvironmentMapEntity.o
+GENERATED += $(OBJDIR)/FModBillboardingBatchPolicy.o
 GENERATED += $(OBJDIR)/FeatureRenderingSettings.o
 GENERATED += $(OBJDIR)/FrameCollector.o
 GENERATED += $(OBJDIR)/GBuffer.o
@@ -130,8 +131,8 @@ GENERATED += $(OBJDIR)/PostFxDistortion.o
 GENERATED += $(OBJDIR)/PostFxFXAA.o
 GENERATED += $(OBJDIR)/PostFxToneMapping.o
 GENERATED += $(OBJDIR)/ProfilerRenderer.o
-GENERATED += $(OBJDIR)/RHIBillboardingBatchPolicy.o
-GENERATED += $(OBJDIR)/RHIBillboardingBatchPolicy_Vertex.o
+GENERATED += $(OBJDIR)/RHIBillboardingBatch_CPUsim.o
+GENERATED += $(OBJDIR)/RHIBillboardingBatch_GPUsim.o
 GENERATED += $(OBJDIR)/RHICustomTasks.o
 GENERATED += $(OBJDIR)/RHIGPUSorter.o
 GENERATED += $(OBJDIR)/RHIGraphicResources.o
@@ -169,6 +170,7 @@ OBJECTS += $(OBJDIR)/DownSampleTexture.o
 OBJECTS += $(OBJDIR)/EGLContext.o
 OBJECTS += $(OBJDIR)/EditorShaderDefinitions.o
 OBJECTS += $(OBJDIR)/EnvironmentMapEntity.o
+OBJECTS += $(OBJDIR)/FModBillboardingBatchPolicy.o
 OBJECTS += $(OBJDIR)/FeatureRenderingSettings.o
 OBJECTS += $(OBJDIR)/FrameCollector.o
 OBJECTS += $(OBJDIR)/GBuffer.o
@@ -197,8 +199,8 @@ OBJECTS += $(OBJDIR)/PostFxDistortion.o
 OBJECTS += $(OBJDIR)/PostFxFXAA.o
 OBJECTS += $(OBJDIR)/PostFxToneMapping.o
 OBJECTS += $(OBJDIR)/ProfilerRenderer.o
-OBJECTS += $(OBJDIR)/RHIBillboardingBatchPolicy.o
-OBJECTS += $(OBJDIR)/RHIBillboardingBatchPolicy_Vertex.o
+OBJECTS += $(OBJDIR)/RHIBillboardingBatch_CPUsim.o
+OBJECTS += $(OBJDIR)/RHIBillboardingBatch_GPUsim.o
 OBJECTS += $(OBJDIR)/RHICustomTasks.o
 OBJECTS += $(OBJDIR)/RHIGPUSorter.o
 OBJECTS += $(OBJDIR)/RHIGraphicResources.o
@@ -362,10 +364,10 @@ $(OBJDIR)/FrameCollector.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/Fram
 $(OBJDIR)/MaterialToRHI.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/MaterialToRHI.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/RHIBillboardingBatchPolicy.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/RHIBillboardingBatchPolicy.cpp
+$(OBJDIR)/RHIBillboardingBatch_CPUsim.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/RHIBillboardingBatch_CPUsim.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/RHIBillboardingBatchPolicy_Vertex.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/RHIBillboardingBatchPolicy_Vertex.cpp
+$(OBJDIR)/RHIBillboardingBatch_GPUsim.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/RHIBillboardingBatch_GPUsim.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/RHICustomTasks.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/RHICustomTasks.cpp
@@ -381,9 +383,6 @@ $(OBJDIR)/RHIParticleRenderDataFactory.o: ../../Samples/PK-SampleLib/RenderInteg
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/RendererCache.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/RendererCache.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/SoundPoolCache.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/SoundPoolCache.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/DirectionalShadows.o: ../../Samples/PK-SampleLib/RenderPasses/DirectionalShadows.cpp
@@ -465,6 +464,12 @@ $(OBJDIR)/ShaderLoader.o: ../../Samples/PK-SampleLib/ShaderLoader.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/SimInterface_GBufferSampling.o: ../../Samples/PK-SampleLib/SimInterfaces/SimInterface_GBufferSampling.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/FModBillboardingBatchPolicy.o: ../../Samples/PK-SampleLib/SoundIntegrationFMod/FModBillboardingBatchPolicy.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/SoundPoolCache.o: ../../Samples/PK-SampleLib/SoundIntegrationFMod/SoundPoolCache.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/AWindowContext.o: ../../Samples/PK-SampleLib/WindowContext/AWindowContext.cpp

@@ -12,20 +12,9 @@
 
 #include "FrameCollector.h"
 
+#include "pk_render_helpers/include/frame_collector/legacy/rh_frame_data_legacy.h"
+
 __PK_SAMPLE_API_BEGIN
-
-//----------------------------------------------------------------------------
-
-CFrameCollector::CFrameCollector()
-{
-}
-
-//----------------------------------------------------------------------------
-
-CFrameCollector::~CFrameCollector()
-{
-}
-
 //----------------------------------------------------------------------------
 
 bool	CFrameCollector::EarlyCull(const CAABB &bbox, const PCRendererDataBillboard &renderer) const
@@ -104,5 +93,4 @@ bool	CFrameCollector::_Cull(const CAABB &bbox, const CRendererDataBase *renderer
 }
 
 //----------------------------------------------------------------------------
-
 __PK_SAMPLE_API_END

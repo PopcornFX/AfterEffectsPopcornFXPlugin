@@ -22,6 +22,7 @@ enum	ERuntimePlugin
 	EPlugin_ImageCodecPVR			= 1 << 6,
 	EPlugin_ImageCodecHDR			= 1 << 7,
 	EPlugin_ImageCodecEXR			= 1 << 8,
+	EPlugin_ImageCodecPKIM			= 1 << 9,
 
 	EPlugin_MeshCodecFBX			= 1 << 16,
 	EPlugin_MeshCodecGranny			= 1 << 17,
@@ -34,6 +35,7 @@ enum	ERuntimePlugin
 	// All "base" plugins
 	EPlugin_Default	=	EPlugin_CompilerBackendVM |
 						EPlugin_CompilerBackendD3D |
+						EPlugin_ImageCodecPKIM |
 						EPlugin_ImageCodecDDS |
 						EPlugin_ImageCodecPNG |
 						EPlugin_ImageCodecJPG |

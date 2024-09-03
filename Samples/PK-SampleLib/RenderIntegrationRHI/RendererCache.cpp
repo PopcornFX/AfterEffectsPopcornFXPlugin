@@ -15,9 +15,6 @@
 #include "PK-SampleLib/ShaderGenerator/ShaderGenerator.h"
 
 #include <pk_render_helpers/include/render_features/rh_features_basic.h>
-#include <pk_rhi/include/ShaderConstantBindingGenerator.h>
-#include <pk_geometrics/include/ge_mesh_resource.h>
-#include <pk_geometrics/include/ge_rectangle_list.h>
 
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
@@ -51,7 +48,7 @@ bool	CRendererCacheInstance_UpdateThread::RenderThread_Build(const RHI::PApiMana
 {
 	// We create all the missing resources (all the dependencies are directly handled in the RenderThread_CreateResource):
 	if (context != null && context->ResourceManager() != null)
-		return CRendererCacheInstanceManager::RenderThread_CreateMissingResources(SCreateArg(apiManager, null, context->ResourceManager(), CString()));
+		return CRendererCacheInstanceManager::RenderThread_CreateMissingResources(SCreateArg(apiManager, context->ResourceManager()));
 	return false;
 }
 
@@ -131,6 +128,13 @@ bool	CRendererCacheInstance_UpdateThread::UpdateThread_Build(const PCRendererDat
 	const SRendererFeaturePropertyValue	*atlasBlending = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Atlas_Blending());
 	const bool	hasAtlas = atlas != null && atlas->ValueB();
 	const bool	needsSecondUVSet = hasAtlas && (atlasBlending != null && atlasBlending->ValueI().x() >= 1);
+
+	const SRendererFeaturePropertyValue *alphaMasks = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_AlphaMasks());
+	const SRendererFeaturePropertyValue *uvDistortions = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_UVDistortions());
+
+	if (hasAtlas && ((uvDistortions != null && uvDistortions->ValueB()) || (alphaMasks != null && alphaMasks->ValueB())))
+		m_Flags.m_HasRawUV0 = true;
+
 	if (needsSecondUVSet)
 		m_Flags.m_HasAtlasBlending = true;
 

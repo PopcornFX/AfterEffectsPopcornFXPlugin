@@ -9,7 +9,6 @@
 #include "AEGP_Define.h"
 
 #include "AEGP_RenderContext.h"
-#include "AEGP_FrameCollector.h"
 
 #include <pk_base_object/include/hbo_object.h>
 
@@ -159,6 +158,9 @@ public:
 
 	void									SetSeeking(bool seekingEnabled) { m_SeekingEnabled = seekingEnabled; }
 	void									SetSkinnedBackdropParams(bool enabled, bool weightedSampling,  u32 colorStreamID, u32 weightStreamID);
+	//	RenderHelpers integration
+	PKSample::CRendererBatchDrawer			*NewBatchDrawer(ERendererClass rendererType, const PRendererCacheBase &rendererCache, bool gpuStorage);
+	PRendererCacheBase						NewRendererCache(const PRendererDataBase &renderer, const CParticleDescriptor *particleDesc);
 
 protected:
 	bool									_LateInitializeIFN();

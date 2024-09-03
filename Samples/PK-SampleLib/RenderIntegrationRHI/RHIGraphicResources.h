@@ -19,10 +19,7 @@
 #include <pk_rhi/include/AllInterfaces.h>
 #include <pk_rhi/include/interfaces/SApiContext.h>
 #include <pk_kernel/include/kr_resources.h>
-#include <pk_particles/include/Renderers/ps_renderer_billboard.h>
-#include <pk_particles/include/Renderers/ps_renderer_ribbon.h>
-#include <pk_particles/include/Renderers/ps_renderer_mesh.h>
-#include <pk_particles/include/Renderers/ps_renderer_material.h>
+#include <pk_particles/include/Renderers/ps_renderer_base.h>
 #include "PK-SampleLib/RenderIntegrationRHI/FeatureRenderingSettings.h"
 
 __PK_API_BEGIN
@@ -38,16 +35,6 @@ PK_FORWARD_DECLARE(RectangleList);
 #define IDEAL_SHADOW_DEPTH_FORMAT	RHI::FormatFloat32RG
 
 __PK_API_END
-
-// Foward declaration of FMOD
-namespace FMOD
-{
-	class System;
-	class ChannelGroup;
-	class Sound;
-	class Channel;
-}
-typedef unsigned int	FMOD_MODE;
 
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
@@ -174,21 +161,16 @@ struct	SPrepareArg
 struct	SCreateArg
 {
 	RHI::PApiManager			m_ApiManager;
-	FMOD::System				*m_SoundSystem;
 	TArray<CResourceManager*>	m_ResourceManagers;
-	CString						m_RootPath;
 
 	SCreateArg(const RHI::PApiManager &apiManager = null)
 	:	m_ApiManager(apiManager)
-	,	m_SoundSystem(null)
 	{
 		m_ResourceManagers.Clear();
 	}
 
-	SCreateArg(const RHI::PApiManager &apiManager, FMOD::System *soundSystem, CResourceManager *resourceManager, const CString &rootPath)
+	SCreateArg(const RHI::PApiManager &apiManager, CResourceManager *resourceManager)
 	:	m_ApiManager(apiManager)
-	,	m_SoundSystem(soundSystem)
-	,	m_RootPath(rootPath)
 	{
 		if (m_ResourceManagers.Resize(1))
 		{
@@ -196,11 +178,9 @@ struct	SCreateArg
 		}
 	}
 
-	SCreateArg(const RHI::PApiManager &apiManager, FMOD::System *soundSystem, TArray<CResourceManager*> resourceManagers, const CString &rootPath)
+	SCreateArg(const RHI::PApiManager &apiManager, TArray<CResourceManager*> resourceManagers)
 		: m_ApiManager(apiManager)
-		, m_SoundSystem(soundSystem)
 		, m_ResourceManagers(resourceManagers)
-		, m_RootPath(rootPath)
 	{
 	}
 };
@@ -213,13 +193,11 @@ struct	SRenderStateKey;
 struct	SShaderModuleKey;
 struct	SShaderProgramKey;
 struct	SGeometryKey;
-struct	SSoundKey;
 struct	SConstantAtlasKey;
 struct	SRendererCacheKey;
 struct	SRendererCacheInstanceKey;
 struct	SComputeStateKey;
 
-PK_FORWARD_DECLARE(SoundResource);
 PK_FORWARD_DECLARE(GeometryResource);
 PK_FORWARD_DECLARE(ConstantAtlas);
 PK_FORWARD_DECLARE(RendererCache);
@@ -232,7 +210,6 @@ PK_FORWARD_DECLARE(RendererCacheInstance);
 		X_GRAPHIC_RESOURCE(ComputeState) __sep \
 		X_GRAPHIC_RESOURCE(ShaderModule) __sep \
 		X_GRAPHIC_RESOURCE(ShaderProgram) __sep \
-		X_GRAPHIC_RESOURCE(SoundResource) __sep \
 		X_GRAPHIC_RESOURCE(Geometry) __sep \
 		X_GRAPHIC_RESOURCE(ConstantAtlas) __sep \
 		X_GRAPHIC_RESOURCE(RendererCache) __sep \
@@ -264,7 +241,6 @@ typedef		TGraphicResourceManager<PGeometryResource, SGeometryKey, SPrepareArg, S
 typedef		TGraphicResourceManager<PConstantAtlas, SConstantAtlasKey, SPrepareArg, SCreateArg>							CConstantAtlasManager;
 typedef		TGraphicResourceManager<PRendererCache, SRendererCacheKey, SPrepareArg, SCreateArg>							CRendererCacheManager;
 typedef		TGraphicResourceManager<PRendererCacheInstance, SRendererCacheInstanceKey, SPrepareArg, SCreateArg>			CRendererCacheInstanceManager;
-typedef		TGraphicResourceManager<PSoundResource, SSoundKey, SPrepareArg, SCreateArg>									CSoundResourceManager;
 typedef		TGraphicResourceManager<RHI::PComputeState, SComputeStateKey, SPrepareArg, SCreateArg>						CComputeStateManager;
 
 //----------------------------------------------------------------------------
@@ -461,39 +437,6 @@ struct	SGeometryKey
 };
 
 //----------------------------------------------------------------------------
-// Sound resource
-//----------------------------------------------------------------------------
-
-class	CSoundResource : public CRefCountedObject
-{
-public:
-	FMOD::Sound		*m_SoundData;
-	float			m_Frequency;
-	float			m_Length;
-
-	CSoundResource()
-	:	m_SoundData(null)
-	,	m_Frequency(0.0f)
-	,	m_Length(0.0f)
-	{}
-};
-PK_DECLARE_REFPTRCLASS(SoundResource);
-
-//----------------------------------------------------------------------------
-
-struct	SSoundKey
-{
-	CString					m_Path;
-
-	bool					UpdateThread_Prepare(const SPrepareArg &args);
-	PSoundResource			RenderThread_CreateResource(const SCreateArg &args);
-	void					UpdateThread_ReleaseDependencies() {}
-	PSoundResource			RenderThread_ReloadResource(const SCreateArg &args);
-	bool					operator == (const SSoundKey &other) const;
-	static const char		*GetResourceName() { return "Sound"; }
-};
-
-//----------------------------------------------------------------------------
 // Constant atlas data
 //----------------------------------------------------------------------------
 
@@ -575,9 +518,7 @@ struct	SConstantVertexBillboarding
 struct	SVertexBillboardingConstants
 {
 	u32		m_IndicesOffset;
-#if (PK_PARTICLES_UPDATER_USE_GPU != 0)
 	u32		m_StreamOffsetsIndex;
-#endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
 };
 PK_STATIC_ASSERT(sizeof(SVertexBillboardingConstants) <= sizeof(CUint4));
 
@@ -737,12 +678,10 @@ public:
 
 	// Billboards/Ribbons
 	bool								m_HasAtlas;
+	bool								m_HasRawUV0;
 
 	// Associated cache
 	PRendererCache						m_Cache;
-
-	// Sound resource
-	PSoundResource						m_Sound;
 };
 PK_DECLARE_REFPTRCLASS(RendererCacheInstance);
 
@@ -759,6 +698,7 @@ public:
 
 private:
 	bool											m_HasAtlas;
+	bool											m_HasRawUV0;
 
 	RHI::SConstantSetLayout							m_ConstSetLayout;
 	// Dependencies
@@ -766,7 +706,6 @@ private:
 	TArray<CTextureManager::CResourceId>			m_Textures;
 	TArray<CConstantSamplerManager::CResourceId>	m_Samplers;
 	CGeometryManager::CResourceId					m_Geometry;
-	CSoundResourceManager::CResourceId				m_Sound;
 	CConstantAtlasManager::CResourceId				m_Atlas;
 	CDigestMD5										m_ContentHash;
 	// Tmp data

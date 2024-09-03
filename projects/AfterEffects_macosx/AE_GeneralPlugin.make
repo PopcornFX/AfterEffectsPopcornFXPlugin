@@ -46,7 +46,7 @@ OBJDIR = ../intermediate/AfterEffects/GM/x64/Debug/AE_GeneralPlugin
 DEFINES += -D_DEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1 -DUSE_POSIX_API=1 -D__MWERKS__=0 -DA_INTERNAL_TEST_ONE=0 -DWEB_ENV=0 -DPK_BUILD_WITH_FMODEX_SUPPORT=0 -DPK_BUILD_WITH_SDL=0 -DPK_BUILD_WITH_D3D11_SUPPORT=0 -DPK_BUILD_WITH_D3D12_SUPPORT=0 -DQT_NO_KEYWORDS -DQT_NO_SIGNALS_SLOTS_KEYWORDS -DPK_BUILD_WITH_METAL_SUPPORT=1 -DPK_BUILD_WITH_OGL_SUPPORT=1 -DGL_GLEXT_PROTOTYPES -DGLEW_STATIC -DGLEW_NO_GLU -DMACOSX -DQT_CORE_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_XML_LIB -DQT_GUI_LIB
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -fPIC -fno-strict-aliasing -g -msse2 -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path` -F$(QTDIR)/lib
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -fPIC -fno-strict-aliasing -g -msse2 -Wall -Wextra -std=c++14 -fvisibility-inlines-hidden -fno-rtti -fvisibility=hidden -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path` -F$(QTDIR)/lib
-LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_d.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_d.a -framework quartzcore -framework cocoa -framework metal -framework Cocoa -framework QtCore -framework QtWidgets -framework QtNetwork -framework QtXml -framework QtGui -liconv -lm -lpthread -ldl -lPK-RenderHelpers_d -lPK-RHI_d -lPK-Discretizers_d -lPK-MCPP_d -lPK-Plugin_CompilerBackend_CPU_VM_d -lPK-Plugin_CodecImage_DDS_d -lPK-Plugin_CodecImage_JPG_d -lPK-Plugin_CodecImage_PKM_d -lPK-Plugin_CodecImage_PNG_d -lPK-Plugin_CodecImage_PVR_d -lPK-Plugin_CodecImage_TGA_d -lPK-Plugin_CodecImage_TIFF_d -lPK-Plugin_CodecImage_HDR_d -lPK-Plugin_CodecImage_EXR_d -lPK-Plugin_CodecMesh_FBX_d -lPK-ZLib_d -lfbxsdk_d -lxml2 -lz -lPK-ParticlesToolbox_d -lPK-Runtime_d
+LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_d.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_d.a -framework quartzcore -framework cocoa -framework metal -framework Cocoa -framework QtCore -framework QtWidgets -framework QtNetwork -framework QtXml -framework QtGui -liconv -lm -lpthread -ldl -lPK-RenderHelpers_d -lPK-RHI_d -lPK-Discretizers_d -lPK-MCPP_d -lPK-Plugin_CompilerBackend_CPU_VM_d -lPK-Plugin_CodecImage_PKIM_d -lPK-Plugin_CodecImage_DDS_d -lPK-Plugin_CodecImage_JPG_d -lPK-Plugin_CodecImage_PKM_d -lPK-Plugin_CodecImage_PNG_d -lPK-Plugin_CodecImage_PVR_d -lPK-Plugin_CodecImage_TGA_d -lPK-Plugin_CodecImage_TIFF_d -lPK-Plugin_CodecImage_HDR_d -lPK-Plugin_CodecImage_EXR_d -lPK-Plugin_CodecMesh_FBX_d -lPK-ZLib_d -lfbxsdk_d -lxml2 -lz -lPK-ParticlesToolbox_d -lPK-Runtime_d
 LDDEPS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_d.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_d.a
 ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/CodecMesh_FBX/libs/macosx/legacy_clang -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -L"$(QTDIR)/lib" -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_GeneralPlugin_macosx_d -Wl,-undefined,error -target x86_64-apple-macos10.14 -framework OpenGL -F$(QTDIR)/lib -Wl,-rpath,$(QTDIR)/lib
 
@@ -57,7 +57,7 @@ OBJDIR = ../intermediate/AfterEffects/GM/x64/Release/AE_GeneralPlugin
 DEFINES += -DNDEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1 -DUSE_POSIX_API=1 -D__MWERKS__=0 -DA_INTERNAL_TEST_ONE=0 -DWEB_ENV=0 -DPK_BUILD_WITH_FMODEX_SUPPORT=0 -DPK_BUILD_WITH_SDL=0 -DPK_BUILD_WITH_D3D11_SUPPORT=0 -DPK_BUILD_WITH_D3D12_SUPPORT=0 -DQT_NO_DEBUG -DQT_NO_KEYWORDS -DQT_NO_SIGNALS_SLOTS_KEYWORDS -DPK_BUILD_WITH_METAL_SUPPORT=1 -DPK_BUILD_WITH_OGL_SUPPORT=1 -DGL_GLEXT_PROTOTYPES -DGLEW_STATIC -DGLEW_NO_GLU -DMACOSX -DQT_CORE_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_XML_LIB -DQT_GUI_LIB
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -O3 -fPIC -fno-strict-aliasing -g -msse2 -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path` -F$(QTDIR)/lib
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -O3 -fPIC -fno-strict-aliasing -g -msse2 -Wall -Wextra -std=c++14 -fvisibility-inlines-hidden -fno-rtti -fvisibility=hidden -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path` -F$(QTDIR)/lib
-LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_r.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_r.a -framework quartzcore -framework cocoa -framework metal -framework Cocoa -framework QtCore -framework QtWidgets -framework QtNetwork -framework QtXml -framework QtGui -liconv -lm -lpthread -ldl -lPK-RenderHelpers_r -lPK-RHI_r -lPK-Discretizers_r -lPK-MCPP_r -lPK-Plugin_CompilerBackend_CPU_VM_r -lPK-Plugin_CodecImage_DDS_r -lPK-Plugin_CodecImage_JPG_r -lPK-Plugin_CodecImage_PKM_r -lPK-Plugin_CodecImage_PNG_r -lPK-Plugin_CodecImage_PVR_r -lPK-Plugin_CodecImage_TGA_r -lPK-Plugin_CodecImage_TIFF_r -lPK-Plugin_CodecImage_HDR_r -lPK-Plugin_CodecImage_EXR_r -lPK-Plugin_CodecMesh_FBX_r -lPK-ZLib_r -lfbxsdk_r -lxml2 -lz -lPK-ParticlesToolbox_r -lPK-Runtime_r
+LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_r.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_r.a -framework quartzcore -framework cocoa -framework metal -framework Cocoa -framework QtCore -framework QtWidgets -framework QtNetwork -framework QtXml -framework QtGui -liconv -lm -lpthread -ldl -lPK-RenderHelpers_r -lPK-RHI_r -lPK-Discretizers_r -lPK-MCPP_r -lPK-Plugin_CompilerBackend_CPU_VM_r -lPK-Plugin_CodecImage_PKIM_r -lPK-Plugin_CodecImage_DDS_r -lPK-Plugin_CodecImage_JPG_r -lPK-Plugin_CodecImage_PKM_r -lPK-Plugin_CodecImage_PNG_r -lPK-Plugin_CodecImage_PVR_r -lPK-Plugin_CodecImage_TGA_r -lPK-Plugin_CodecImage_TIFF_r -lPK-Plugin_CodecImage_HDR_r -lPK-Plugin_CodecImage_EXR_r -lPK-Plugin_CodecMesh_FBX_r -lPK-ZLib_r -lfbxsdk_r -lxml2 -lz -lPK-ParticlesToolbox_r -lPK-Runtime_r
 LDDEPS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_r.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_r.a
 ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/CodecMesh_FBX/libs/macosx/legacy_clang -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -L"$(QTDIR)/lib" -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_GeneralPlugin_macosx_r -Wl,-undefined,error -target x86_64-apple-macos10.14 -framework OpenGL -F$(QTDIR)/lib -Wl,-rpath,$(QTDIR)/lib
 
@@ -89,7 +89,6 @@ GENERATED += $(OBJDIR)/AEGP_D3D12Context.o
 GENERATED += $(OBJDIR)/AEGP_FileDialog.o
 GENERATED += $(OBJDIR)/AEGP_FileDialogMac.o
 GENERATED += $(OBJDIR)/AEGP_FileWatcher.o
-GENERATED += $(OBJDIR)/AEGP_FrameCollector.o
 GENERATED += $(OBJDIR)/AEGP_GraphicalResourcesTreeModel.o
 GENERATED += $(OBJDIR)/AEGP_LayerHolder.o
 GENERATED += $(OBJDIR)/AEGP_Log.o
@@ -126,7 +125,6 @@ OBJECTS += $(OBJDIR)/AEGP_D3D12Context.o
 OBJECTS += $(OBJDIR)/AEGP_FileDialog.o
 OBJECTS += $(OBJDIR)/AEGP_FileDialogMac.o
 OBJECTS += $(OBJDIR)/AEGP_FileWatcher.o
-OBJECTS += $(OBJDIR)/AEGP_FrameCollector.o
 OBJECTS += $(OBJDIR)/AEGP_GraphicalResourcesTreeModel.o
 OBJECTS += $(OBJDIR)/AEGP_LayerHolder.o
 OBJECTS += $(OBJDIR)/AEGP_Log.o
@@ -267,9 +265,6 @@ $(OBJDIR)/AEGP_FileDialogMac.o: ../../AE_GeneralPlugin/Sources/AEGP_FileDialogMa
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(PERFILE_FLAGS_1) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/AEGP_FileWatcher.o: ../../AE_GeneralPlugin/Sources/AEGP_FileWatcher.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/AEGP_FrameCollector.o: ../../AE_GeneralPlugin/Sources/AEGP_FrameCollector.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/AEGP_LayerHolder.o: ../../AE_GeneralPlugin/Sources/AEGP_LayerHolder.cpp

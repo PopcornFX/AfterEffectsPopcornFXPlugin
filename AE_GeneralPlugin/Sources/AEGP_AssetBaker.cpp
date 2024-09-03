@@ -185,6 +185,7 @@ SBakeContext::~SBakeContext()
 	COvenBakeConfig_VectorField::UnregisterHandler();
 	COvenBakeConfig_TextureAtlas::UnregisterHandler();
 	COvenBakeConfig_Texture::UnregisterHandler();
+	COvenBakeConfig_TextureLookup::UnregisterHandler();
 	COvenBakeConfig_Mesh::UnregisterHandler();
 	COvenBakeConfig_HBO::UnregisterHandler();
 	COvenBakeConfig_Base::UnregisterHandler();
@@ -238,6 +239,7 @@ bool	SBakeContext::Init()
 	COvenBakeConfig_Base::RegisterHandler();
 	COvenBakeConfig_HBO::RegisterHandler();
 	COvenBakeConfig_Mesh::RegisterHandler();
+	COvenBakeConfig_TextureLookup::RegisterHandler();
 	COvenBakeConfig_Texture::RegisterHandler();
 	COvenBakeConfig_TextureAtlas::RegisterHandler();
 	COvenBakeConfig_VectorField::RegisterHandler();
@@ -436,7 +438,7 @@ void	CEffectBaker::Initialize(const CString &srcPack, const CString &dstPack, co
 		const CGuid	ovenIdTexture = m_Cookery.RegisterOven(PK_NEW(COven_Texture));
 		const CGuid	ovenIdTextureAtlas = m_Cookery.RegisterOven(PK_NEW(COven_TextureAtlas));
 		const CGuid	ovenIdVectorField = m_Cookery.RegisterOven(PK_NEW(COven_VectorField));
-
+		const CGuid	ovenIdMaterial = m_Cookery.RegisterOven(PK_NEW(COven_Material));
 		COven_Particle	*ovenParticle = PK_NEW(COven_Particle);
 		ovenParticle->SetExternalPathRemapper(FastDelegate<bool(CString &)>(SBakeContext::_RemapPath));
 		const CGuid	ovenIdParticle = m_Cookery.RegisterOven(ovenParticle);
@@ -446,17 +448,18 @@ void	CEffectBaker::Initialize(const CString &srcPack, const CString &dstPack, co
 
 		if (!ovenIdHBO.Valid() || !ovenIdMesh.Valid() || !ovenIdTexture.Valid() || !ovenIdTextureAtlas.Valid() ||
 			!ovenIdVectorField.Valid() || !ovenIdParticle.Valid() || !ovenIdStraightCopy.Valid() ||
-			!ovenIdAudio.Valid())
+			!ovenIdAudio.Valid() || !ovenIdMaterial.Valid())
 		{
 			CLog::Log(PK_WARN, "Couldn't initialize the cookery, RegisterOven Failed.");
 			return;
 		}
 
 		m_Cookery.MapOven("pkri", ovenIdStraightCopy);		// Editor Material
-		m_Cookery.MapOven("pkma", ovenIdStraightCopy);		// Editor Material
+		m_Cookery.MapOven("pkma", ovenIdMaterial);			// Editor Material to report the .pkri used by the effects
 		// map all known extensions to the appropriate oven:
 		m_Cookery.MapOven("fbx", ovenIdMesh);				// FBX mesh
 		m_Cookery.MapOven("pkmm", ovenIdMesh);				// PopcornFX multi-mesh
+		m_Cookery.MapOven("pkim", ovenIdTexture);			// pkim image
 		m_Cookery.MapOven("dds", ovenIdTexture);			// dds image
 		m_Cookery.MapOven("png", ovenIdTexture);			// png image
 		m_Cookery.MapOven("jpg", ovenIdTexture);			// jpg image
@@ -603,14 +606,12 @@ bool	CEffectBaker::IsChangeRegistered(const CString &path, EAssetChangesType typ
 
 //----------------------------------------------------------------------------
 
-void	CEffectBaker::ReimportAssets(TArray<CString> &paths, bool importPkri /*=true*/)
+void	CEffectBaker::ReimportAssets(TArray<CString> &paths)
 {
 	for (u32 i = 0; i < paths.Count(); ++i)
 	{
 		FileChangedRelativePath(paths[i]);
 	}
-	if (importPkri)
-		FileChangedRelativePath(m_LibraryDir + "/PopcornFXCore/Materials/Interface/Editor.pkri");
 }
 
 //----------------------------------------------------------------------------

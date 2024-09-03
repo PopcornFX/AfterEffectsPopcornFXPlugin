@@ -80,7 +80,8 @@ void	AddEditorDebugDrawValueDefinition(TArray<SShaderCombination> &shaders);
 void	FillEditorDebugDrawLineShaderBindings(RHI::SShaderBindings &bindings);
 void	AddEditorDebugDrawLineDefinition(TArray<SShaderCombination> &shaders);
 
-void	AddEditorHeatmapOverdraw(TArray<SShaderCombination> &shaders);
+void	FillEditorHeatmapOverdrawBindings(RHI::SShaderBindings &bindings, const RHI::SConstantSetLayout &layout);
+void	AddEditorHeatmapOverdrawDefinition(TArray<SShaderCombination> &shaders);
 
 void	CreateBrushBackdropInfoConstantSetLayout(RHI::SConstantSetLayout &layout);
 void	FillBrushBackdropShaderBindings(RHI::SShaderBindings &bindings, const RHI::SConstantSetLayout &brushInfo, const RHI::SConstantSetLayout &environmentMapLayout);

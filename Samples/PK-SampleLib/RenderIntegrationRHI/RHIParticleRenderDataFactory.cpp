@@ -12,17 +12,8 @@
 
 #include "RHIParticleRenderDataFactory.h"
 
-// Default implementations of the batches:
-#include <pk_render_helpers/include/batches/rh_billboard_batch.h>
-#include <pk_render_helpers/include/batches/rh_ribbon_batch.h>
-#include <pk_render_helpers/include/batches/rh_mesh_batch.h>
-#include <pk_render_helpers/include/batches/rh_decal_batch.h>
-#include <pk_render_helpers/include/batches/rh_triangle_batch.h>
-#include <pk_render_helpers/include/batches/rh_light_batch.h>
-#include <pk_render_helpers/include/batches/rh_sound_batch.h>
-
-#include "RHIBillboardingBatchPolicy.h"
-#include "RHIBillboardingBatchPolicy_Vertex.h"
+#include "RHIBillboardingBatch_CPUsim.h"
+#include "RHIBillboardingBatch_GPUsim.h"
 
 // Custom RHI policy:
 #include "RHIParticleRenderDataFactory.h"
@@ -33,13 +24,14 @@
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
 
-bool	CRHIParticleRenderDataFactory::UpdateThread_Initialize(	RHI::EGraphicalApi apiName,
+bool	CRHIParticleRenderDataFactory::UpdateThread_Initialize(	RHI::PApiManager apiManager,
 																HBO::CContext *hboContext,
 																const RHI::SGPUCaps &gpuCaps,
 																Drawers::EBillboardingLocation billboardingLocation)
 {
 	PK_SCOPEDLOCK(m_FactoryLock); // Those members are accessed by the render thread
-	m_ApiName = apiName;
+	m_ApiManager = apiManager;
+	m_ApiName = apiManager->ApiName();
 	m_HBOContext = hboContext;
 	m_GPUCaps = gpuCaps;
 	m_BillboardingLocation = billboardingLocation;
@@ -126,110 +118,41 @@ bool	CRHIParticleRenderDataFactory::RenderThread_BuildPendingCaches(const RHI::P
 
 //----------------------------------------------------------------------------
 
-Drawers::EBillboardingLocation	CRHIParticleRenderDataFactory::ResolveBillboardingLocationForStorage(bool gpuStorage)
-{
-	PK_SCOPEDLOCK(m_FactoryLock);
-
-	Drawers::EBillboardingLocation	bbLocation = m_BillboardingLocation;
-
-	// Default fallback: CPU -> Geometry shader -> Vertex shader
-	if (gpuStorage)
-	{
-		PK_ASSERT(m_GPUCaps.m_SupportsShaderResourceViews || m_GPUCaps.m_SupportsGeometryShaders);
-
-		if (bbLocation == Drawers::BillboardingLocation_CPU)
-			bbLocation = Drawers::BillboardingLocation_GeometryShader;
-
-		// Fallback on Geometry shader billboarding
-		if (bbLocation == Drawers::BillboardingLocation_VertexShader && !m_GPUCaps.m_SupportsShaderResourceViews)
-			bbLocation = Drawers::BillboardingLocation_GeometryShader;
-		// Fallback on CPU billboarding
-		if (bbLocation == Drawers::BillboardingLocation_GeometryShader && !m_GPUCaps.m_SupportsGeometryShaders)
-			bbLocation = Drawers::BillboardingLocation_VertexShader;
-	}
-	else
-	{
-		// Fallback on Geometry shader billboarding
-		if (bbLocation == Drawers::BillboardingLocation_VertexShader && !m_GPUCaps.m_SupportsShaderResourceViews)
-			bbLocation = Drawers::BillboardingLocation_GeometryShader;
-		// Fallback on CPU billboarding
-		if (bbLocation == Drawers::BillboardingLocation_GeometryShader && !m_GPUCaps.m_SupportsGeometryShaders)
-			bbLocation = Drawers::BillboardingLocation_CPU;
-	}
-	return bbLocation;
-}
-
-//----------------------------------------------------------------------------
-
-CRHIParticleRenderDataFactory::CBillboardingBatchInterface	*CRHIParticleRenderDataFactory::CreateBillboardingBatch(ERendererClass rendererType, const PRendererCacheBase &rendererCache, bool gpuStorage)
+CRendererBatchDrawer *CRHIParticleRenderDataFactory::CreateBillboardingBatch2(ERendererClass rendererType, const PRendererCacheBase &rendererCache, bool gpuStorage)
 {
 	(void)rendererCache;
 	if (!PK_VERIFY(m_IsInitialized)) // Check if initialized!
 		return null;
 
-	// Default billboarding batch implementations:
-	typedef	TBillboardBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy>		CBillboardBillboardingBatch;
-	typedef	TBillboardBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy_Vertex>	CBillboardBillboardingBatch_Vertex;
-	typedef	TRibbonBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy>			CRibbonBillboardingBatch;
-	typedef	TRibbonBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy_Vertex>	CRibbonBillboardingBatch_Vertex;
-	typedef	TMeshBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy>				CMeshBillboardingBatch;
-	typedef	TDecalBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy>			CDecalBillboardingBatch;
-	typedef	TTriangleBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy>			CTriangleBillboardingBatch;
-	typedef	TTriangleBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy_Vertex>	CTriangleBillboardingBatch_Vertex;
-	typedef TLightBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy>			CLightBillboardingBatch;
-	typedef TSoundBatch<CRHIParticleBatchTypes, CRHIBillboardingBatchPolicy>			CSoundBillboardingBatch;
-
-	const Drawers::EBillboardingLocation	bbLocation = ResolveBillboardingLocationForStorage(gpuStorage);
-
 	if (gpuStorage)
 	{
-		if (bbLocation != Drawers::BillboardingLocation_CPU)
+		switch (rendererType)
 		{
-			switch (rendererType)
-			{
-			case	Renderer_Billboard:
-			{
-				switch (bbLocation)
-				{
-				case	Drawers::BillboardingLocation_GeometryShader:
-				{
-					CBillboardBillboardingBatch	*batch = PK_NEW((CBillboardBillboardingBatch));
-					if (PK_VERIFY(batch != null))
-						batch->SetBillboardingLocation(Drawers::BillboardingLocation_GeometryShader);
-					return batch;
-				}
-				case	Drawers::BillboardingLocation_VertexShader:
-				{
-					CBillboardBillboardingBatch_Vertex	*batch = PK_NEW(CBillboardBillboardingBatch_Vertex);
-					if (!PK_VERIFY(batch != null))
-						return null;
-					batch->SetBillboardingLocation(Drawers::BillboardingLocation_VertexShader);
-					return batch;
-				}
-				default:
-					PK_ASSERT_NOT_REACHED(); // Compute shader billboarding not implemented in RHIParticleRenderDataFactory
-					break;
-				}
+		case	Renderer_Billboard:
+			if (m_BillboardingLocation == Drawers::BillboardingLocation_VertexShader && m_GPUCaps.m_SupportsShaderResourceViews)
+				return PK_NEW(CRHIRendererBatch_BillboardGPU_VertexBB(m_ApiManager));
+			else if (m_GPUCaps.m_SupportsGeometryShaders)
+				return PK_NEW(CRHIRendererBatch_BillboardGPU_GeomBB(m_ApiManager));
+			else
 				return null;
-			}
-			case	Renderer_Mesh:
-			{
-				CMeshBillboardingBatch	*batch = PK_NEW(CMeshBillboardingBatch);
-				if (!PK_VERIFY(batch != null))
-					return null;
-				return batch;
-			}
-			case	Renderer_Ribbon:
-			{
-				CRibbonBillboardingBatch_Vertex	*batch = PK_NEW(CRibbonBillboardingBatch_Vertex);
-				if (!PK_VERIFY(batch != null))
-					return null;
-				batch->SetBillboardingLocation(Drawers::BillboardingLocation_VertexShader);
-				return batch;
-			}
-			default:
-				break;
-			}
+
+		case	Renderer_Ribbon:
+			if (m_GPUCaps.m_SupportsShaderResourceViews)
+				return PK_NEW(CRHIRendererBatch_Ribbon_GPU(m_ApiManager));
+			else
+				return null;
+
+		case	Renderer_Mesh:
+			return PK_NEW(CRHIRendererBatch_Mesh_GPU(m_ApiManager));
+
+		//case	Renderer_Decal:
+		//	return PK_NEW(CRHIRendererBatch_Decal_GPU(m_ApiManager));
+
+		//case	Renderer_Triangle:
+		//	return PK_NEW(CRHIRendererBatch_Triangle_GPU(m_ApiManager));
+
+		default:
+			break;
 		}
 	}
 	else
@@ -238,75 +161,39 @@ CRHIParticleRenderDataFactory::CBillboardingBatchInterface	*CRHIParticleRenderDa
 		{
 		case	Renderer_Billboard:
 		{
-			switch (bbLocation)
-			{
-			case	Drawers::BillboardingLocation_CPU:
-			case	Drawers::BillboardingLocation_GeometryShader:
-			{
-				CBillboardBillboardingBatch	*batch = PK_NEW((CBillboardBillboardingBatch));
-				if (!PK_VERIFY(batch != null))
-					return null;
-				batch->SetBillboardingLocation(bbLocation);
-				return batch;
-			}
-			case	Drawers::BillboardingLocation_VertexShader:
-			{
-				CBillboardBillboardingBatch_Vertex	*batch = PK_NEW(CBillboardBillboardingBatch_Vertex);
-				if (!PK_VERIFY(batch != null))
-					return null;
-				batch->SetBillboardingLocation(bbLocation);
-				return batch;
-			}
-			default:
-				PK_ASSERT_NOT_REACHED(); // Compute shader billboarding not implemented in RHIParticleRenderDataFactory
-				break;
-			}
-			return null;
+			if (m_BillboardingLocation == Drawers::BillboardingLocation_VertexShader && m_GPUCaps.m_SupportsShaderResourceViews)
+				return PK_NEW(CRHIRendererBatch_Billboard_VertexBB(m_ApiManager));
+			else if (m_BillboardingLocation == Drawers::BillboardingLocation_GeometryShader && m_GPUCaps.m_SupportsGeometryShaders)
+				return PK_NEW(CRHIRendererBatch_Billboard_GeomBB(m_ApiManager));
+			else
+				return PK_NEW(CRHIRendererBatch_Billboard_CPUBB(m_ApiManager));
 		}
+
 		case	Renderer_Ribbon:
-		{
-			CRibbonBillboardingBatch	*batch = PK_NEW(CRibbonBillboardingBatch);
-			return batch;
-		}
+			return PK_NEW(CRHIRendererBatch_Ribbon_CPU(m_ApiManager));
+
 		case	Renderer_Mesh:
-			return PK_NEW(CMeshBillboardingBatch);
+			return PK_NEW(CRHIRendererBatch_Mesh_CPU(m_ApiManager));
+
+		case	Renderer_Decal:
+			return PK_NEW(CRHIRendererBatch_Decal_CPU(m_ApiManager));
+
 		case	Renderer_Triangle:
 		{
-			switch (bbLocation)
-			{
-			case	Drawers::BillboardingLocation_CPU:
-			case	Drawers::BillboardingLocation_GeometryShader: // Falls back to BillboardingLocation_CPU
-			{
-				CTriangleBillboardingBatch	*batch = PK_NEW(CTriangleBillboardingBatch);
-				if (!PK_VERIFY(batch != null))
-					return null;
-				batch->SetBillboardingLocation(Drawers::BillboardingLocation_CPU);
-				return batch;
-			}
-			case	Drawers::BillboardingLocation_VertexShader:
-			{
-				CTriangleBillboardingBatch_Vertex	*batch = PK_NEW(CTriangleBillboardingBatch_Vertex);
-				if (!PK_VERIFY(batch != null))
-					return null;
-				batch->SetBillboardingLocation(bbLocation);
-				return batch;
-			}
-			default:
-				PK_ASSERT_NOT_REACHED();
-				break;
-			}
-			return null;
+			if (m_BillboardingLocation != Drawers::BillboardingLocation_CPU && m_GPUCaps.m_SupportsShaderResourceViews)
+				return PK_NEW(CRHIRendererBatch_Triangle_VertexBB(m_ApiManager));
+			else
+				return PK_NEW(CRHIRendererBatch_Triangle_CPUBB(m_ApiManager));
 		}
-		case	Renderer_Decal:
-			return PK_NEW(CDecalBillboardingBatch);
+
 		case	Renderer_Light:
-			return PK_NEW(CLightBillboardingBatch);
-		case	Renderer_Sound:
-			return PK_NEW(CSoundBillboardingBatch);
+			return PK_NEW(CRHIRendererBatch_Light_CPU(m_ApiManager));
+
 		default:
-			PK_ASSERT_NOT_REACHED();
+			break;
 		}
 	}
+
 	return null;
 }
 

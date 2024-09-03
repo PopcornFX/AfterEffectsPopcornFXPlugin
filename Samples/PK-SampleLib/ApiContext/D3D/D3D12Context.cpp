@@ -19,7 +19,13 @@
 #	include <d3d12.h>
 #pragma warning(pop)
 
-#include <dxgi1_4.h>
+#if (PK_PARTICLES_UPDATER_USE_D3D12U != 0 || PK_COMPILER_BUILD_COMPILER_D3D12U != 0)
+extern "C" { __declspec(dllexport) extern const unsigned int D3D12SDKVersion = 614;}
+
+extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
+#endif
+
+#include <dxgi1_6.h>
 
 #include <WindowContext/SdlContext/SdlContext.h>
 
@@ -51,17 +57,19 @@
 #	define		USE_DEBUG_DXGI			1 // disabled by default, not available everywhere
 #	define		USE_GPU_BASED_DEBUG		0 // disabled by default, not available everywhere
 #	define		ENABLE_INFO_DEBUG_LVL	0 // disabled by default, change it for debug when specifically needed
+#	define		USE_WARP				0 // disabled by default, change it for debug when specifically needed
 #	define		USE_DRED				0 // disabled by default, not available everywhere
 #	define		BREAK_ON_D3D_ERROR		0 // disabled by default, enable for break on D3D errors during API calls
 #	define		BREAK_ON_D3D_WARN		0 // disabled by default, enable for break on D3D warnings during API calls
 #	if (USE_DEBUG_DXGI != 0)
 #		pragma comment(lib, "dxguid.lib")
-#		include "d3d12sdklayers.h"
+#		include <d3d12sdklayers.h>
 #	endif // (USE_DEBUG_DXGI != 0)
 #else
 #	define		USE_DEBUG_DXGI			0
 #	define		USE_GPU_BASED_DEBUG		0
 #	define		ENABLE_INFO_DEBUG_LVL	0 // useless to change this, debug layers shouldn't be enable
+#	define		USE_WARP				0
 #	define		USE_DRED				0
 #	define		BREAK_ON_D3D_ERROR		0
 #	define		BREAK_ON_D3D_WARN		0
@@ -412,6 +420,13 @@ const char *KOp[] = {
 	"OP_SETPIPELINESTATE1",
 	"OP_INITIALIZEEXTENSIONCOMMAND",
 	"OP_EXECUTEEXTENSIONCOMMAND",
+	"OP_DISPATCHMESH",
+	"OP_ENCODEFRAME",
+	"OP_RESOLVEENCODEROUTPUTMETADATA",
+	"OP_BARRIER",
+	"OP_BEGIN_COMMAND_LIST",
+	"OP_DISPATCHGRAPH",
+	"OP_SETPROGRAM"
 };
 #endif
 
@@ -435,15 +450,15 @@ bool	CD3D12Context::EndFrame(u32 swapchainIdx)
 #if (USE_DRED != 0)
 
 		// Gather extended device remove data
-		ID3D12DeviceRemovedExtendedData	*dred = null;
+		ID3D12DeviceRemovedExtendedData1	*dred = null;
 		if (S_OK == m_ApiData.m_Device->QueryInterface(IID_PPV_ARGS(&dred)))
 		{
-			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT DredAutoBreadcrumbsOutput;
-			D3D12_DRED_PAGE_FAULT_OUTPUT DredPageFaultOutput;
-			dred->GetAutoBreadcrumbsOutput(&DredAutoBreadcrumbsOutput);
-			dred->GetPageFaultAllocationOutput(&DredPageFaultOutput);
+			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 DredAutoBreadcrumbsOutput;
+			D3D12_DRED_PAGE_FAULT_OUTPUT1 DredPageFaultOutput;
+			dred->GetAutoBreadcrumbsOutput1(&DredAutoBreadcrumbsOutput);
+			dred->GetPageFaultAllocationOutput1(&DredPageFaultOutput);
 
-			const D3D12_AUTO_BREADCRUMB_NODE * node = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
+			const D3D12_AUTO_BREADCRUMB_NODE1 * node = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
 			CLog::Log(PK_DBG, "AUTO BREADCRUMNS:");
 			while (node != null)
 			{
@@ -457,9 +472,16 @@ bool	CD3D12Context::EndFrame(u32 swapchainIdx)
 				}
 				for (u32 i = 0; i < node->BreadcrumbCount; ++i)
 				{
+					for (u32 j = 0; j < node->BreadcrumbContextsCount; ++j)
+					{
+						if (node->pBreadcrumbContexts[j].BreadcrumbIndex == i)
+							CLog::Log(PK_DBG, "%s", node->pBreadcrumbContexts[j].pContextString);
+					}
 					const char *op = KOp[node->pCommandHistory[i]];
+
 					CLog::Log(PK_DBG, "%s - %s", op, name);
 				}
+
 				node = node->pNext;
 			}
 
@@ -526,11 +548,13 @@ bool	CD3D12Context::EnableDebugLayer()
 	debugController1->SetEnableGPUBasedValidation(TRUE);
 #endif
 #if (USE_DRED != 0)
-	ID3D12DeviceRemovedExtendedDataSettings	*dredSettings = null;
+	ID3D12DeviceRemovedExtendedDataSettings1	*dredSettings = null;
 	if (PK_D3D_FAILED(m_Context->m_GetDebugInterfaceFunc(IID_PPV_ARGS(&dredSettings))))
 		return false;
 	dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+	dredSettings->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 	dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+	dredSettings->SetWatsonDumpEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 	dredSettings->Release();
 #endif
 	return true;
@@ -546,6 +570,7 @@ bool	CD3D12Context::CreateDevice(bool debug)
 		CLog::Log(PK_ERROR, "D3D12: Couldn't pick hardware adapter");
 		return false;
 	}
+
 	if (!PK_D3D_OK(m_Context->m_CreateDeviceFunc(m_Context->m_HardwareAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_ApiData.m_Device))))
 	{
 		CLog::Log(PK_ERROR, "D3D12: Couldn't create device");
@@ -558,11 +583,14 @@ bool	CD3D12Context::CreateDevice(bool debug)
 		D3D_FEATURE_LEVEL_11_0,
 		D3D_FEATURE_LEVEL_11_1,
 		D3D_FEATURE_LEVEL_12_0,
-		D3D_FEATURE_LEVEL_12_1
+		D3D_FEATURE_LEVEL_12_1,
+		D3D_FEATURE_LEVEL_12_2,
+		D3D_FEATURE_LEVEL_1_0_CORE,
+		D3D_FEATURE_LEVEL_1_0_GENERIC,
 	};
 	levelFeature.NumFeatureLevels = PK_ARRAY_COUNT(levels);
 	levelFeature.pFeatureLevelsRequested = levels;
-	m_ApiData.m_Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &levelFeature, sizeof(levelFeature));
+	PK_D3D_OK(m_ApiData.m_Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &levelFeature, sizeof(levelFeature)));
 
 	if (levelFeature.MaxSupportedFeatureLevel > D3D_FEATURE_LEVEL_11_0)
 	{
@@ -598,10 +626,21 @@ void	CD3D12Context::AdditionalFilterForDebugLayer()
 	filter.DenyList.NumSeverities = PK_ARRAY_COUNT(denySeverity);
 	filter.DenyList.pSeverityList = denySeverity;
 #endif
-	D3D12_MESSAGE_ID		denyIDs[] = { D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE }; // deny clear warning on RT
+	D3D12_MESSAGE_ID		denyIDs[] = {	D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,	// Deny clear warning on RT
+											D3D12_MESSAGE_ID_CREATERESOURCE_STATE_IGNORED };				// Deny warning when setting an initial state that is not COMMON
 	filter.DenyList.NumIDs = PK_ARRAY_COUNT(denyIDs);
 	filter.DenyList.pIDList = denyIDs;
 	PK_D3D_OK(infoQueue->PushStorageFilter(&filter));
+
+#if		(USE_GPU_BASED_DEBUG != 0)
+	ID3D12DebugDevice2	*debugDevice = null;
+	m_ApiData.m_Device->QueryInterface(&debugDevice);
+	D3D12_DEBUG_FEATURE features = D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS | D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING;
+
+	debugDevice->SetFeatureMask(features);
+	debugDevice->Release();
+
+#endif
 
 #if (BREAK_ON_D3D_ERROR != 0) || (BREAK_ON_D3D_WARN != 0)
 	PK_D3D_OK(infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE));
@@ -620,6 +659,30 @@ bool	CD3D12Context::PickHardwareAdapter()
 {
 	IDXGIFactory4	*&factory = m_Context->m_Factory;
 	IDXGIAdapter1	*&adapter = m_Context->m_HardwareAdapter;
+#if (USE_WARP != 0)
+	adapter = 0;
+	for (u32 idx = 0; factory->EnumAdapters1(idx, &adapter) != DXGI_ERROR_NOT_FOUND; ++idx)
+	{
+		DXGI_ADAPTER_DESC1 desc;
+		adapter->GetDesc1(&desc);
+
+		if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0)
+		{
+			// Don't select the Basic Render Driver adapter.
+			// If you want a software adapter, pass in "/warp" on the command line.
+			continue;
+		}
+
+		// Check to see if the adapter supports Direct3D 12, but don't create the
+		// actual device yet.
+		if (SUCCEEDED(m_Context->m_CreateDeviceFunc(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), null)))
+		{
+			return true;
+		}
+	}
+	adapter = 0;
+	return false;
+#else
 	adapter = 0;
 	for (u32 idx = 0; factory->EnumAdapters1(idx, &adapter) != DXGI_ERROR_NOT_FOUND; ++idx)
 	{
@@ -642,6 +705,8 @@ bool	CD3D12Context::PickHardwareAdapter()
 	}
 	adapter = 0;
 	return false;
+#endif // (USE_WARP != 0)
+
 }
 
 //----------------------------------------------------------------------------

@@ -30,10 +30,6 @@
 
 #include <pk_maths/include/pk_maths_simd.h>
 
-#if (PK_BUILD_WITH_FMODEX_SUPPORT != 0)
-#include <../SDK/Samples/External/fmodex-4.44.19/inc/fmod.hpp>
-#endif
-
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
 //
@@ -1194,86 +1190,6 @@ CGeometryManager::CResourceId	SGeometryKey::s_DefaultResourceID;
 
 //----------------------------------------------------------------------------
 //
-//	SSoundKey
-//
-//----------------------------------------------------------------------------
-
-bool	SSoundKey::UpdateThread_Prepare(const SPrepareArg &args)
-{
-	(void)args;
-	return true;
-}
-
-//----------------------------------------------------------------------------
-
-PSoundResource	SSoundKey::RenderThread_CreateResource(const SCreateArg &args)
-{
-	PSoundResource	sndres = PK_NEW(CSoundResource);
-	if (sndres == null)
-	{
-		CLog::Log(PK_ERROR, "Could not allocate sound resource for \"%s\"", m_Path.Data());
-		return null;
-	}
-
-	sndres->m_SoundData = null;
-	sndres->m_Frequency = 0.f; // cannot get the frequency from here
-	sndres->m_Length = -1.f;
-
-#if (PK_BUILD_WITH_FMODEX_SUPPORT != 0)
-	if (args.m_SoundSystem == null)
-	{
-		CLog::Log(PK_ERROR, "Could not create sound resource (null FMOD system) for \"%s\"", m_Path.Data());
-		PK_ASSERT_NOT_REACHED_MESSAGE("FMOD System is null (it can be an FMOD failure or an implementation miss)");
-		return null;
-	}
-
-	if (!m_Path.Empty())	// no path: not an issue, just an empty resource
-	{
-		// Fix #4138: Audio files with filenames containing special unicode characters do not load & playback properly
-		// With this version of fmod, we must explicitly pass it unicode strings.
-		// Apparently from what I gathered from the online docs fmod studio now has removed all that,
-		// and all file-related functions accept UTF-8 strings.
-
-		const CString			soundPath = args.m_RootPath / m_Path;
-		const CStringUnicode	soundPathUTF16 = CStringUnicode::FromUTF8(soundPath.Data());
-		FMOD_RESULT				res = args.m_SoundSystem->createSound((const char*)soundPathUTF16.Data(), FMOD_LOOP_OFF | FMOD_3D | FMOD_UNICODE, 0, &sndres->m_SoundData);
-		if (res != FMOD_OK)
-		{
-			CLog::Log(PK_ERROR, "FMOD: Failed to load sound \"%s\" (%d)", soundPath.Data(), res);
-		}
-		else
-		{
-			// get the sound length
-			u32		soundDurationMs = 0;
-			res = sndres->m_SoundData->getLength(&soundDurationMs, FMOD_TIMEUNIT_MS);
-			if (res != FMOD_OK)
-				CLog::Log(PK_ERROR, "FMOD: Failed to get sound length \"%s\" (%d)", soundPath.Data(), res);
-			else
-				sndres->m_Length = soundDurationMs * 0.001f;
-		}
-	}
-#else
-	(void)args;
-#endif
-	return sndres;
-}
-
-//----------------------------------------------------------------------------
-
-PSoundResource	SSoundKey::RenderThread_ReloadResource(const SCreateArg &args)
-{
-	return RenderThread_CreateResource(args);
-}
-
-//----------------------------------------------------------------------------
-
-bool	SSoundKey::operator == (const SSoundKey &oth) const
-{
-	return m_Path == oth.m_Path;
-}
-
-//----------------------------------------------------------------------------
-//
 //	SConstantAtlasKey
 //
 //----------------------------------------------------------------------------
@@ -1454,7 +1370,7 @@ bool	SConstantDrawRequests::GetConstantBufferDesc(RHI::SConstantBufferDesc &outD
 
 		// (see Drawers::STriangleDrawRequest for more details)
 		// Float: NormalsBendingFactor
-		return outDesc.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "DrawRequest", elementCount / 4));
+		return outDesc.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "DrawRequest", elementCount));
 	}
 	else if (rendererType == Renderer_Mesh)
 	{
@@ -1925,18 +1841,7 @@ bool	SRendererCacheKey::operator == (const SRendererCacheKey &oth) const
 PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareArg &args)
 {
 	if (args.m_Renderer->m_RendererType == Renderer_Sound)
-	{
-		const SRendererFeaturePropertyValue	*soundProperty = args.m_Renderer->m_Declaration.FindProperty(BasicRendererProperties::SID_Sound_SoundData());
-
-		if (!PK_VERIFY(soundProperty != null))
-			return false;
-
-		SSoundKey	soundKey;
-		soundKey.m_Path = soundProperty->m_ValuePath;
-
-		m_Sound = CSoundResourceManager::UpdateThread_GetResource(soundKey, args);
-		return true;
-	}
+		return false;
 
 	//------------------------------------------------------------
 	// Create the constant set layout:
@@ -1989,7 +1894,18 @@ PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareA
 		const bool	isLUT = textureProperties[i].m_Property != null &&
 							(textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_AlphaRemap_AlphaMap() ||
 							textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_DiffuseRamp_RampMap());
+
+		const bool	isScrollingTexture = textureProperties[i].m_Property != null &&
+										 (textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_UVDistortions_Distortion1Map() ||
+										 textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_UVDistortions_Distortion2Map() ||
+										 textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_AlphaMasks_Mask1Map() ||
+										 textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_AlphaMasks_Mask2Map());
+										
+
 		if (textureRepeat != null && textureRepeat->ValueB() && !isLUT)
+			wrapMode = RHI::SampleRepeat;
+
+		if (isScrollingTexture)
 			wrapMode = RHI::SampleRepeat;
 
 #if 1 // Tmp - this should be configurable at texture asset level, and/or at renderer feature property level
@@ -2020,6 +1936,10 @@ PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareA
 
 	const SRendererDeclaration	&decl = args.m_Renderer->m_Declaration;
 	m_HasAtlas = decl.IsFeatureEnabled(BasicRendererProperties::SID_Atlas());
+
+	
+	m_HasRawUV0 = m_HasAtlas && (args.m_Renderer->m_RendererType == Renderer_Billboard || args.m_Renderer->m_RendererType == Renderer_Ribbon) &&(decl.IsFeatureEnabled(BasicRendererProperties::SID_AlphaMasks()) || decl.IsFeatureEnabled(BasicRendererProperties::SID_UVDistortions()));
+
 	if (args.m_Renderer->m_RendererType == Renderer_Billboard ||
 		args.m_Renderer->m_RendererType == Renderer_Ribbon ||
 		args.m_Renderer->m_RendererType == Renderer_Decal ||
@@ -2090,6 +2010,7 @@ PRendererCacheInstance	SRendererCacheInstanceKey::RenderThread_CreateResource(co
 	}
 
 	rendererCacheInstance->m_HasAtlas = m_HasAtlas;
+	rendererCacheInstance->m_HasRawUV0 = m_HasRawUV0;
 
 	// Base renderer cache:
 	if (m_Cache.Valid())
@@ -2253,10 +2174,6 @@ PRendererCacheInstance	SRendererCacheInstanceKey::RenderThread_CreateResource(co
 	if (m_Atlas.Valid())
 		rendererCacheInstance->m_Atlas = CConstantAtlasManager::RenderThread_ResolveResource(m_Atlas, args);
 
-	// Sound
-	if (m_Sound.Valid())
-		rendererCacheInstance->m_Sound = CSoundResourceManager::RenderThread_ResolveResource(m_Sound, args);
-
 	return rendererCacheInstance;
 }
 
@@ -2285,12 +2202,12 @@ bool	SRendererCacheInstanceKey::operator == (const SRendererCacheInstanceKey &ot
 {
 	return (m_Atlas == oth.m_Atlas &&
 			m_HasAtlas == oth.m_HasAtlas &&
+			m_HasRawUV0 == oth.m_HasRawUV0 &&
 			m_Geometry == oth.m_Geometry &&
 			m_Samplers == oth.m_Samplers &&
 			m_Cache == oth.m_Cache &&
 			m_ContentHash == oth.m_ContentHash &&
 			m_Textures == oth.m_Textures &&
-			m_Sound == oth.m_Sound &&
 			m_ConstSetLayout == oth.m_ConstSetLayout);
 }
 

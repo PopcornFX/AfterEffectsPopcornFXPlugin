@@ -85,7 +85,7 @@ void	CreateShaderDefinitions(TArray<SShaderCombination> &shaders)
 	AddEditorDebugDrawDefinition(shaders);
 	AddEditorDebugDrawValueDefinition(shaders);
 	AddEditorDebugDrawLineDefinition(shaders);
-	AddEditorHeatmapOverdraw(shaders);
+	AddEditorHeatmapOverdrawDefinition(shaders);
 	AddBrushBackdropDefinition(shaders);
 	AddParticleLightDefinition(shaders);
 	AddEditorSelectorDefinition(shaders);

@@ -11,17 +11,14 @@
 //----------------------------------------------------------------------------
 
 #include <pk_rhi/include/FwdInterfaces.h>
-#include <pk_render_helpers/include/frame_collector/rh_frame_data.h>
+#include <pk_render_helpers/include/frame_collector/rh_frame_data.h> // for SRenderContext
 
 #include "PK-SampleLib/PKSample.h"
 #include "PK-SampleLib/RenderIntegrationRHI/RendererCache.h"
-#include "PK-SampleLib/RenderIntegrationRHI/SoundPoolCache.h"
 #include "PK-SampleLib/RenderIntegrationRHI/RHICustomTasks.h"
 
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
-
-class	CRHIBillboardingBatchPolicy;
 
 struct	SRHIDrawCall
 {
@@ -189,18 +186,20 @@ private:
 
 struct	SAdditionalInputs
 {
-	SRHIDrawCall::EDebugDrawGPUBuffer	m_Semantic; // Internal - Editor only
-
 	SGpuBuffer							m_Buffer;
 	u32									m_ByteSize;
 	u32									m_AdditionalInputIndex;
 
 	SAdditionalInputs()
-	:	m_Semantic(SRHIDrawCall::EDebugDrawGPUBuffer::_DebugDrawGPUBuffer_Count)
-	,	m_ByteSize(0)
+	:	m_ByteSize(0)
 	,	m_AdditionalInputIndex(0)
 	{
+	}
 
+	SAdditionalInputs(u32 byteSize, u32 index)
+	:	m_ByteSize(byteSize)
+	,	m_AdditionalInputIndex(index)
+	{
 	}
 };
 
@@ -256,76 +255,18 @@ struct	SRHIDrawOutputs
 
 //----------------------------------------------------------------------------
 
-struct	SRenderContext
+// Custom render context containing the list of RHI draw calls each batch drawer accesses
+// Only used in ***::EmitDrawCall
+// Used also in other places for the editor's selection (see the TODOs in the Billboarding-policy methods)
+struct	SRHIRenderContext : PopcornFX::SRenderContext
 {
-	enum	EPass
-	{
-		EPass_PostUpdateFence,
-		EPass_RenderThread
-	};
-
-	EPass					Pass() const { return m_Pass; }
-	bool					IsPostUpdateFencePass() const { return m_Pass == EPass_PostUpdateFence; }
-	bool					IsRenderThreadPass() const { return m_Pass == EPass_RenderThread; }
-	RHI::PApiManager		ApiManager() const { return m_ApiManager; }
-
-	CSoundPoolCache			&SoundPool() { PK_ASSERT(m_SoundPool != null); return *m_SoundPool; }
-	float					SimSpeed() { return m_SimSpeed; }
+	SRHIDrawOutputs		m_DrawOutputs;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 	const PKSample::SEffectParticleSelectionView			&Selection() const { return m_Selection; }
 	PKSample::SEffectParticleSelectionView					m_Selection;
 #endif
-
-	SRenderContext(EPass pass, RHI::PApiManager apiManager)
-	:	m_Pass(pass)
-	,	m_ApiManager(apiManager)
-	,	m_SoundPool(null)
-	,	m_SimSpeed(0)
-	{
-	}
-
-	SRenderContext(EPass pass, CSoundPoolCache *soundPool, const float simSpeed)
-	:	m_Pass(pass)
-	,	m_ApiManager(null)
-	,	m_SoundPool(soundPool)
-	,	m_SimSpeed(simSpeed)
-	{
-	}
-
-private:
-	EPass					m_Pass;
-	RHI::PApiManager		m_ApiManager;
-
-	CSoundPoolCache			*m_SoundPool;
-	float					m_SimSpeed;
 };
-
-//----------------------------------------------------------------------------
-
-struct	SAudioContext
-{
-};
-
-//----------------------------------------------------------------------------
-
-struct	SViewUserData
-{
-};
-
-//----------------------------------------------------------------------------
-
-class	CRHIParticleBatchTypes
-{
-public:
-	typedef SRenderContext		CRenderContext;
-	typedef SRHIDrawOutputs		CFrameOutputData;
-	typedef SViewUserData		CViewUserData;
-
-	enum { kMaxQueuedCollectedFrame = 2U };
-};
-
-typedef TSceneView<SViewUserData>	SSceneView;
 
 //----------------------------------------------------------------------------
 __PK_SAMPLE_API_END

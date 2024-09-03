@@ -147,8 +147,7 @@ bool	CDeferredScene::InitIFN()
 	if (STextureKey::s_DefaultResourceID.Valid() ||
 		SGeometryKey::s_DefaultResourceID.Valid())
 	{
-		const CString		rootPath = m_Controller->VirtualToPhysical(CString::EmptyString, IFileSystem::Access_Read);
-		const SCreateArg	args(m_ApiManager, null, Resource::DefaultManager(), rootPath);
+		const SCreateArg	args(m_ApiManager, Resource::DefaultManager());
 
 		if (STextureKey::s_DefaultResourceID.Valid())
 			CTextureManager::RenderThread_ResolveResource(STextureKey::s_DefaultResourceID, args);
@@ -229,8 +228,7 @@ bool	CDeferredScene::InitIFN()
 	if (!textureId.Valid())
 		return false;
 
-	const CString		rootPath = m_Controller->VirtualToPhysical(CString::EmptyString, IFileSystem::Access_Read);
-	const SCreateArg	args(m_ApiManager, null, Resource::DefaultManager(), rootPath);
+	const SCreateArg	args(m_ApiManager, Resource::DefaultManager());
 	RHI::PTexture		ditheringtexture = CTextureManager::RenderThread_ResolveResource(textureId, args);
 	if (ditheringtexture == null)
 		return false;

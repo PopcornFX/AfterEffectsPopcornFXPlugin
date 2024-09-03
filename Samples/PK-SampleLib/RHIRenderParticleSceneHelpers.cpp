@@ -99,8 +99,7 @@ bool	CRHIParticleSceneRenderHelper::Init(const RHI::PApiManager	&apiManager,
 	if (STextureKey::s_DefaultResourceID.Valid() ||
 		SGeometryKey::s_DefaultResourceID.Valid())
 	{
-		const CString		rootPath = resourceManager->FileController()->VirtualToPhysical(CString::EmptyString, IFileSystem::Access_Read);
-		const SCreateArg	args(apiManager, null, resourceManager, rootPath);
+		const SCreateArg	args(apiManager, resourceManager);
 
 		if (STextureKey::s_DefaultResourceID.Valid())
 			CTextureManager::RenderThread_ResolveResource(STextureKey::s_DefaultResourceID, args);
@@ -191,7 +190,7 @@ bool	CRHIParticleSceneRenderHelper::Init(const RHI::PApiManager	&apiManager,
 	CTextureManager::CResourceId textureId = CTextureManager::UpdateThread_GetResource(textureKey, SPrepareArg(null, null, null));
 	if (!textureId.Valid())
 		return false;
-	RHI::PTexture ditheringtexture = CTextureManager::RenderThread_ResolveResource(textureId, SCreateArg(m_ApiManager, null, m_ResourceManager, CString()));
+	RHI::PTexture ditheringtexture = CTextureManager::RenderThread_ResolveResource(textureId, SCreateArg(m_ApiManager, m_ResourceManager));
 	if (ditheringtexture == null)
 		return false;
 
@@ -958,6 +957,73 @@ bool	CRHIParticleSceneRenderHelper::SetupPostFX_FXAA(const SParticleSceneOptions
 
 //----------------------------------------------------------------------------
 
+bool CRHIParticleSceneRenderHelper::SetupPostFX_Overdraw(const SParticleSceneOptions::SOverdraw &config, bool /*firstInit*/)
+{
+	PK_ASSERT(config.m_OverdrawUpperRange >= 1u);
+	m_OverdrawScaleFactor = 1.0f / config.m_OverdrawUpperRange;
+
+	RHI::PTexture	overdrawTexture = m_HeatmapTexture;
+	if ((m_InitializedRP & InitRP_ColorRemap) != 0)
+	{
+		if (!config.m_OverdrawTexturePath.Empty())
+		{
+			PK_ASSERT(m_CurrentPackResourceManager != null);
+			CString					resourcePath = config.m_OverdrawTexturePath;
+			TResourcePtr<CImage>	inputImage = m_CurrentPackResourceManager->Load<CImage>(resourcePath);
+
+
+			if (inputImage != null && !inputImage->Empty() && !inputImage->m_Frames.Empty() && !inputImage->m_Frames[0].m_Mipmaps.Empty())
+			{
+				// CImage from ressource
+				CImageMap	&resourceMipmap = inputImage->m_Frames[0].m_Mipmaps[0];
+				CImageMap	dstMipmap = resourceMipmap;
+
+				const bool	canSkip = inputImage->m_Format == CImage::Format_BGRA8_sRGB;
+				if (!canSkip)
+				{
+					dstMipmap.m_Dimensions = resourceMipmap.m_Dimensions;
+					dstMipmap.m_RawBuffer = CRefCountedMemoryBuffer::Alloc(dstMipmap.PixelBufferSize(inputImage->m_Format));
+					Mem::Copy(dstMipmap.m_RawBuffer.Get(), resourceMipmap.m_RawBuffer.Get(), dstMipmap.PixelBufferSize(inputImage->m_Format));
+
+					// Convert to BGRA8
+					CImageSurface		surface(dstMipmap, inputImage->m_Format);
+
+					if (!surface.Convert(CImage::Format_BGRA8))
+					{
+						CLog::Log(PK_ERROR, "Overdraw color palette: Could not linearize LUT image \"%s\"", resourcePath.Data());
+						return false;
+					}
+
+					surface.m_Format = inputImage->GammaCorrected() ? CImage::Format_BGRA8 : CImage::Format_BGRA8_sRGB;
+					if (!surface.Convert(inputImage->GammaCorrected() ? CImage::Format_BGRA8_sRGB : CImage::Format_BGRA8))
+					{
+						CLog::Log(PK_ERROR, "Overdraw color palette: Could not linearize LUT image \"%s\"", resourcePath.Data());
+						return false;
+					}
+					dstMipmap.m_RawBuffer = surface.m_RawBuffer;
+				}
+				if (dstMipmap.m_RawBuffer != null)
+				{
+					RHI::PTexture resourceTexture = m_ApiManager->CreateTexture(RHI::SRHIResourceInfos(resourcePath), TMemoryView<CImageMap>(dstMipmap), RHI::FormatUnorm8BGRA);
+					if (resourceTexture != null)
+					{
+						overdrawTexture = resourceTexture;
+					}
+					else
+					{
+						CLog::Log(PK_ERROR, "Overdraw color palette: Failed loading LUT image \"%s\"", resourcePath.Data());
+					}
+				}
+			}
+		}
+		m_OverdrawConstantSet->SetConstants(m_DefaultSampler, overdrawTexture, 1);
+		m_OverdrawConstantSet->UpdateConstantValues();
+	}
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
 bool	CRHIParticleSceneRenderHelper::SetupShadows()
 {
 	m_Lights.m_DirectionalShadows.SetCascadeShadowsSettings(0,
@@ -1514,9 +1580,12 @@ bool	CRHIParticleSceneRenderHelper::RenderScene(	ERenderTargetDebug		renderTarge
 			{
 				if (m_EnableOverdrawRender)
 				{
+					const SOverdrawInfo infos(m_OverdrawScaleFactor);
+
 					postOpaqueCmdBuff->BindRenderState(m_OverdrawHeatmapRenderState);
 					postOpaqueCmdBuff->BindVertexBuffers(m_GBuffer.m_QuadBuffers.m_VertexBuffers);
 					postOpaqueCmdBuff->BindConstantSets(TMemoryView<RHI::PConstantSet>(m_OverdrawConstantSet));
+					postOpaqueCmdBuff->PushConstant(&infos, 0);
 					postOpaqueCmdBuff->Draw(0, 6);
 				}
 				else if (renderTargetDebug == RenderTargetDebug_ShadowCascades)
@@ -1696,7 +1765,7 @@ void	CRHIParticleSceneRenderHelper::_RenderParticles(bool											debugMode,
 {
 	PK_SCOPEDPROFILE();
 	RHI::PRenderState							renderState = null;
-	const CRHIBillboardingBatchPolicy			*lastBatch = null;
+	const void									*lastBatch = null;
 
 	for (const SRHIDrawCall &dc : drawCalls)
 	{
@@ -1715,9 +1784,8 @@ void	CRHIParticleSceneRenderHelper::_RenderParticles(bool											debugMode,
 
 		if (debugMode && gpuStorage)
 		{
-			if ((shaderOptions & Option_RibbonVertexBillboarding) != 0 ||
-				(shaderOptions & Option_TriangleVertexBillboarding) != 0)
-				continue; // Triangle/Ribbon GPU particles debug draw not currently supported in VertexBB
+			if ((shaderOptions & Option_RibbonVertexBillboarding) != 0)
+				continue; // Ribbon GPU particles debug draw not currently supported
 		}
 
 		for (ESampleLibGraphicResources_RenderPass renderPass : renderPasses)
@@ -2321,7 +2389,7 @@ bool	CRHIParticleSceneRenderHelper::_CreateFinalRenderStates(	const TMemoryView<
 		setLayout.AddConstantsLayout(RHI::SConstantSamplerDesc("IntensityMap", RHI::SamplerTypeSingle));
 		setLayout.AddConstantsLayout(RHI::SConstantSamplerDesc("OverdrawLUT", RHI::SamplerTypeSingle));
 
-		FillCopyShaderBindings(CopyCombination_Basic, renderState.m_ShaderBindings, setLayout);
+		FillEditorHeatmapOverdrawBindings(renderState.m_ShaderBindings, setLayout);
 
 		CShaderLoader::SShadersPaths shadersPaths;
 		shadersPaths.m_Vertex = FULL_SCREEN_QUAD_VERTEX_SHADER_PATH;
@@ -2341,11 +2409,11 @@ bool	CRHIParticleSceneRenderHelper::_CreateFinalRenderStates(	const TMemoryView<
 		CTextureManager::CResourceId textureId = CTextureManager::UpdateThread_GetResource(textureKey, SPrepareArg(null, null, null));
 		if (!textureId.Valid())
 			return false;
-		RHI::PTexture heatmapTexture = CTextureManager::RenderThread_ResolveResource(textureId, SCreateArg(m_ApiManager, null, m_ResourceManager, CString()));
-		if (heatmapTexture == null)
+		m_HeatmapTexture = CTextureManager::RenderThread_ResolveResource(textureId, SCreateArg(m_ApiManager, m_ResourceManager));
+		if (m_HeatmapTexture == null)
 			return false;
 		m_OverdrawConstantSet->SetConstants(m_DefaultSampler, prevPassOut.m_RenderTarget->GetTexture(), 0);
-		m_OverdrawConstantSet->SetConstants(m_DefaultSampler, heatmapTexture, 1);
+		m_OverdrawConstantSet->SetConstants(m_DefaultSampler, m_HeatmapTexture, 1);
 		m_OverdrawConstantSet->UpdateConstantValues();
 	}
 

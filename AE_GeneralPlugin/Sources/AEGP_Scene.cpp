@@ -426,14 +426,15 @@ bool	CAAEScene::Quit()
 
 	if (m_Initialized)
 	{
-		m_FrameCollector.UpdateThread_UninstallFromMediumCollection(m_ParticleMediumCollection);
+		m_FrameCollector.UninstallFromMediumCollection(m_ParticleMediumCollection);
+		m_FrameCollector.DeleteUnloadedRenderMediums();
+		m_FrameCollector.Destroy();
+
 		if (m_ParticleMediumCollection)
 		{
 			m_ParticleMediumCollection->Clear();
 			PK_SAFE_DELETE(m_ParticleMediumCollection);
 		}
-		m_FrameCollector.DestroyBillboardingBatches();
-		m_FrameCollector.UpdateThread_Destroy();
 	}
 
 	m_ResourceManager = null;
@@ -878,6 +879,24 @@ bool	CAAEScene::ResetEffect(bool unload)
 }
 
 //----------------------------------------------------------------------------
+//
+//	RenderHelpers integration
+//
+//----------------------------------------------------------------------------
+
+PKSample::CRendererBatchDrawer	*CAAEScene::NewBatchDrawer(ERendererClass rendererType, const PRendererCacheBase &rendererCache, bool gpuStorage)
+{
+	return m_ParticleRenderDataFactory.CreateBillboardingBatch2(rendererType, rendererCache, gpuStorage);
+}
+
+//----------------------------------------------------------------------------
+
+PRendererCacheBase	CAAEScene::NewRendererCache(const PRendererDataBase &renderer, const CParticleDescriptor *particleDesc)
+{
+	return m_ParticleRenderDataFactory.UpdateThread_CreateRendererCache(renderer, particleDesc);
+}
+
+//----------------------------------------------------------------------------
 
 void	CAAEScene::SetSkinnedBackdropParams(bool enabled, bool weightedSampling, u32 colorStreamID, u32 weightStreamID)
 {
@@ -974,20 +993,22 @@ bool	CAAEScene::_LateInitializeIFN()
 		PK_SCOPEDLOCK(pkfxWorld.GetRenderLock());
 		RHI::PApiManager	apiManager = pkfxWorld.GetCurrentRenderContext()->GetAEGraphicContext()->GetApiManager();
 		const RHI::SGPUCaps	&caps = apiManager->GetApiContext()->m_GPUCaps; // We get the GPU caps to know what is supported by the GPU and fallback IFN
-		m_ParticleRenderDataFactory.UpdateThread_Initialize(apiManager->ApiName(), m_HBOContext, caps, Drawers::BillboardingLocation_CPU);
+		m_ParticleRenderDataFactory.UpdateThread_Initialize(apiManager, m_HBOContext, caps, Drawers::BillboardingLocation_CPU);
 	}
 	// Frame collector
 	{
 		const u32	enabledRenderers =	(1U << ERendererClass::Renderer_Billboard) | (1U << ERendererClass::Renderer_Ribbon) | (1U << ERendererClass::Renderer_Mesh) | (1U << ERendererClass::Renderer_Light)  | (1U << ERendererClass::Renderer_Triangle);
 
 		// Initialize the frame collector with the factory and required renderers (see CPopcornScene::CollectCurrentFrame() for more detail)
-		CFrameCollector::SFrameCollectorInit	init(&m_ParticleRenderDataFactory, enabledRenderers);
-		if (!m_FrameCollector.UpdateThread_Initialize(init))
+		CFrameCollector::SFrameCollectorInit	init(enabledRenderers,
+													 CbNewBatchDrawer(this, &CAAEScene::NewBatchDrawer),
+													 CbNewRendererCache(this, &CAAEScene::NewRendererCache));
+		if (!m_FrameCollector.Initialize(init))
 		{
 			return CAELog::TryLogErrorWindows("Failed to initialize the frame collector.");
 		}
 		// Hook this frame collector to the medium collection. It will "listen" to each medium insertion (see rh_frame_collector.inl)
-		m_FrameCollector.UpdateThread_InstallToMediumCollection(m_ParticleMediumCollection);
+		m_FrameCollector.InstallToMediumCollection(m_ParticleMediumCollection);
 
 		m_FrameCollector.SetDrawCallsSortMethod(m_DCSortMethod);
 	}
@@ -1364,28 +1385,27 @@ bool	CAAEScene::_LoadScene(const SSimpleSceneDef &sceneDef)
 void	CAAEScene::_CollectCurrentFrame()
 {
 	PK_SCOPEDPROFILE();
-	m_FrameCollector.m_CullingFrustums = TMemoryView<const CFrustum>(m_Camera.ViewFrustum());
-
-	if (m_FrameCollector.UpdateThread_BeginCollectFrame())
-	{
-		m_FrameCollector.UpdateThread_CollectFrame(m_ParticleMediumCollection);
-	}
+	m_FrameCollector.CollectFrame();
 }
 
 //----------------------------------------------------------------------------
 
 void	CAAEScene::_RenderLastCollectedFrame()
 {
-	TSceneView<PKSample::SViewUserData>	view;
-
-	CFloat4x4		matW2P = m_Camera.m_ViewInv;//AE Axis System
+	// Setup your view(s):
+	// You need to specify each view's inverse matrix, that we use to billboard/sort particles
+	PopcornFX::SSceneView		view;
+	PKSample::SRHIRenderContext	ctx;
+	CFloat4x4					matW2P = m_Camera.m_ViewInv;//AE Axis System
 
 	matW2P.Axis(1) *= -1; //AE Y-down to PopcornFX Y-up 
 	matW2P.Axis(2) *= -1; //AE Z-foward to PopcornFX Z-backward
 	view.m_InvViewMatrix = matW2P; 
 	view.m_NeedsSortedIndices = true;
 
-	m_FrameCollector.BuildNewFrame(m_FrameCollector.UpdateThread_GetLastCollectedFrame());
+	ctx.m_Views = TMemoryView<PopcornFX::SSceneView>(view);
+
+	m_FrameCollector.BuildNewFrame(m_FrameCollector.GetLastCollectedFrame(), true);
 	m_DrawOutputs.Clear();
 
 	// Build necessary renderer caches
@@ -1394,14 +1414,12 @@ void	CAAEScene::_RenderLastCollectedFrame()
 
 	m_ParticleRenderDataFactory.RenderThread_BuildPendingCaches(currentRenderContext->GetAEGraphicContext()->GetApiManager());
 
-	// Do not release last collected frame when billboarding is finished
-	// We release frame before updating the medium collection (avoids handling of special cases when sim is paused)
-	const bool	releaseLastCollectedFrame = false;
-
-	PKSample::SRenderContext			context(PKSample::SRenderContext::EPass_RenderThread, currentRenderContext->GetAEGraphicContext()->GetApiManager());
-
-	if (m_FrameCollector.BeginCollectingDrawCalls(context, TMemoryView<PKSample::SSceneView>(view)))
-		m_FrameCollector.EndCollectingDrawCalls(context, m_DrawOutputs, releaseLastCollectedFrame);
+	if (m_FrameCollector.BeginRenderBuiltFrame(ctx)) // the policy fills "ctx.m_DrawOutputs".
+	{
+		m_FrameCollector.RenderFence(); // Blocking wait
+		m_FrameCollector.EndRenderBuiltFrame(ctx, false);
+		m_DrawOutputs = ctx.m_DrawOutputs;
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -1711,96 +1729,99 @@ bool	CAAEScene::_RebuildAttributes(const SSimpleSceneDef &sceneDef)
 {
 	(void)sceneDef;
 
-	auto		&attributeList = m_AttributesList->AttributeList();
-	auto		&samplerList = m_AttributesList->SamplerList();
-	const u32	samplerCount = samplerList.Count();
-	const u32	attrCount = attributeList.Count();
+	auto		&attrList = m_AttributesList->AttributeAndSamplerList();
+	const u32	attrCount = attrList.Count();
 
 	TArray<SAttributeBaseDesc*>	attrOrder;
 
 	for (u32 i = 0; i < attrCount; ++i)
 	{
-		CParticleAttributeDeclaration		*attrDecl = attributeList[i];
+		CParticleAttributeDeclarationAbstract		*attrAbstractDecl = attrList[i];
 
-		PK_ASSERT(attrDecl != null);
+		PK_ASSERT(attrAbstractDecl != null);
 
-		CString				category = attrDecl->CategoryName().MapENG().ToAscii();
-		SAttributeDesc		*attrDesc = new SAttributeDesc(attrDecl->ExportedName().Data(), (const char*)category.Data(), AttributePKToAAE((EBaseTypeID)attrDecl->ExportedType()), AttributePKToAAE(attrDecl->GetEffectiveDataSemantic()));
+		CString				category = attrAbstractDecl->CategoryName().MapENG().ToAscii();
 
-		SAttributesContainer_SAttrib		value = attrDecl->GetDefaultValue();
-		SAttributesContainer_SAttrib		valueMin = attrDecl->GetMinValue();
-		SAttributesContainer_SAttrib		valueMax = attrDecl->GetMaxValue();
-
-		attrDesc->m_HasMax = attrDecl->HasMax();
-		attrDesc->m_HasMin = attrDecl->HasMin();
-		EAttributeType						type = attrDesc->m_Type;
-		if (type >= AttributeType_Bool1 && type <= AttributeType_Bool4)
+		if (!attrAbstractDecl->IsSampler())
 		{
-			attrDesc->SetValue(value.Get<bool>());
-			attrDesc->SetDefaultValue(value.Get<bool>());
-			attrDesc->SetMinValue(valueMin.Get<bool>());
-			attrDesc->SetMaxValue(valueMax.Get<bool>());
+			CParticleAttributeDeclaration		*attrDecl = attrAbstractDecl->AsAttribute();
+			PK_ASSERT(attrDecl != null);
+
+			SAttributeDesc						*attrDesc = new SAttributeDesc(attrDecl->ExportedName().Data(), (const char*)category.Data(), AttributePKToAAE((EBaseTypeID)attrDecl->ExportedType()), AttributePKToAAE(attrDecl->GetEffectiveDataSemantic()));
+
+			SAttributesContainer_SAttrib		value = attrDecl->GetDefaultValue();
+			SAttributesContainer_SAttrib		valueMin = attrDecl->GetMinValue();
+			SAttributesContainer_SAttrib		valueMax = attrDecl->GetMaxValue();
+
+			attrDesc->m_HasMax = attrDecl->HasMax();
+			attrDesc->m_HasMin = attrDecl->HasMin();
+			EAttributeType						type = attrDesc->m_Type;
+			if (type >= AttributeType_Bool1 && type <= AttributeType_Bool4)
+			{
+				attrDesc->SetValue(value.Get<bool>());
+				attrDesc->SetDefaultValue(value.Get<bool>());
+				attrDesc->SetMinValue(valueMin.Get<bool>());
+				attrDesc->SetMaxValue(valueMax.Get<bool>());
+			}
+			if (type >= AttributeType_Int1 && type <= AttributeType_Int4)
+			{
+				attrDesc->SetValue(value.Get<s32>());
+				attrDesc->SetDefaultValue(value.Get<s32>());
+				attrDesc->SetMinValue(valueMin.Get<s32>());
+				attrDesc->SetMaxValue(valueMax.Get<s32>());
+			}
+			if (type >= AttributeType_Float1 && type <= AttributeType_Float4)
+			{
+				attrDesc->SetValue(value.Get<float>());
+				attrDesc->SetDefaultValue(value.Get<float>());
+				attrDesc->SetMinValue(valueMin.Get<float>());
+				attrDesc->SetMaxValue(valueMax.Get<float>());
+			}
+			attrDesc->m_IsDefaultValue = true;
+
+			if (!PK_VERIFY(attrOrder.PushBack(attrDesc).Valid()))
+				return false;
 		}
-		if (type >= AttributeType_Int1 && type <= AttributeType_Int4)
+		else
 		{
-			attrDesc->SetValue(value.Get<s32>());
-			attrDesc->SetDefaultValue(value.Get<s32>());
-			attrDesc->SetMinValue(valueMin.Get<s32>());
-			attrDesc->SetMaxValue(valueMax.Get<s32>());
+			CParticleAttributeSamplerDeclaration	*samplerDecl = attrAbstractDecl->AsSampler();
+			PK_ASSERT(samplerDecl != null);
+
+			SAttributeSamplerDesc	*smplrDesc = new SAttributeSamplerDesc(samplerDecl->ExportedName().Data(), (const char*)category.Data(), AttributeSamplerPKToAAE((SParticleDeclaration::SSampler::ESamplerType)samplerDecl->ExportedType()));
+
+			switch (smplrDesc->m_Type)
+			{
+			case AttributeSamplerType_Geometry:
+				smplrDesc->m_Descriptor = new SShapeSamplerDescriptor();
+				break;
+			case AttributeSamplerType_Text:
+				smplrDesc->m_Descriptor = new STextSamplerDescriptor();
+				break;
+			case AttributeSamplerType_Image:
+				smplrDesc->m_Descriptor = new SImageSamplerDescriptor();
+				break;
+			case AttributeSamplerType_Audio:
+			{
+				smplrDesc->m_Descriptor = new SAudioSamplerDescriptor();
+
+				CResourceDescriptor_Audio	*nodeSamplerData = HBO::Cast<CResourceDescriptor_Audio>(samplerDecl->AttribSamplerDefaultValue().Get());
+				if (PK_VERIFY(nodeSamplerData != null))
+					((SAudioSamplerDescriptor*)smplrDesc->m_Descriptor)->m_ChannelGroup = nodeSamplerData->ChannelGroup().Data();
+				break;
+			}
+			case AttributeSamplerType_VectorField:
+				smplrDesc->m_Descriptor = new SVectorFieldSamplerDescriptor();
+				break;
+			default:
+				smplrDesc->m_Descriptor = null;
+				break;
+			}
+			if (smplrDesc->m_Descriptor)
+				smplrDesc->m_Descriptor->m_UsageFlags = samplerDecl->UsageFlags();
+
+			if (!PK_VERIFY(attrOrder.PushBack(smplrDesc).Valid()))
+				return false;
 		}
-		if (type >= AttributeType_Float1 && type <= AttributeType_Float4)
-		{
-			attrDesc->SetValue(value.Get<float>());
-			attrDesc->SetDefaultValue(value.Get<float>());
-			attrDesc->SetMinValue(valueMin.Get<float>());
-			attrDesc->SetMaxValue(valueMax.Get<float>());
-		}
-		attrDesc->m_IsDefaultValue = true;
-
-		if (!PK_VERIFY(attrOrder.PushBack(attrDesc).Valid()))
-			return false;
-	}
-
-	for (u32 i = 0; i < samplerCount; ++i)
-	{
-		CParticleAttributeSamplerDeclaration		*samplerDecl = samplerList[i];
-		PK_ASSERT(samplerDecl != null);
-
-		CString					category = samplerDecl->CategoryName().MapENG().ToAscii();
-		SAttributeSamplerDesc	*smplrDesc = new SAttributeSamplerDesc(samplerDecl->ExportedName().Data(), (const char*)category.Data(), AttributeSamplerPKToAAE((SParticleDeclaration::SSampler::ESamplerType)samplerDecl->ExportedType()));
-
-		switch (smplrDesc->m_Type)
-		{
-		case AttributeSamplerType_Geometry:
-			smplrDesc->m_Descriptor = new SShapeSamplerDescriptor();
-			break;
-		case AttributeSamplerType_Text:
-			smplrDesc->m_Descriptor = new STextSamplerDescriptor();
-			break;
-		case AttributeSamplerType_Image:
-			smplrDesc->m_Descriptor = new SImageSamplerDescriptor();
-			break;
-		case AttributeSamplerType_Audio:
-		{
-			smplrDesc->m_Descriptor = new SAudioSamplerDescriptor();
-
-			CResourceDescriptor_Audio	*nodeSamplerData = HBO::Cast<CResourceDescriptor_Audio>(samplerDecl->AttribSamplerDefaultValue().Get());
-			if (PK_VERIFY(nodeSamplerData != null))
-				((SAudioSamplerDescriptor*)smplrDesc->m_Descriptor)->m_ChannelGroup = nodeSamplerData->ChannelGroup().Data();
-			break;
-		}
-		case AttributeSamplerType_VectorField:
-			smplrDesc->m_Descriptor = new SVectorFieldSamplerDescriptor();
-			break;
-		default:
-			smplrDesc->m_Descriptor = null;
-			break;
-		}
-		if (smplrDesc->m_Descriptor)
-			smplrDesc->m_Descriptor->m_UsageFlags = samplerDecl->UsageFlags();
-
-		if (!PK_VERIFY(attrOrder.PushBack(smplrDesc).Valid()))
-			return false;
 	}
 
 	typedef TArray<SAttributeBaseDesc*>::Iterator	attrDescIt;

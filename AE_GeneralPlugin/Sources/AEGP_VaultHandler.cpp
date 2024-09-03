@@ -242,7 +242,7 @@ CString		CVaultHandler::BakeVectorField(const CString resourcePath, const CStrin
 		CEffectBaker	baker;
 
 		baker.Initialize(filePackPath.Pack()->Path(), m_VaultPathAssets, "");
-		baker.ReimportAssets(effectsPath, false);
+		baker.ReimportAssets(effectsPath);
 		baker.ClearBakedPaths();
 
 		while (baker.PopFileChanges() != 0)

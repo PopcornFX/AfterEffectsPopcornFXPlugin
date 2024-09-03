@@ -12,7 +12,9 @@
 
 #include "PK-SampleLib/PKSample.h"
 
-// Foward declaration of fmod
+#include "pk_render_helpers/include/frame_collector/rh_particle_render_data_factory.h"
+
+// Forward declaration of fmod
 namespace FMOD
 {
 	class System;
@@ -20,15 +22,76 @@ namespace FMOD
 	class ChannelGroup;
 	class Sound;
 }
+typedef unsigned int	FMOD_MODE;
 
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
+//
+// Sound resource
+// (interfaced with the frame collector's rendering cache)
+//
+//----------------------------------------------------------------------------
 
-class	CSoundResource;
+class	CSoundResource : public CRendererCacheBase
+{
+public:
+	CString			m_Path;
+	FMOD::Sound		*m_SoundData;
+	float			m_Frequency;
+	float			m_Length;
+	bool			m_NeedReload;
+
+	CSoundResource()
+	:	m_Path()
+	,	m_SoundData(null)
+	,	m_Frequency(0.0f)
+	,	m_Length(0.0f)
+	,	m_NeedReload(false)
+	{}
+
+	virtual ~CSoundResource() { Release(); }
+
+	virtual void	UpdateThread_BuildBillboardingFlags(const PRendererDataBase &) override { }
+
+	static	CString	ResolveSoundPath(const PRendererDataBase &renderer);
+
+	bool		Load(FMOD::System *soundSystem);
+	void		Release();
+};
+PK_DECLARE_REFPTRCLASS(SoundResource);
+
+//----------------------------------------------------------------------------
+
+// Simple resousrce-manager for the sound resources:
+// It locks when loading resources (Note: FMOD can handle asynch. loading, to check)
+// The runtime CResourceManager could be used, but it would require to create a new "plugin".
+class	CSoundResourceManager
+{
+protected:
+	TArray<PSoundResource>		m_SoundResources;
+	Threads::CCriticalSection	m_SoundResourcesLock;
+
+public:
+	CSoundResourceManager() {}
+	~CSoundResourceManager() { ReleaseAllSoundResources(); }
+
+	PSoundResource	CreateOrFindSoundResource(FMOD::System *soundSystem, const PRendererDataBase &renderer, CStringView rootPath);
+	PSoundResource	CreateOrFindSoundResource(FMOD::System *soundSystem, CStringView pathFull);
+
+	void			ReleaseAllSoundResources();
+
+	void			BroadcastResourceChanged(CStringView pathVirtual);
+};
+
+//----------------------------------------------------------------------------
+//
+// Sound player
+//
+//----------------------------------------------------------------------------
 
 struct	SSoundElement
 {
-	CSoundResource	*m_Resource;	// audio-data to use
+	PSoundResource	m_Resource;		// audio-data to use
 	FMOD::Channel	*m_Handle;		// audio-handle that controls the playback
 	float			m_PlayTime;
 	float			m_PerceivedVolume;
@@ -60,7 +123,7 @@ struct	SSoundElement
 class	CSoundPoolCache
 {
 public:
-	CSoundPoolCache() : m_FmodSystem(null), m_PoolSize(0) {}
+	CSoundPoolCache() : m_FmodSystem(null), m_FmodChannelGroup(null), m_PoolSize(0) {}
 	~CSoundPoolCache() {}
 
 	void					SetSoundSystem(FMOD::System *soundSystem, FMOD::ChannelGroup *FmodChannelGroup);
@@ -81,6 +144,15 @@ private:
 	FMOD::ChannelGroup		*m_FmodChannelGroup;
 	TArray<SSoundElement>	m_SoundPool;
 	u32						m_PoolSize;
+};
+
+//----------------------------------------------------------------------------
+
+// Custom render context containing few additionnal info for the sound playing
+// Only used in ***::EmitDrawCall
+struct	SAudioRenderContext : public PopcornFX::SRenderContext
+{
+	float	m_SimSpeed;
 };
 
 //----------------------------------------------------------------------------

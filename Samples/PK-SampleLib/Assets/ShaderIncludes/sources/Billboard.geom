@@ -349,6 +349,25 @@ void	bb_billboardUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, inout
 	}
 }
 
+#if 	defined(GOUTPUT_fragRawUV0)
+void	bb_billboardRawUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, inout vec2 c10, inout vec2 c11)
+{
+	uint	drId = asuint(gInput.VertexPosition.w);
+	uint	flags = asuint(GET_CONSTANT(BillboardInfo, DrawRequest)[drId].x);
+
+	if ((flags & BB_Flag_FlipV) != 0U)
+	{
+		swap(c00, c01);
+		swap(c10, c11);
+	}
+	if ((flags & BB_Flag_FlipU) != 0U)
+	{
+		swap(c00, c10);
+		swap(c01, c11);
+	}
+}
+#endif
+
 void	bb_billboardNormal(
 	float nFactor,
 	out vec3 n0, out vec3 n1, out vec3 n2, out vec3 n3,
@@ -434,19 +453,33 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	bool	flipV = (flags & BB_Flag_FlipV) != 0U;
 	float	tangentW = 1.0f;
 	// UV
-#if 	defined(GOUTPUT_fragUV0) && defined(GOUTPUT_fragUV1)
-# define	setUV0(_uv, _value)	_uv = _value.xy;
-# define	setUV1(_uv, _value)	_uv = _value.zw;
+	vec2	rawC00 = vec2(0, 0);
+	vec2	rawC01 = vec2(0, 1);
+	vec2	rawC10 = vec2(1, 0);
+	vec2	rawC11 = vec2(1, 1);
+#if	defined(GOUTPUT_fragUV0) && defined(GOUTPUT_fragUV1)
+
+#	define	setUV0(_uv, _value)	_uv = _value.xy;
+# 	define	setUV1(_uv, _value)	_uv = _value.zw;
+#	if	defined(GOUTPUT_fragRawUV0) 
+# 	define	setRawUV0(_uv, _value) _uv = _value.xy;
+#	else
+# 	define	setRawUV0(_uv, _value)
+#	endif
 	vec4	c00 = vec4(0, 0, 0, 0);
 	vec4	c01 = vec4(0, 1, 0, 1);
 	vec4	c10 = vec4(1, 0, 1, 0);
 	vec4	c11 = vec4(1, 1, 1, 1);
 	vec4	rect0 = vec4(0, 0, 0, 0);
-	vec4	rect1 = vec4(0, 0, 0, 0);;
+	vec4	rect1 = vec4(0, 0, 0, 0);
 	bb_billboardUV(gInput.Primitives[0], c00, c01, c10, c11, gOutput.fragAtlasID, rect0, rect1);
+#	if	defined(GOUTPUT_fragRawUV0)
+	bb_billboardRawUV(gInput.Primitives[0], rawC00, rawC01, rawC10, rawC11);
+#	endif
 #elif 	defined(GOUTPUT_fragUV0)
 # define	setUV0(_uv, _value)	_uv = _value;
 # define	setUV1(_uv, _value)
+# define	setRawUV0(_uv, _value)
 	vec2	c00 = vec2(0, 0);
 	vec2	c01 = vec2(0, 1);
 	vec2	c10 = vec2(1, 0);
@@ -456,6 +489,7 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 #else
 # define	setUV0(_uv, _value)
 # define	setUV1(_uv, _value)
+# define	setRawUV0(_uv, _value)
 #endif
 
 	// Axis y/x to create the quad + normal
@@ -522,27 +556,28 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 
 	// Emit 4 / 6 vertex
 
-#define emittr(pos, uv, normal, tangent)	\
+#define emittr(pos, uv, normal, tangent, rawUV)	\
 	gOutput.VertexPosition = proj_position(pos); \
 	setViewProjPosition(gOutput.fragViewProjPosition, gOutput.VertexPosition); \
 	setWorldPosition(gOutput.fragWorldPosition, pos); \
 	setUV0(gOutput.fragUV0, uv); \
 	setUV1(gOutput.fragUV1, uv); \
+	setRawUV0(gOutput.fragRawUV0, rawUV); \
 	setNormal(gOutput.fragNormal, normal); \
 	setTangent(gOutput.fragTangent, tangent); \
 	AppendVertex(gOutput GS_PARAMS);
 
 #if BB_AxisAlignedCapsule
-	emittr(center + yAxis + upVec, c10, n5, t5);
-	emittr(center + xpy, c11, n0, t0); // +x+y
-	emittr(center - xmy, c00, n1, t1); // -x+y
-	emittr(center + xmy, c11, n2, t2); // +x-y
-	emittr(center - xpy, c00, n3, t3); // -x-y
-	emittr(center - yAxis - upVec, c01, n4, t4);
+	emittr(center + yAxis + upVec, c10, n5, t5, rawC10);
+	emittr(center + xpy, c11, n0, t0, rawC11); // +x+y
+	emittr(center - xmy, c00, n1, t1, rawC00); // -x+y
+	emittr(center + xmy, c11, n2, t2, rawC11); // +x-y
+	emittr(center - xpy, c00, n3, t3, rawC00); // -x-y
+	emittr(center - yAxis - upVec, c01, n4, t4, rawC00);
 #else
-	emittr(center + xpy, c11, n0, t0); // +x+y
-	emittr(center + xmy, c10, n1, t1); // +x-y
-	emittr(center - xmy, c01, n2, t2); // -x+y
-	emittr(center - xpy, c00, n3, t3); // -x-y
+	emittr(center + xpy, c11, n0, t0, rawC11); // +x+y
+	emittr(center + xmy, c10, n1, t1, rawC10); // +x-y
+	emittr(center - xmy, c01, n2, t2, rawC01); // -x+y
+	emittr(center - xpy, c00, n3, t3, rawC00); // -x-y
 #endif
 }

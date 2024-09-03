@@ -383,8 +383,13 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 	if (flipV)
 		texCoords.y = 1.0f - texCoords.y;
 
+#if defined(VOUTPUT_fragRawUV0)
+	vOutput.fragRawUV0 = texCoords;
+#endif
+
 #if	defined(VOUTPUT_fragUV0)
 #	if BB_Feature_Atlas
+
 	const uint	maxAtlasID = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(0)) - 1U;
 	
 #		if BB_GPU_SIM

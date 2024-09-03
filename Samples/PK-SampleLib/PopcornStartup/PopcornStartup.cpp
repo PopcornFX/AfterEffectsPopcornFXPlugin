@@ -88,6 +88,7 @@ PK_PLUGIN_DECLARE(CCompilerBackendCPU_VM);
 #if defined(USE_COMPILER_BACKEND_UNKNOWN2)
 	PK_PLUGIN_DECLARE(CCompilerBackendGPU_PSSLC);
 #endif
+PK_PLUGIN_DECLARE(CImagePKIMCodec);
 PK_PLUGIN_DECLARE(CImageDDSCodec);
 PK_PLUGIN_DECLARE(CImagePNGCodec);
 PK_PLUGIN_DECLARE(CImageTGACodec);
@@ -125,6 +126,7 @@ namespace
 #if	defined(USE_COMPILER_BACKEND_UNKNOWN2)
 		PLUGIN_DEF(CCompilerBackendGPU_PSSLC, "Plugins/compiler_backend_gpu_psslc"),
 #endif
+		PLUGIN_DEF(CImagePKIMCodec, "Plugins/codec_pkim"),
 		PLUGIN_DEF(CImageDDSCodec, "Plugins/codec_dds"),
 		PLUGIN_DEF(CImagePNGCodec, "Plugins/codec_png"),
 		PLUGIN_DEF(CImageTGACodec, "Plugins/codec_tga"),

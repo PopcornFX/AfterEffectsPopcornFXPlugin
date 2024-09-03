@@ -21,35 +21,36 @@
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
 
-class	CRHIParticleRenderDataFactory : public TParticleRenderDataFactory<CRHIParticleBatchTypes>
+// This class handles the creation of the "Renderer-cache" and "Renderer-batch"  (aka a factory)
+class	CRHIParticleRenderDataFactory
 {
 public:
-	CRHIParticleRenderDataFactory() : m_IsInitialized(false) { }
+	CRHIParticleRenderDataFactory() : m_IsInitialized(false), m_ApiName(RHI::GApi_Null), m_HBOContext(null), m_BillboardingLocation(Drawers::BillboardingLocation_CPU)  { }
 	virtual ~CRHIParticleRenderDataFactory() { }
 
 public:
 	// Create the renderer cache
-	virtual PRendererCacheBase			UpdateThread_CreateRendererCache(const PRendererDataBase &renderer, const CParticleDescriptor *particleDesc) override;
+	virtual PRendererCacheBase			UpdateThread_CreateRendererCache(const PRendererDataBase &renderer, const CParticleDescriptor *particleDesc);
 
 	// Create the billboarding batch for this renderer type
-	virtual CBillboardingBatchInterface	*CreateBillboardingBatch(ERendererClass rendererType, const PRendererCacheBase &rendererCache, bool gpuStorage) override;
+	CRendererBatchDrawer				*CreateBillboardingBatch2(ERendererClass rendererType, const PRendererCacheBase &rendererCache, bool gpuStorage); //new
 
-	virtual void						UpdateThread_CollectedForRendering(const PRendererCacheBase &rendererCache) override { (void)rendererCache; /* Nothing to do */ }
+	void								UpdateThread_CollectedForRendering(const PRendererCacheBase &rendererCache) { (void)rendererCache; /* Nothing to do */ }
 
 public:
-	virtual bool							UpdateThread_Initialize(RHI::EGraphicalApi apiName, HBO::CContext *hboContext, const RHI::SGPUCaps &gpuCaps, Drawers::EBillboardingLocation billboardingLocation = Drawers::BillboardingLocation_CPU);
-	virtual void							UpdateThread_Release();
-	bool									IsInitializedWithAPI(RHI::EGraphicalApi apiName);
+	virtual bool						UpdateThread_Initialize(RHI::PApiManager apiManager, HBO::CContext *hboContext, const RHI::SGPUCaps &gpuCaps, Drawers::EBillboardingLocation billboardingLocation = Drawers::BillboardingLocation_CPU);
+	virtual void						UpdateThread_Release();
+	bool								IsInitializedWithAPI(RHI::EGraphicalApi apiName);
 
-	void									UpdateThread_SetBillboardingLocation(Drawers::EBillboardingLocation billboardingLocation);
+	void								UpdateThread_SetBillboardingLocation(Drawers::EBillboardingLocation billboardingLocation);
+	Drawers::EBillboardingLocation		UpdateThread_BillboardingLocation() const { return m_BillboardingLocation; }
 
-	bool									RenderThread_BuildPendingCaches(const RHI::PApiManager &apiManager);
-
-	Drawers::EBillboardingLocation			ResolveBillboardingLocationForStorage(bool gpuStorage);
+	bool								RenderThread_BuildPendingCaches(const RHI::PApiManager &apiManager);
 
 protected:
 	bool					m_IsInitialized;
 
+	RHI::PApiManager		m_ApiManager;
 	RHI::EGraphicalApi		m_ApiName;
 	HBO::CContext			*m_HBOContext;
 	RHI::SGPUCaps			m_GPUCaps;

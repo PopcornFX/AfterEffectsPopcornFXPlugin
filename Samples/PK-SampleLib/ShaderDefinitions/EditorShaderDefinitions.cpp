@@ -915,7 +915,22 @@ void	AddEditorDebugDrawLineDefinition(TArray<SShaderCombination> &shaders)
 
 //----------------------------------------------------------------------------
 
-void	AddEditorHeatmapOverdraw(TArray<SShaderCombination> &shaders)
+void	FillEditorHeatmapOverdrawBindings(RHI::SShaderBindings &bindings, const RHI::SConstantSetLayout &layout)
+{
+	bindings.Reset();
+	bindings.m_InputAttributes.PushBack();
+	bindings.m_InputAttributes.Last().m_Name = "Position";
+	bindings.m_InputAttributes.Last().m_ShaderLocationBinding = 0;
+	bindings.m_InputAttributes.Last().m_Type = RHI::TypeFloat2;
+
+	// Overdraw Info
+	RHI::SPushConstantBuffer	overdrawInfo("OverdrawInfo", RHI::FragmentShaderMask);
+	overdrawInfo.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat, "ScaleFactor"));
+	bindings.m_PushConstants.PushBack(overdrawInfo);
+	bindings.m_ConstantSets.PushBack(layout);
+}
+
+void	AddEditorHeatmapOverdrawDefinition(TArray<SShaderCombination> &shaders)
 {
 
 	RHI::SShaderDescription		description;
@@ -936,7 +951,7 @@ void	AddEditorHeatmapOverdraw(TArray<SShaderCombination> &shaders)
 	setLayout.AddConstantsLayout(RHI::SConstantSamplerDesc("IntensityMap", RHI::SamplerTypeSingle));
 	setLayout.AddConstantsLayout(RHI::SConstantSamplerDesc("OverdrawLUT", RHI::SamplerTypeSingle));
 
-	FillCopyShaderBindings(CopyCombination_Basic, description.m_Bindings, setLayout);
+	FillEditorHeatmapOverdrawBindings(description.m_Bindings, setLayout);
 
 	shaders.PushBack();
 	shaders.Last().m_VertexShader = "FullScreenQuad.vert";

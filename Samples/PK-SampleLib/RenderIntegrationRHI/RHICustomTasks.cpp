@@ -701,6 +701,18 @@ RHI::PGpuBuffer	 GetIsSelectedBuffer(const SEffectParticleSelectionView &selecti
 
 //----------------------------------------------------------------------------
 
+RHI::PGpuBuffer	 GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::SRibbon_DrawRequest &dr)
+{
+	for (const auto &s : selectionView.m_AllParticleSelectionsView_GPU)
+	{
+		if (s.m_Selection->m_Medium == dr.m_BB._UnsafeMedium())
+			return s.m_DstBuffer;
+	}
+	return null;
+}
+
+//----------------------------------------------------------------------------
+
 RHI::PGpuBuffer	 GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::SMesh_DrawRequest &dr)
 {
 	for (const auto &s : selectionView.m_AllParticleSelectionsView_GPU)
