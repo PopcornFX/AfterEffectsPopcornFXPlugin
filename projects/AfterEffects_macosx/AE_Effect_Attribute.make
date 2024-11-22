@@ -11,7 +11,7 @@ endif
 .PHONY: clean prebuild
 
 SHELLTYPE := posix
-ifeq (.exe,$(findstring .exe,$(ComSpec)))
+ifeq ($(shell echo "test"), "test")
 	SHELLTYPE := msdos
 endif
 
@@ -27,6 +27,7 @@ endif
 ifeq ($(origin AR), default)
   AR = ar
 endif
+RESCOMP = windres
 INCLUDES += -I../../ExternalLibs/Runtime -I../../ExternalLibs/Runtime/include -I../../ExternalLibs/Runtime/include/license/AfterEffects -I../../ExternalLibs -I../../AE_Effect_Attribute/Sources -I../../AE_Effect_Attribute/Include -I../../AE_Effect_Attribute/Precompiled -I../../AE_Suites -I"../../External/AE SDK/Resources" -I"../../External/AE SDK/Headers" -I"../../External/AE SDK/Util" -I"../../External/AE SDK/Headers/SP" -I"../../External/AE SDK/Headers/adobesdk" -I"../../External/AE SDK/Headers/SP/artemis" -I"../../External/AE SDK/Headers/SP/photoshop" -I"../../External/AE SDK/Headers/SP/artemis/config" -I"../../External/AE SDK/Headers/SP/photoshop/config" -I"../../External/AE SDK/Headers/adobesdk/config" -I"../../External/AE SDK/Headers/adobesdk/drawbotsuite"
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
@@ -46,8 +47,8 @@ TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_x64
 TARGET = $(TARGETDIR)/libAE_Effect_Attribute_d
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Debug/AE_Effect_Attribute
 DEFINES += -D_DEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1 -DUSE_POSIX_API=1 -D__MWERKS__=0 -DA_INTERNAL_TEST_ONE=0 -DWEB_ENV=0 -DPK_BUILD_WITH_FMODEX_SUPPORT=0 -DPK_BUILD_WITH_SDL=0
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fPIC -fno-strict-aliasing -msse2 -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fPIC -fno-strict-aliasing -msse2 -Wall -Wextra -std=c++14 -fvisibility-inlines-hidden -fno-rtti -fvisibility=hidden -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fvisibility-inlines-hidden -fPIC -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fvisibility-inlines-hidden -fPIC -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -std=c++14 -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
 ALL_LDFLAGS += $(LDFLAGS) -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_Effect_Attribute_d -Wl,-undefined,error -target x86_64-apple-macos10.14 -framework OpenGL
 
 else ifeq ($(config),release_x64)
@@ -55,8 +56,8 @@ TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_x64
 TARGET = $(TARGETDIR)/libAE_Effect_Attribute_r
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Release/AE_Effect_Attribute
 DEFINES += -DNDEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1 -DUSE_POSIX_API=1 -D__MWERKS__=0 -DA_INTERNAL_TEST_ONE=0 -DWEB_ENV=0 -DPK_BUILD_WITH_FMODEX_SUPPORT=0 -DPK_BUILD_WITH_SDL=0
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -O3 -fPIC -fno-strict-aliasing -msse2 -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -O3 -fPIC -fno-strict-aliasing -msse2 -Wall -Wextra -std=c++14 -fvisibility-inlines-hidden -fno-rtti -fvisibility=hidden -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fvisibility-inlines-hidden -O3 -fPIC -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fvisibility-inlines-hidden -O3 -fPIC -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -std=c++14 -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
 ALL_LDFLAGS += $(LDFLAGS) -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_Effect_Attribute_r -Wl,-undefined,error -target x86_64-apple-macos10.14 -framework OpenGL
 
 #else

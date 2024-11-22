@@ -86,7 +86,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;PKSAMPLE_PROJNAME=PK-Sample_02_FullIntegration;PK_BUILD_WITH_D3D11_SUPPORT=1;PK_BUILD_WITH_D3D12_SUPPORT=1;PK_BUILD_WITH_OGL_SUPPORT=1;GL_GLEXT_PROTOTYPES;GLEW_STATIC;GLEW_NO_GLU;PK_BUILD_WITH_VULKAN_SUPPORT=0;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\Samples\PK-Sample_02_FullIntegration;..\..\Samples\precompiled;..\..\Samples;..\..\ExternalLibs\DX\include;..\..\ExternalLibs\GL\include;..\..\ExternalLibs\imgui;..\..\ExternalLibs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Samples\PK-Sample_02_FullIntegration;..\..\Samples\precompiled;..\..\Samples;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\SDK\Samples\ParticleSample\src;..\..\ExternalLibs\pk_upgraderlib\src\include;..\..\SDK\Samples\Common\PKFX;..\..\ExternalLibs\DX\include;..\..\ExternalLibs\GL\include;..\..\ExternalLibs\imgui;..\..\ExternalLibs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -97,6 +97,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -114,7 +115,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;PKSAMPLE_PROJNAME=PK-Sample_02_FullIntegration;PK_BUILD_WITH_D3D11_SUPPORT=1;PK_BUILD_WITH_D3D12_SUPPORT=1;PK_BUILD_WITH_OGL_SUPPORT=1;GL_GLEXT_PROTOTYPES;GLEW_STATIC;GLEW_NO_GLU;PK_BUILD_WITH_VULKAN_SUPPORT=0;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\Samples\PK-Sample_02_FullIntegration;..\..\Samples\precompiled;..\..\Samples;..\..\ExternalLibs\DX\include;..\..\ExternalLibs\GL\include;..\..\ExternalLibs\imgui;..\..\ExternalLibs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Samples\PK-Sample_02_FullIntegration;..\..\Samples\precompiled;..\..\Samples;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\SDK\Samples\ParticleSample\src;..\..\ExternalLibs\pk_upgraderlib\src\include;..\..\SDK\Samples\Common\PKFX;..\..\ExternalLibs\DX\include;..\..\ExternalLibs\GL\include;..\..\ExternalLibs\imgui;..\..\ExternalLibs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -129,6 +130,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,7 +150,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;PK_RETAIL;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;PKSAMPLE_PROJNAME=PK-Sample_02_FullIntegration;PK_BUILD_WITH_D3D11_SUPPORT=1;PK_BUILD_WITH_D3D12_SUPPORT=1;PK_BUILD_WITH_OGL_SUPPORT=1;GL_GLEXT_PROTOTYPES;GLEW_STATIC;GLEW_NO_GLU;PK_BUILD_WITH_VULKAN_SUPPORT=0;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\Samples\PK-Sample_02_FullIntegration;..\..\Samples\precompiled;..\..\Samples;..\..\ExternalLibs\DX\include;..\..\ExternalLibs\GL\include;..\..\ExternalLibs\imgui;..\..\ExternalLibs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Samples\PK-Sample_02_FullIntegration;..\..\Samples\precompiled;..\..\Samples;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\SDK\Samples\ParticleSample\src;..\..\ExternalLibs\pk_upgraderlib\src\include;..\..\SDK\Samples\Common\PKFX;..\..\ExternalLibs\DX\include;..\..\ExternalLibs\GL\include;..\..\ExternalLibs\imgui;..\..\ExternalLibs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -163,6 +165,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -299,6 +302,7 @@
     <ClInclude Include="..\..\Samples\precompiled\precompiled.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\SDK\Samples\Common\PKFX\FxPlatformGeneric.cpp" />
     <ClCompile Include="..\..\Samples\PK-Sample_02_FullIntegration\GPUContext_D3D.cpp" />
     <ClCompile Include="..\..\Samples\PK-Sample_02_FullIntegration\Main.cpp" />
     <ClCompile Include="..\..\Samples\PK-Sample_02_FullIntegration\Scene\PopcornScene.cpp" />

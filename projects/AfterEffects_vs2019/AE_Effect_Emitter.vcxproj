@@ -75,6 +75,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -107,6 +108,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>

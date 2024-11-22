@@ -80,6 +80,10 @@
 #	include "WindowContext/GdkContext/GdkContext.h"
 #endif
 
+#if defined(PK_NX)
+#	include "WindowContext/NXContext/NXApplicationContext.h"
+#endif
+
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
 
@@ -119,6 +123,12 @@ bool	CAbstractGraphicScene::Init(RHI::EGraphicalApi api, bool forceDirectDraw/* 
 	m_WindowContext = PK_NEW(CGdkWindowContext);
 #elif defined(PK_GGP)
 	m_WindowContext = PK_NEW(CGgpContext);
+#elif defined(PK_NX)
+	if (renderOffscreen)
+		m_WindowContext = PK_NEW(COffscreenContext);
+	else
+		m_WindowContext = PK_NEW(CNXApplicationContext);
+		
 #endif
 	if (api == RHI::GApi_Null)
 	{

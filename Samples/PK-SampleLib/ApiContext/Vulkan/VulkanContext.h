@@ -26,6 +26,13 @@
 #elif	defined(PK_GGP)
 #	define PLATFORM_SURFACE_EXTENSION_NAME		VK_GGP_STREAM_DESCRIPTOR_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_GGP
+#elif	defined(PK_NX)
+#	define PLATFORM_SURFACE_EXTENSION_NAME		VK_NN_VI_SURFACE_EXTENSION_NAME
+#	define VK_USE_PLATFORM_VI_NN
+#	include <nn/init.h>
+#	include <nn/vi.h>
+#	include <nn/hid.h>
+#	include <nv/nv_MemoryManagement.h>
 #else
 #	error	Unrecognized Vulkan platform
 #endif
@@ -113,7 +120,9 @@ public:
 #elif	defined(PK_MACOSX)
 	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *view);
 #elif	defined(PK_GGP)
-	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx);
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void* view);
+#elif	defined(PK_NX)
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void* window);
 #else
 #	error not implemented
 #endif
@@ -123,7 +132,7 @@ public:
 												const TMemoryView<const char *> &extensionsToEnable,
 												const TMemoryView<const char *> &layersToEnable,
 												bool							isOffscreen);
-												
+
 	static bool		LoadExtensionFunctionPointers(RHI::SVulkanBasicContext &basicCtx);
 	// Creates the swap-chain
 	static ESwapChainOpResult	CreateSwapChain(RHI::SVulkanBasicContext &basicCtx,

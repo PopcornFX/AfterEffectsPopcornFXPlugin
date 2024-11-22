@@ -28,6 +28,7 @@ enum	ContextApi
 	Context_Glfw,
 	Context_Gdk,
 	Context_UNKNOWN2,
+	Context_NX,
 };
 
 //----------------------------------------------------------------------------

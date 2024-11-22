@@ -95,6 +95,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -129,6 +130,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -165,6 +167,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -375,6 +378,7 @@
     <ClInclude Include="..\..\Samples\PK-SampleLib\SoundIntegrationFMod\FModBillboardingBatchPolicy.h" />
     <ClInclude Include="..\..\Samples\PK-SampleLib\SoundIntegrationFMod\SoundPoolCache.h" />
     <ClInclude Include="..\..\Samples\PK-SampleLib\WindowContext\AWindowContext.h" />
+    <ClInclude Include="..\..\Samples\PK-SampleLib\WindowContext\NXContext\NXApplicationContext.h" />
     <ClInclude Include="..\..\Samples\PK-SampleLib\WindowContext\OffscreenContext\OffscreenContext.h" />
     <ClInclude Include="..\..\Samples\PK-SampleLib\WindowContext\SdlContext\SdlContext.h" />
     <ClInclude Include="..\..\Samples\precompiled\precompiled.h" />
@@ -444,6 +448,7 @@
     <ClCompile Include="..\..\Samples\PK-SampleLib\SoundIntegrationFMod\FModBillboardingBatchPolicy.cpp" />
     <ClCompile Include="..\..\Samples\PK-SampleLib\SoundIntegrationFMod\SoundPoolCache.cpp" />
     <ClCompile Include="..\..\Samples\PK-SampleLib\WindowContext\AWindowContext.cpp" />
+    <ClCompile Include="..\..\Samples\PK-SampleLib\WindowContext\NXContext\NXApplicationContext.cpp" />
     <ClCompile Include="..\..\Samples\PK-SampleLib\WindowContext\OffscreenContext\OffscreenContext.cpp" />
     <ClCompile Include="..\..\Samples\PK-SampleLib\WindowContext\SdlContext\SdlContext.cpp" />
     <ClCompile Include="..\..\Samples\precompiled\precompiled.cpp">

@@ -35,6 +35,10 @@
 #	endif // defined(PK_COMPILER_CLANG_CL)
 #endif // (PK_BUILD_WITH_SDL != 0)
 
+#ifdef PK_NX
+#	include "pk_kernel/layer_0/kr_mem/include/pv_mem.h"
+#endif
+
 #define		USE_CUSTOM_ALLOCATOR
 
 //----------------------------------------------------------------------------
@@ -164,6 +168,16 @@ VKAPI_ATTR void* VKAPI_CALL	VulkanAllocate(void *pUserData, size_t size, size_t 
 		return kVulkanInvalidMallocValue;
 }
 
+#ifdef PK_NX
+void* NXAllocate(size_t size, size_t alignment, void *pUserData) {
+	(void)pUserData;
+	if (size != 0)
+		return PK_MALLOC_ALIGNED(static_cast<u32>(size), alignment);
+	else
+		return kVulkanInvalidMallocValue;
+}
+#endif
+
 //----------------------------------------------------------------------------
 
 VKAPI_ATTR void* VKAPI_CALL	VulkanReallocate(void *pUserData, void *pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
@@ -192,6 +206,32 @@ VKAPI_ATTR void* VKAPI_CALL	VulkanReallocate(void *pUserData, void *pOriginal, s
 	}
 }
 
+#ifdef PK_NX
+void*	NXReallocate(void* addr, size_t newSize, void *userPtr)
+{
+	(void)userPtr;
+	if (userPtr == kVulkanInvalidMallocValue)
+	{
+		if (newSize == 0)
+			return kVulkanInvalidMallocValue;
+		else
+			return PK_MALLOC(static_cast<u32>(newSize));
+	}
+	else
+	{
+		if (newSize == 0)
+		{
+			PK_FREE(addr);
+			return kVulkanInvalidMallocValue;
+		}
+		else
+		{
+			return PK_REALLOC_ALIGNED(addr, static_cast<u32>(newSize), PTR_TO_ALLOC_UNIT(addr)->Alignment());
+		}
+	}
+}
+#endif
+
 //----------------------------------------------------------------------------
 
 VKAPI_ATTR void VKAPI_CALL	VulkanFree(void *pUserData, void *pMemory)
@@ -200,6 +240,15 @@ VKAPI_ATTR void VKAPI_CALL	VulkanFree(void *pUserData, void *pMemory)
 	if (pMemory != kVulkanInvalidMallocValue)
 		PK_FREE(pMemory);
 }
+
+#ifdef PK_NX
+void NXFree(void *addr, void *userPtr)
+{
+	(void)userPtr;
+	if (addr != kVulkanInvalidMallocValue)
+		PK_FREE(addr);
+}
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -246,7 +295,29 @@ bool	CVulkanContext::InitRenderApiContext(bool debug, PAbstractWindowContext win
 	m_ApiData.m_Allocator->pfnAllocation = VulkanAllocate;
 	m_ApiData.m_Allocator->pfnReallocation = VulkanReallocate;
 	m_ApiData.m_Allocator->pfnFree = VulkanFree;
+#ifdef PK_NX
+	nv::SetGraphicsAllocator(NXAllocate, NXFree, NXReallocate, null);
+	nv::SetGraphicsDevtoolsAllocator(NXAllocate, NXFree, NXReallocate, null);
+#endif // PK_NX
+#endif // USE_CUSTOM_ALLOCATOR
+
+#ifdef PK_NX
+	u32 memorySize = 256u * 1024u * 1024u;
+	void* pGraphicsMemory = PK_MALLOC_ALIGNED(memorySize, 4096);
+	nv::InitializeGraphics(pGraphicsMemory, memorySize);
+
+	nn::vi::Initialize();
+
+	nn::vi::Display	*display;
+	nn::vi::Layer	*layer;
+
+	nn::Result result = nn::vi::OpenDefaultDisplay(&display);
+	PK_ASSERT(result.IsSuccess());
+
+	result = nn::vi::CreateLayer(&layer, display);
+	PK_ASSERT(result.IsSuccess());
 #endif
+
 	// Init Vulkan
 	bool					enableValidationLayer = false;
 	bool					enableDebugNames = false;
@@ -267,7 +338,7 @@ bool	CVulkanContext::InitRenderApiContext(bool debug, PAbstractWindowContext win
 	{
 		m_IsOffscreen = true;
 	}
-	else 
+	else
 	{
 		deviceExtensions.PushBack(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
@@ -310,6 +381,15 @@ bool	CVulkanContext::InitRenderApiContext(bool debug, PAbstractWindowContext win
 	else if (windowApi->GetContextApi() == PKSample::Context_Glfw)
 	{
 		err = CreateWindowSurface(m_ApiData);
+	}
+#endif
+#if defined(PK_NX)
+	else if (windowApi->GetContextApi() == PKSample::Context_NX)
+	{
+		void	*window;
+		GetNativeWindow(&window, layer);
+		if (!CreateWindowSurface(m_ApiData, window))
+			return false;
 	}
 #endif
 	else if (windowApi->GetContextApi() == PKSample::Context_Offscreen)
@@ -725,6 +805,24 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx)
 	return _AfterSurfaceCreation(basicCtx);
 }
 
+#elif	defined(PK_NX)
+bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *window)
+{
+	if (!_BeforeSurfaceCreation(basicCtx))
+		return false;
+
+	VkViSurfaceCreateInfoNN	createInfo;
+
+	createInfo.sType = VK_STRUCTURE_TYPE_VI_SURFACE_CREATE_INFO_NN;
+	createInfo.pNext = null;
+	createInfo.flags = 0;
+	createInfo.window = window;
+
+	if (PK_VK_FAILED(vkCreateViSurfaceNN(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains.Last().m_Surface)))
+		return false;
+
+	return _AfterSurfaceCreation(basicCtx);
+}
 #else
 #	error not implemented
 #endif
@@ -1027,7 +1125,7 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateOffscreenSwapChain(RHI:
 		RHI::CVulkanRenderTarget		*toAdd = PK_NEW(RHI::CVulkanRenderTarget(RHI::SRHIResourceInfos("VulkanContext Offscreen Render Target")));
 		toAdd->VulkanSetRenderTarget(offscreenSwapchainImageViews[i], basicCtx.m_SwapChains[swapChainIdx].m_SwapChainFormat.format, basicCtx.m_SwapChains[swapChainIdx].m_SwapChainExtent, true);
 		basicCtx.m_SwapChains[swapChainIdx].m_SwapChainRenderTargets[i] = toAdd;
-	}	
+	}
 	basicCtx.m_BufferingMode = RHI::ContextDoubleBuffering;
 
 	if (basicCtx.m_SwapChains[swapChainIdx].m_SwapChainImageAvailable == VK_NULL_HANDLE)
