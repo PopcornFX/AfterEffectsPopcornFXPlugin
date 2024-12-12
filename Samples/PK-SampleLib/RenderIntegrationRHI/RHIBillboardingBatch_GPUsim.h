@@ -224,6 +224,7 @@ private:
 	SGpuBuffer				m_Indirection;
 
 	SGpuBuffer				m_IndirectionOffsets;
+	volatile u32			*m_MappedIndirectionOffsets = null;
 
 	SGpuBuffer				m_MatricesOffsets;
 	volatile u32			*m_MappedMatricesOffsets = null;

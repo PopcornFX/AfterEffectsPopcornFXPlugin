@@ -679,12 +679,12 @@ private:
 	bool	_EndRenderPass(EInitRenderPasses renderPass, const RHI::PCommandBuffer &cmdBuff) const;
 
 private:
-	typedef FastDelegate<bool(const RHI::PCommandBuffer &cmdBuff)>	CbPostRenderOpaque;
+	typedef FastDelegate<bool(const RHI::PCommandBuffer &cmdBuff)>	CbPreRender;
 
-	CbPostRenderOpaque				m_PostRenderOpaque;
+	CbPreRender				m_PreRender;
 
 public:
-	CbPostRenderOpaque				&GetPostOpaque() { return m_PostRenderOpaque; }
+	CbPreRender				&GetPreRender() { return m_PreRender; }
 };
 
 //----------------------------------------------------------------------------

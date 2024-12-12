@@ -1254,6 +1254,9 @@ bool	CRHIParticleSceneRenderHelper::RenderScene(	ERenderTargetDebug		renderTarge
 	if (m_BackdropsData.m_ShowMesh && !m_MeshBackdrop.m_MeshBatches.Empty())
 		_UpdateMeshBackdropInfos();
 
+	if (!m_PreRender.empty())
+		m_PreRender(preOpaqueCmdBuff);
+
 	const bool										hasBloom = (m_InitializedRP & InitRP_Bloom) != 0;
 	const RHI::PFrameBuffer							&frameBuffer = hasBloom ? m_BeforeBloomFrameBuffer : m_FinalFrameBuffers[finalRtIdx];
 	const RHI::PRenderPass							&renderPass = hasBloom ? m_BeforeBloomRenderPass : m_FinalRenderPass;
@@ -1312,8 +1315,6 @@ bool	CRHIParticleSceneRenderHelper::RenderScene(	ERenderTargetDebug		renderTarge
 		m_ApiManager->SubmitCommandBufferDirect(preOpaqueCmdBuff);
 
 		postOpaqueCmdBuff->Start();
-		if (!m_PostRenderOpaque.empty())
-			m_PostRenderOpaque(postOpaqueCmdBuff);
 
 		// -- START RENDER PASS: Deferred -------------------
 		{

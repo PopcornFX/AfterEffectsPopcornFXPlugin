@@ -2281,6 +2281,12 @@ bool	CRHIRendererBatch_Mesh_GPU::MapBuffers(SRenderContext &ctx)
 	if (!PK_VERIFY(m_MappedMatricesOffsets != null))
 		return false;
 
+	// Indirection offsets
+	m_MappedIndirectionOffsets = static_cast<u32*>(m_ApiManager->MapCpuView(m_IndirectionOffsets.m_Buffer));
+	if (!PK_VERIFY(m_MappedIndirectionOffsets != null))
+		return false;
+
+
 	return true;
 }
 
@@ -2349,6 +2355,10 @@ bool	CRHIRendererBatch_Mesh_GPU::LaunchCustomTasks(SRenderContext &ctx)
 	for (const auto &addField : m_AdditionalFieldsSimStreamOffsets.m_MappedFields)
 		Mem::Copy_Uncached(addField.m_Storage.m_RawDataPtr, &streamsOffsets[streamOffset++ * drCount], sizeof(u32) * drCount);
 
+	// Init indirection offsets
+	const u32	indirectionOffsetsSizeInBytes = 2 * drCount * sizeof(u32) * (m_HasMeshIDs ? m_MeshCount : (m_HasMeshLODs ? m_MeshLODCount : 1));
+	Mem::Clear_Uncached(m_MappedIndirectionOffsets, indirectionOffsetsSizeInBytes);
+
 	// Setup matrices offset
 	u32		matricesOffset = 0u;
 	for (u32 dri = 0; dri < drCount; dri++)
@@ -2384,6 +2394,7 @@ bool	CRHIRendererBatch_Mesh_GPU::UnmapBuffers(SRenderContext &ctx)
 
 	m_AdditionalFieldsSimStreamOffsets.UnmapBuffers(m_ApiManager);
 
+	m_IndirectionOffsets.UnmapIFN(manager);
 	m_MatricesOffsets.UnmapIFN(manager);
 
 	return true;
