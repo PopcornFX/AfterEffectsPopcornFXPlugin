@@ -220,9 +220,10 @@ bool	CPreprocessor::FindShaderDependencies(	const CString &input,
 					{
 						const CStringView	includePath = CStringView(pathStart, (u32)(src - pathStart));
 						const CString		actualPath = CFilePath::IsAbsolute(includePath) ? includePath.ToString() : execDirectory / includePath;
-						if (!outDep.Contains(actualPath) && controller->Exists(actualPath))
+						const CString		purePath = CFilePath::Purified(actualPath);
+						if (!outDep.Contains(purePath) && controller->Exists(purePath))
 						{
-							if (!outDep.PushBack(actualPath).Valid())
+							if (!outDep.PushBack(purePath).Valid())
 								return false;
 						}
 						// Skip close quote

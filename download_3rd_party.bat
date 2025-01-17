@@ -7,7 +7,7 @@ set OPEN_SOURCE_AE_REPO_PATH=%~dp0
 
 bitsadmin /reset
 bitsadmin /create third_party_download
-bitsadmin /addfile third_party_download http://downloads.popcornfx.com/Plugins/ExternalLibs/ExternalLibs_AfterEffects_2.20.5-22434_x64_macosx_vs2019.zip "%OPEN_SOURCE_AE_REPO_PATH%ExternalLibs.zip"
+bitsadmin /addfile third_party_download http://downloads.popcornfx.com/Plugins/ExternalLibs/ExternalLibs_AfterEffects_2.20.6-22710_x64_macosx_vs2019.zip "%OPEN_SOURCE_AE_REPO_PATH%ExternalLibs.zip"
 bitsadmin /setpriority third_party_download "FOREGROUND"
 bitsadmin /resume third_party_download
 

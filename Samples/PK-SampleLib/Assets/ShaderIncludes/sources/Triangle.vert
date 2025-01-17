@@ -52,8 +52,8 @@ void    VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, u
 #if defined(HAS_TriangleCustomUVs)
 #if BB_GPU_SIM
 	const vec2	uv0 = LOADF2(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(TriangleCustomUVs_UV1sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 2));
-	const vec2	uv1 = LOADF2(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(TriangleCustomUVs_UV1sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 2));
-	const vec2	uv2 = LOADF2(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(TriangleCustomUVs_UV1sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 2));
+	const vec2	uv1 = LOADF2(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(TriangleCustomUVs_UV2sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 2));
+	const vec2	uv2 = LOADF2(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(TriangleCustomUVs_UV3sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 2));
 #else
 	const vec2	uv0 = LOADF2(GET_RAW_BUFFER(TriangleCustomUVs_UV1s), RAW_BUFFER_INDEX(particleID * 2));
 	const vec2	uv1 = LOADF2(GET_RAW_BUFFER(TriangleCustomUVs_UV2s), RAW_BUFFER_INDEX(particleID * 2));
