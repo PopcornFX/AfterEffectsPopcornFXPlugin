@@ -67,7 +67,7 @@
 #define	FLIP_BILLBOARDING_AXIS		1
 
 #if	!defined(CONST_BillboardInfo_DrawRequest)
-#error "Missing constant with infos for billboard"
+#	error "Missing constant with infos for billboard"
 #endif
 
 #if defined(CONST_BillboardInfo_DrawRequest)
@@ -84,47 +84,50 @@
 // RightHanded/LeftHanded:
 #define	myCross(a, b)  cross(a, b) * GET_CONSTANT(SceneInfo, Handedness)
 
+//----------------------------------------------------------------------------
+
 vec2	get_radius(uint particleID VS_ARGS)
 {
 	float	enabled = 1.0f;
 
-#if BB_GPU_SIM
-#	if	 defined(VRESOURCE_EnabledsOffsets)
+#if defined(BB_GPU_SIM)
+#	if	defined(VRESOURCE_EnabledsOffsets)
 	const uint	e = LOADU(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(EnabledsOffsets), RAW_BUFFER_INDEX(GET_CONSTANT(GPUBillboardPushConstants, StreamOffsetsIndex))) + RAW_BUFFER_INDEX(particleID));
 	enabled = e != 0 ? 1.0f : 0.0f;
 #	endif
-
-#	if		defined(HAS_SizeFloat2)
+#	if	defined(HAS_SizeFloat2)
 	return LOADF2(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Size2sOffsets), RAW_BUFFER_INDEX(GET_CONSTANT(GPUBillboardPushConstants, StreamOffsetsIndex))) + RAW_BUFFER_INDEX(particleID * 2)) * enabled;
 #	else
 	float	_radius = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(SizesOffsets), RAW_BUFFER_INDEX(GET_CONSTANT(GPUBillboardPushConstants, StreamOffsetsIndex))) + RAW_BUFFER_INDEX(particleID));
 	return vec2(_radius, _radius) * enabled;
 #	endif
 #else
-#	if		defined(HAS_SizeFloat2)
+#	if	defined(HAS_SizeFloat2)
 	return LOADF2(GET_RAW_BUFFER(Size2s), RAW_BUFFER_INDEX(particleID * 2)) * enabled;
 #	else
 	float	_radius = LOADF(GET_RAW_BUFFER(Sizes), RAW_BUFFER_INDEX(particleID));
 	return vec2(_radius, _radius) * enabled;
 #	endif
-#endif // BB_GPU_SIM
+#endif // defined(BB_GPU_SIM)
 }
+
+//----------------------------------------------------------------------------
 
 #if defined(BB_ScreenAligned) || defined(BB_ViewposAligned) || defined(BB_PlaneAligned)
 void	RotateTangents(uint particleID, INOUT(vec3) tangent0, INOUT(vec3) tangent1 VS_ARGS)
 {
-#if defined(VRESOURCE_Rotations) || defined(VRESOURCE_RotationsOffsets)
-#	if BB_GPU_SIM
-#		if !defined(VRESOURCE_RotationsOffsets)
-#			error missing RotationsOffsets SRV
-#		endif // !defined(VRESOURCE_Rotations)
+#	if defined(VRESOURCE_Rotations) || defined(VRESOURCE_RotationsOffsets)
+#		if defined(BB_GPU_SIM)
+#			if !defined(VRESOURCE_RotationsOffsets)
+#				error missing RotationsOffsets SRV
+#			endif // !defined(VRESOURCE_Rotations)
 	const float	rotation = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(RotationsOffsets), RAW_BUFFER_INDEX(GET_CONSTANT(GPUBillboardPushConstants, StreamOffsetsIndex))) + RAW_BUFFER_INDEX(particleID));
-#	else
-#		if !defined(VRESOURCE_Rotations)
-#			error missing Rotations SRV
-#		endif // !defined(VRESOURCE_Rotations)
+#		else
+#			if !defined(VRESOURCE_Rotations)
+#				error missing Rotations SRV
+#			endif // !defined(VRESOURCE_Rotations)
 	const float	rotation = LOADF(GET_RAW_BUFFER(Rotations), RAW_BUFFER_INDEX(particleID));
-#	endif // BB_GPU_SIM
+#		endif // defined(BB_GPU_SIM)
 
 	const float	rotCos = cos(rotation);
 	const float	rotSin = sin(rotation);
@@ -132,25 +135,28 @@ void	RotateTangents(uint particleID, INOUT(vec3) tangent0, INOUT(vec3) tangent1 
 
 	tangent0 = tangent1 * rotSin + tangent0 * rotCos;
 	tangent1 = tangent1 * rotCos - _tangent0 * rotSin;
-#endif // defined(VRESOURCE_Rotations) || defined(VRESOURCE_RotationsOffsets)
+#	endif // defined(VRESOURCE_Rotations) || defined(VRESOURCE_RotationsOffsets)
 }
 #endif
 
+//----------------------------------------------------------------------------
+
 vec4	proj_position(IN(vec3) position VS_ARGS)
 {
-#if		defined(CONST_SceneInfo_ViewProj)
+#if	defined(CONST_SceneInfo_ViewProj)
 	return mul(GET_CONSTANT(SceneInfo, ViewProj), vec4(position, 1.0f));
 #else
 	return vec4(position, 1.0f);
 #endif
 }
 
+//----------------------------------------------------------------------------
+
 #if BB_FeatureC1
 vec3	ComputeTangent1(IN(vec3) nrm, IN(vec3) tangent0 VS_ARGS)
 {
 	vec3	side = GET_CONSTANT(SceneInfo, SideVector).xyz;
 	vec3	depth = GET_CONSTANT(SceneInfo, DepthVector).xyz;
-
 	vec3	tangent1 = myCross(nrm, tangent0);
 	if (dot(tangent1, tangent1) > NORMALIZER_EPSILON)
 		tangent1 = normalize(tangent1);
@@ -167,9 +173,11 @@ vec3	ComputeTangent1(IN(vec3) nrm, IN(vec3) tangent0 VS_ARGS)
 }
 #endif
 
+//----------------------------------------------------------------------------
+
 void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint particleID VS_ARGS)
 {
-#if BB_GPU_SIM
+#if defined(BB_GPU_SIM)
 	const uint		storageId = GET_CONSTANT(GPUBillboardPushConstants, StreamOffsetsIndex);
 	const vec3		worldPos = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(PositionsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
 	const uint		drId = 0; // No batching yet for GPU particles
@@ -177,8 +185,7 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 	const vec4		worldPosDrId = LOADF4(GET_RAW_BUFFER(Positions), RAW_BUFFER_INDEX(particleID * 4));
 	const vec3		worldPos = worldPosDrId.xyz;
 	const uint		drId = asuint(worldPosDrId.w);
-#endif
-
+#endif	// defined(BB_GPU_SIM)
 
 	const vec4		currentDr = GET_CONSTANT(BillboardInfo, DrawRequest)[drId];
 	const uint		flags = asuint(currentDr.x);
@@ -191,13 +198,13 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 	vec3			tangent1 = vec3(0, 0, 0); // billboard fwd/stretch vector
 	vec3			planeNormal = vec3(0, 0, 0); // billboard normal vector
 
-#if		!defined(CONST_SceneInfo_BillboardingView)
+#if	!defined(CONST_SceneInfo_BillboardingView)
 #	error "Missing BillboardingView matrix in SceneInfo"
 #endif
-#if		!defined(CONST_SceneInfo_SideVector)
+#if	!defined(CONST_SceneInfo_SideVector)
 #	error "Missing View side vector in SceneInfo"
 #endif
-#if		!defined(CONST_SceneInfo_DepthVector)
+#if	!defined(CONST_SceneInfo_DepthVector)
 #	error "Missing View depth vector in SceneInfo"
 #endif
 
@@ -207,129 +214,118 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 	{
 #if BB_ScreenAligned
 	case BB_ScreenAligned:
-	{
-		tangent0 = GET_MATRIX_X_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
-		tangent1 = GET_MATRIX_Y_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
-		planeNormal = GET_MATRIX_Z_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+		{
+			tangent0 = GET_MATRIX_X_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+			tangent1 = GET_MATRIX_Y_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+			planeNormal = GET_MATRIX_Z_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 
-		RotateTangents(particleID, tangent0, tangent1 VS_PARAMS);
+			RotateTangents(particleID, tangent0, tangent1 VS_PARAMS);
 
-		// Apply radius after rotation, otherwise float2 sizes are incorrect
-		tangent0 *= radius.x;
-		tangent1 *= radius.y;
+			// Apply radius after rotation, otherwise float2 sizes are incorrect
+			tangent0 *= radius.x;
+			tangent1 *= radius.y;
+		}
 		break;
-	}
-#endif
+#endif	// BB_ScreenAligned
 #if BB_ViewposAligned
 	case BB_ViewposAligned:
-	{
-		const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
-		const vec3	viewUpAxis = GET_MATRIX_Y_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
-		const vec3	camToParticle = normalize(worldPos - viewPos);
-		const vec3	upVectorInterm = viewUpAxis - 1.e-5f * camToParticle.xzy;
+		{
+			const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+			const vec3	viewUpAxis = GET_MATRIX_Y_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+			const vec3	camToParticle = normalize(worldPos - viewPos);
+			const vec3	upVectorInterm = viewUpAxis - 1.e-5f * camToParticle.xzy;
 
-		tangent0 = normalize(myCross(camToParticle, upVectorInterm));
-		tangent1 = myCross(tangent0, camToParticle);
-		planeNormal = -camToParticle;
-		RotateTangents(particleID, tangent0, tangent1 VS_PARAMS);
-		
-		// Apply radius after rotation, otherwise float2 sizes are incorrect
-		tangent0 *= radius.x;
-		tangent1 *= radius.y;
+			tangent0 = normalize(myCross(camToParticle, upVectorInterm));
+			tangent1 = myCross(tangent0, camToParticle);
+			planeNormal = -camToParticle;
+			RotateTangents(particleID, tangent0, tangent1 VS_PARAMS);
+			
+			// Apply radius after rotation, otherwise float2 sizes are incorrect
+			tangent0 *= radius.x;
+			tangent1 *= radius.y;
+		}
 		break;
-	}
-#endif
+#endif	// BB_ViewposAligned
 #if BB_AxisAligned
 	case BB_AxisAligned:
-	{
-		const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
-		const vec3	camToParticle = normalize(worldPos - viewPos);
-
-#	if BB_GPU_SIM
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
+		{
+			const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+			const vec3	camToParticle = normalize(worldPos - viewPos);
+#	if defined(BB_GPU_SIM)
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
 #	else
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
-#	endif // BB_GPU_SIM
-
-		tangent0 = ComputeTangent1(camToParticle, axis_fwd VS_PARAMS) * radius.x;
-		tangent1 = axis_fwd * 0.5f;
-		planeNormal = -camToParticle;
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
+#	endif // defined(BB_GPU_SIM)
+			tangent0 = ComputeTangent1(camToParticle, axis_fwd VS_PARAMS) * radius.x;
+			tangent1 = axis_fwd * 0.5f;
+			planeNormal = -camToParticle;
+		}
 		break;
-	}
-#endif
+#endif	// BB_AxisAligned
 #if BB_AxisAlignedSpheroid
 	case BB_AxisAlignedSpheroid:
-	{
-		const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
-		const vec3	camToParticle = normalize(worldPos - viewPos);
-
-#	if BB_GPU_SIM
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
+		{
+			const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+			const vec3	camToParticle = normalize(worldPos - viewPos);
+#	if defined(BB_GPU_SIM)
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
 #	else
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
-#	endif // BB_GPU_SIM
-
-		tangent0 = ComputeTangent1(camToParticle, axis_fwd VS_PARAMS) * radius.x;
-		tangent1 = axis_fwd * 0.5f + myCross(tangent0, camToParticle);
-		// Warning: tangent0 and tangent1 are not orthogonal.
-		planeNormal = normalize(myCross(tangent0, tangent1));
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
+#	endif // defined(BB_GPU_SIM)
+			tangent0 = ComputeTangent1(camToParticle, axis_fwd VS_PARAMS) * radius.x;
+			tangent1 = axis_fwd * 0.5f + myCross(tangent0, camToParticle);
+			// Warning: tangent0 and tangent1 are not orthogonal.
+			planeNormal = normalize(myCross(tangent0, tangent1));
+		}
 		break;
-	}
-#endif
+#endif	// BB_AxisAlignedSpheroid
 #if BB_AxisAlignedCapsule
 	case BB_AxisAlignedCapsule:
-	{
-		const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
-		const vec3	camToParticle = normalize(worldPos - viewPos);
-
-#	if BB_GPU_SIM
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
+		{
+			const vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
+			const vec3	camToParticle = normalize(worldPos - viewPos);
+#	if defined(BB_GPU_SIM)
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
 #	else
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
-#	endif // BB_GPU_SIM
-
-		tangent0 = ComputeTangent1(camToParticle, axis_fwd VS_PARAMS) * sqrt(2.f) * radius.x;
-
-		tangent1 = axis_fwd * 0.5f;
-		planeNormal = normalize(myCross(tangent0, tangent1));
-
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
+#	endif // defined(BB_GPU_SIM)
+			tangent0 = ComputeTangent1(camToParticle, axis_fwd VS_PARAMS) * sqrt(2.f) * radius.x;
+			tangent1 = axis_fwd * 0.5f;
+			planeNormal = normalize(myCross(tangent0, tangent1));
 #if FLIP_BILLBOARDING_AXIS
-		tangent0 *= -1.0f;
+			tangent0 *= -1.0f;
 #endif
-
-		const float	upAxisStretch = abs(texCoords.y) - 1.0f;
-		tangent1 -= myCross(tangent0, camToParticle) * upAxisStretch;
-		texCoords.y = clamp(texCoords.y, -1.0f, 1.0f);
-
+			const float	upAxisStretch = abs(texCoords.y) - 1.0f;
+			tangent1 -= myCross(tangent0, camToParticle) * upAxisStretch;
+			texCoords.y = clamp(texCoords.y, -1.0f, 1.0f);
+		}
 		break;
-	}
-#endif
+#endif	// BB_AxisAlignedCapsule
 #if BB_PlaneAligned
 	case BB_PlaneAligned:
-	{
-#	if BB_GPU_SIM
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
-		const vec3	axis_nrm = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis1sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
+		{
+#	if defined(BB_GPU_SIM)
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
+			const vec3	axis_nrm = LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis1sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
 #	else
-		const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
-		const vec3	axis_nrm = LOADF3(GET_RAW_BUFFER(Axis1s), RAW_BUFFER_INDEX(particleID * 3));
-#	endif // BB_GPU_SIM
-
-		tangent0 = ComputeTangent1(axis_nrm, axis_fwd VS_PARAMS);
-		tangent1 = myCross(tangent0, axis_nrm);
-		planeNormal = axis_nrm;
-
-		// Specific to planar aligned quads, flip X
-		RotateTangents(particleID, tangent0, tangent1 VS_PARAMS);
-		
-		// Apply radius after rotation, otherwise float2 sizes are incorrect
-		tangent0 *= radius.x;
-		tangent1 *= radius.y;
-		tangent0 = -tangent0;
-
+			const vec3	axis_fwd = LOADF3(GET_RAW_BUFFER(Axis0s), RAW_BUFFER_INDEX(particleID * 3));
+			const vec3	axis_nrm = LOADF3(GET_RAW_BUFFER(Axis1s), RAW_BUFFER_INDEX(particleID * 3));
+#	endif // defined(BB_GPU_SIM)
+	
+			tangent0 = ComputeTangent1(axis_nrm, axis_fwd VS_PARAMS);
+			tangent1 = myCross(tangent0, axis_nrm);
+			planeNormal = axis_nrm;
+	
+			// Specific to planar aligned quads, flip X
+			RotateTangents(particleID, tangent0, tangent1 VS_PARAMS);
+			
+			// Apply radius after rotation, otherwise float2 sizes are incorrect
+			tangent0 *= radius.x;
+			tangent1 *= radius.y;
+			tangent0 = -tangent0;
+		}
 		break;
-	}
-#endif
+#endif	// BB_PlaneAligned
 	default:
 		break;
 	}
@@ -392,11 +388,11 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 
 	const uint	maxAtlasID = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(0)) - 1U;
 	
-#		if BB_GPU_SIM
+#		if defined(BB_GPU_SIM)
 	const float	textureID = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Atlas_TextureIDsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID));
 #		else
 	const float	textureID = LOADF(GET_RAW_BUFFER(Atlas_TextureIDs), RAW_BUFFER_INDEX(particleID));
-#		endif // BB_GPU_SIM
+#		endif // defined(BB_GPU_SIM)
 
 	const uint	atlasID0 = min(uint(textureID), maxAtlasID);
 	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 1));
@@ -417,7 +413,7 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 #	else
 		vOutput.fragUV0 = texCoords;
 #	endif
-#endif
+#endif	// defined(VOUTPUT_fragUV0)
 
 #if	defined(VOUTPUT_fragNormal) || defined(VOUTPUT_fragTangent)
 	const float	normalBendingFactor = currentDr.y;
@@ -470,10 +466,10 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 		vOutput.fragTangent = vec4(normalize(tangent0Norm + tangent1Norm) * (flipU ? -1.0f : 1.0f), flipU != flipV ? -1.0f : 1.0f);
 #		else
 		vOutput.fragTangent = vec4(normalize(tangent0) * (flipU ? -1.0f : 1.0f), flipU != flipV ? 1.0f : -1.0f);
-#endif
+#		endif
 #	endif
 	}
-#endif
+#endif	// defined(VOUTPUT_fragNormal) || defined(VOUTPUT_fragTangent)
 
 	vOutput.VertexPosition = proj_position(vertexWorldPosition VS_PARAMS);
 #if defined(VOUTPUT_fragWorldPosition)

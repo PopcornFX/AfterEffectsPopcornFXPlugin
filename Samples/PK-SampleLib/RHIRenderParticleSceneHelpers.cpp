@@ -230,6 +230,23 @@ bool	CRHIParticleSceneRenderHelper::Init(const RHI::PApiManager	&apiManager,
 			return false;
 	}
 
+	// Create Wind info:
+	{
+		RHI::SConstantSetLayout			windInfoConstantSetLayout;
+		if (!CreateWindInfoConstantLayout(windInfoConstantSetLayout))
+			return false;
+
+		const RHI::SConstantBufferDesc	&sceneInfoBufferDesc = windInfoConstantSetLayout.m_Constants.First().m_ConstantBuffer;
+
+		const u32	constantBufferSize = sceneInfoBufferDesc.m_ConstantBufferSize;
+		PK_ASSERT(constantBufferSize == sizeof(PKSample::SBackdropsData::SWind));
+		m_WindInfoConstantBuffer = m_ApiManager->CreateGpuBuffer(RHI::SRHIResourceInfos("WindInfos Constant Buffer"), RHI::ConstantBuffer, constantBufferSize);
+		if (!PK_VERIFY(m_WindInfoConstantBuffer != null))
+			return false;
+
+		Mem::Clear(&m_BackdropsData.m_WindInfo, sizeof(m_BackdropsData.m_WindInfo));
+	}
+
 	// Just for the full screen quad...
 	if (!m_GBuffer.Init(m_ApiManager, m_DefaultSampler, m_DefaultSamplerConstLayout, m_SceneInfoConstantSetLayout))
 		return false;
@@ -1162,21 +1179,6 @@ bool	CRHIParticleSceneRenderHelper::SetBackdropInfo(const SBackdropsData &backdr
 												m_DefaultSampler);
 		}
 
-		if (backdropData.m_FollowInstances)
-		{
-			m_MeshBackdrop.m_Transforms = backdropData.m_FXInstancesTransforms;
-		}
-		else
-		{
-			if (!PK_VERIFY(m_MeshBackdrop.m_Transforms.Resize(1)))
-				return false;
-			m_MeshBackdrop.m_Transforms.First() = backdropData.m_MeshBackdropTransforms;
-		}
-
-		// If there is skinned mesh data, transfer to VBuffers
-		if (!m_MeshBackdrop.RefreshSkinnedDatas(m_ApiManager, backdropData.m_FXInstancesSkinnedDatas))
-			return false;
-
 		// And we update the lights
 		PK_VERIFY(_UpdateBackdropLights(backdropData));
 	}
@@ -1187,6 +1189,17 @@ bool	CRHIParticleSceneRenderHelper::SetBackdropInfo(const SBackdropsData &backdr
 	{
 		// Create the grid geometry:
 		success &= _CreateGridGeometry(backdropData.m_GridSize, backdropData.m_GridSubdivisions, backdropData.m_GridSubSubdivisions, backdropData.m_GridTransforms, coordinateFrame);
+	}
+
+	if (m_WindInfoConstantBuffer != null && m_BackdropsData.m_WindInfo != backdropData.m_WindInfo)
+	{
+		// Fill the GPU buffer:
+		SBackdropsData::SWind	*buffer = static_cast<SBackdropsData::SWind*>(m_ApiManager->MapCpuView(m_WindInfoConstantBuffer));
+		if (!PK_VERIFY(buffer != null))
+			return false;
+		*buffer = backdropData.m_WindInfo;
+		if (!PK_VERIFY(m_ApiManager->UnmapCpuView(m_WindInfoConstantBuffer)))
+			return false;
 	}
 
 	m_BackdropsData = backdropData;
@@ -1238,6 +1251,9 @@ bool	CRHIParticleSceneRenderHelper::RenderScene(	ERenderTargetDebug		renderTarge
 
 	RHI::PCommandBuffer	preOpaqueCmdBuff = m_ApiManager->CreateCommandBuffer(RHI::SRHIResourceInfos("PK-RHI Pre Opaque command buffer"));
 	RHI::PCommandBuffer	postOpaqueCmdBuff = m_ApiManager->CreateCommandBuffer(RHI::SRHIResourceInfos("PK-RHI Post Opaque command buffer"));
+
+	if (!PK_VERIFY(preOpaqueCmdBuff != null && postOpaqueCmdBuff != null))
+		return false;
 
 	preOpaqueCmdBuff->Start();
 
@@ -2203,64 +2219,75 @@ void	CRHIParticleSceneRenderHelper::_RenderMeshBackdrop(const RHI::PCommandBuffe
 
 	const bool	useVertexColors = m_MeshBackdrop.m_HasVertexColors && m_BackdropsData.m_MeshVertexColorsMode != 0u;
 
-	if (useVertexColors)
-		cmdBuff->BindRenderState(m_MeshRenderStateVertexColor);
-	else
-		cmdBuff->BindRenderState(m_MeshRenderState);
-
 	const RHI::PConstantSet		constSets[] =
 	{
 		m_SceneInfoConstantSet,
 		m_MeshBackdrop.m_ConstantSet
 	};
 
-	cmdBuff->BindConstantSets(constSets);
+	const u32	instanceCount = m_MeshBackdrop.m_Transforms.Count();
 
-	SMeshVertexConstant	meshVertexConstant;
-	const u32			instanceCount = m_MeshBackdrop.m_Transforms.Count();
-	for (u32 iInstance = 0; iInstance < instanceCount; ++iInstance)
+	for (u32 j = 0, stop = (m_MeshBackdropFilteredSubmeshes.Empty() ? m_MeshBackdrop.m_MeshBatches.Count() : m_MeshBackdropFilteredSubmeshes.Count()); j < stop; ++j)
 	{
-		// Model matrix
-		const CFloat4x4	meshTransforms = m_MeshBackdrop.m_Transforms[iInstance];
-		meshVertexConstant.m_ModelMatrix = meshTransforms;
-		// Normal matrix (same as model but without scale and translate)
-		const CFloat4x4	modelNoTranslate = CFloat4x4(meshTransforms.XAxis(), meshTransforms.YAxis(), meshTransforms.ZAxis(), CFloat4::WAXIS);
-		meshVertexConstant.m_NormalMatrix = modelNoTranslate.Inverse().Transposed();
+		const u32							smidx = m_MeshBackdropFilteredSubmeshes.Empty() ? j : m_MeshBackdropFilteredSubmeshes[j];
+		if (smidx >= m_MeshBackdrop.m_MeshBatches.Count()) // This can happen the frame the backdrop LOD changes in the mesh viewer
+			continue;
 
-		cmdBuff->PushConstant(&meshVertexConstant, 0);
-		for (u32 j = 0, stop = (m_MeshBackdropFilteredSubmeshes.Empty() ? m_MeshBackdrop.m_MeshBatches.Count() : m_MeshBackdropFilteredSubmeshes.Count()); j < stop; ++j)
+		const PKSample::SMesh::SMeshBatch	&curBatch = m_MeshBackdrop.m_MeshBatches[smidx];
+		if (!PK_VERIFY(curBatch.m_BindPoseVertexBuffers != null && curBatch.m_IndexBuffer != null))
+			continue;
+
+		RHI::PGpuBuffer	vBuffer = curBatch.m_BindPoseVertexBuffers;
+
+		const bool	useStrips = (curBatch.m_IndexMode == RHI::DrawModeTriangleStrip);
+		if (useVertexColors)
+			cmdBuff->BindRenderState(useStrips ? m_MeshRenderStateVertexColorStrips : m_MeshRenderStateVertexColor);
+		else
+			cmdBuff->BindRenderState(useStrips ? m_MeshRenderStateStrips : m_MeshRenderState);
+
+		cmdBuff->BindConstantSets(constSets);
+
+		cmdBuff->BindIndexBuffer(curBatch.m_IndexBuffer, 0, curBatch.m_IndexSize);
+
+		const u32	offsetsWithColors[] = { curBatch.m_PositionsOffset, curBatch.m_NormalsOffset, curBatch.m_TangentsOffset, curBatch.m_TexCoordsOffset, curBatch.m_ColorsOffset };
+		const u32	offsets[] = { curBatch.m_PositionsOffset, curBatch.m_NormalsOffset, curBatch.m_TangentsOffset, curBatch.m_TexCoordsOffset};
+		bool		hasOverriddenBaseVB = true;	// Set to true for first bind
+
+		const u32	instanceStop = curBatch.m_Instances.Empty() ? 1 : PKMin(instanceCount, curBatch.m_Instances.Count());
+		for (u32 iInstance = 0; iInstance < instanceStop; ++iInstance)
 		{
-			const u32							smidx = m_MeshBackdropFilteredSubmeshes.Empty() ? j : m_MeshBackdropFilteredSubmeshes[j];
-			if (smidx >= m_MeshBackdrop.m_MeshBatches.Count()) // This can happen the frame the backdrop LOD changes in the mesh viewer
-				continue;
-
-			const PKSample::SMesh::SMeshBatch	&curBatch = m_MeshBackdrop.m_MeshBatches[smidx];
-			RHI::PGpuBuffer						vBuffer = null;
-
 			// curBatch can be either static or skinned batch, most of the time it won't be animated
-			if (!PK_VERIFY(curBatch.m_Instances.Empty() || iInstance < curBatch.m_Instances.Count()))
-				continue;
-			// If this instance has valid skinned data, render with those vb, otherwise render the bindpose
-			if (curBatch.m_Instances.Empty() || !curBatch.m_Instances[iInstance].m_HasValidSkinnedData)
-				vBuffer = curBatch.m_BindPoseVertexBuffers;
-			else
-				vBuffer = curBatch.m_Instances[iInstance].m_SkinnedVertexBuffers;
+			const bool	hasVBOverride = (!curBatch.m_Instances.Empty() && curBatch.m_Instances[iInstance].m_HasValidSkinnedData);
+			if (hasOverriddenBaseVB || hasVBOverride)
+			{
+				if (hasVBOverride)
+					vBuffer = curBatch.m_Instances[iInstance].m_SkinnedVertexBuffers;
+				else
+					vBuffer = curBatch.m_BindPoseVertexBuffers;
 
-			if (!PK_VERIFY(vBuffer != null && curBatch.m_BindPoseVertexBuffers != null))
-				continue;
+				if (!PK_VERIFY(vBuffer != null))
+					continue;
 
-			const RHI::PGpuBuffer		vertexBuffersWithColors[] = { vBuffer, vBuffer, vBuffer, curBatch.m_BindPoseVertexBuffers, curBatch.m_BindPoseVertexBuffers };
-			const u32					offsetsWithColors[] = { curBatch.m_PositionsOffset, curBatch.m_NormalsOffset, curBatch.m_TangentsOffset, curBatch.m_TexCoordsOffset, curBatch.m_ColorsOffset };
+				const RHI::PGpuBuffer	vertexBuffersWithColors[] = { vBuffer, vBuffer, vBuffer, curBatch.m_BindPoseVertexBuffers, curBatch.m_BindPoseVertexBuffers };
+				const RHI::PGpuBuffer	vertexBuffers[] = { vBuffer, vBuffer, vBuffer, curBatch.m_BindPoseVertexBuffers};
 
-			const RHI::PGpuBuffer		vertexBuffers[] = { vBuffer, vBuffer, vBuffer, curBatch.m_BindPoseVertexBuffers};
-			const u32					offsets[] = { curBatch.m_PositionsOffset, curBatch.m_NormalsOffset, curBatch.m_TangentsOffset, curBatch.m_TexCoordsOffset};
+				if (useVertexColors)
+					cmdBuff->BindVertexBuffers(vertexBuffersWithColors, offsetsWithColors);
+				else
+					cmdBuff->BindVertexBuffers(vertexBuffers, offsets);
 
-			if (useVertexColors)
-				cmdBuff->BindVertexBuffers(vertexBuffersWithColors, offsetsWithColors);
-			else
-				cmdBuff->BindVertexBuffers(vertexBuffers, offsets);
+				hasOverriddenBaseVB = (vBuffer != curBatch.m_BindPoseVertexBuffers);
+			}
 
-			cmdBuff->BindIndexBuffer(curBatch.m_IndexBuffer, 0, curBatch.m_IndexSize);
+			SMeshVertexConstant	meshVertexConstant;
+			// Model matrix
+			const CFloat4x4	meshTransforms = m_MeshBackdrop.m_Transforms[iInstance];
+			meshVertexConstant.m_ModelMatrix = meshTransforms;
+			// Normal matrix (same as model but without scale and translate)
+			const CFloat4x4	modelNoTranslate = CFloat4x4(meshTransforms.XAxis(), meshTransforms.YAxis(), meshTransforms.ZAxis(), CFloat4::WAXIS);
+			meshVertexConstant.m_NormalMatrix = modelNoTranslate.Inverse().Transposed();
+
+			cmdBuff->PushConstant(&meshVertexConstant, 0);
 
 			cmdBuff->DrawIndexed(0, 0, curBatch.m_IndexCount);
 		}
@@ -2601,9 +2628,11 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 	CreateGBufferConstSetLayouts(GBufferCombination_Diffuse_RoughMetal_Normal, m_MeshConstSetLayout);
 
 	m_MeshRenderState = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Render State"));
+	m_MeshRenderStateStrips = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Render State (tristrips)"));
 	m_MeshRenderStateVertexColor = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Vertex Color Render State"));
+	m_MeshRenderStateVertexColorStrips = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Vertex Color Render State (tristrips)"));
 
-	if (m_MeshRenderState == null || m_MeshRenderStateVertexColor == null)
+	if (m_MeshRenderState == null || m_MeshRenderStateVertexColor == null || m_MeshRenderStateStrips == null || m_MeshRenderStateVertexColorStrips == null)
 		return false;
 
 	// Pipeline state
@@ -2641,6 +2670,25 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 			return false;
 	}
 
+	// Dup strips state
+	{
+		m_MeshRenderStateStrips->m_RenderState.m_PipelineState = m_MeshRenderState->m_RenderState.m_PipelineState;
+		m_MeshRenderStateStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderState->m_RenderState.m_InputVertexBuffers;
+		m_MeshRenderStateStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
+
+		FillGBufferShaderBindings(m_MeshRenderStateStrips->m_RenderState.m_ShaderBindings, m_SceneInfoConstantSetLayout, m_MeshConstSetLayout, false, true);
+
+		m_MeshRenderStateStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[0].m_BufferIdx = 0;
+		m_MeshRenderStateStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[1].m_BufferIdx = 1;
+		m_MeshRenderStateStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[2].m_BufferIdx = 2;
+		m_MeshRenderStateStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[3].m_BufferIdx = 3;
+
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateStrips->m_RenderState, shadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateStrips, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
 	// Pipeline state vertex color
 	{
 		m_MeshRenderStateVertexColor->m_RenderState = m_MeshRenderState->m_RenderState;
@@ -2665,6 +2713,26 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateVertexColor->m_RenderState, shadersPaths, m_ApiManager))
 			return false;
 		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateVertexColor, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	// Dup VColor strips state
+	{
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_PipelineState = m_MeshRenderStateVertexColor->m_RenderState.m_PipelineState;
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderStateVertexColor->m_RenderState.m_InputVertexBuffers;
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
+
+		FillGBufferShaderBindings(m_MeshRenderStateVertexColorStrips->m_RenderState.m_ShaderBindings, m_SceneInfoConstantSetLayout, m_MeshConstSetLayout, true, true);
+
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[0].m_BufferIdx = 0;
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[1].m_BufferIdx = 1;
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[2].m_BufferIdx = 2;
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[3].m_BufferIdx = 3;
+		m_MeshRenderStateVertexColorStrips->m_RenderState.m_ShaderBindings.m_InputAttributes[4].m_BufferIdx = 4;
+
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateVertexColorStrips->m_RenderState, shadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateVertexColorStrips, frameBufferLayout, renderPass, subPassIdx))
 			return false;
 	}
 

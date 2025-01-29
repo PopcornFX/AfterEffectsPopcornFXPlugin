@@ -18,7 +18,7 @@
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_ribbon_gpu.h>
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_mesh_gpu.h>
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_decal_gpu.h>
-//#include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_triangle_gpu.h>
+#include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_triangle_gpu.h>
 
 #include "PK-SampleLib/RenderIntegrationRHI/RendererCache.h"
 #include "PK-SampleLib/RenderIntegrationRHI/RHITypePolicy.h"
@@ -190,6 +190,61 @@ private:
 	// Static buffers
 	SGpuBuffer		m_DrawIndices;	// DrawIndexed indices
 	SGpuBuffer		m_TexCoords;	// DrawIndexed texcoords
+	bool			m_Initialized = false;
+	bool			_InitStaticBuffers();
+};
+
+//----------------------------------------------------------------------------
+
+class	CRHIRendererBatch_Triangle_GPU : public CRendererBatchJobs_Triangle_GPUBB
+{
+public:
+	CRHIRendererBatch_Triangle_GPU(RHI::PApiManager apiManager)
+	:	m_ApiManager(apiManager)
+	{
+	}
+
+	virtual bool	Setup(const CRendererDataBase *renderer, const CParticleRenderMedium *owner, const CFrameCollector *fc, const CStringId &storageClass) override;
+	virtual bool	AreRenderersCompatible(const CRendererDataBase *rendererA, const CRendererDataBase *rendererB) const override;
+
+	virtual bool	AllocBuffers(SRenderContext &ctx) override;
+	virtual bool	MapBuffers(SRenderContext &ctx) override;
+	virtual bool	LaunchCustomTasks(SRenderContext &ctx) override;
+	virtual bool	UnmapBuffers(SRenderContext &ctx) override;
+
+	virtual bool	EmitDrawCall(SRenderContext &ctx, const SDrawCallDesc &toEmit) override;
+
+private:
+	RHI::PApiManager	m_ApiManager;
+
+	bool				m_NeedGPUSort = false;
+	bool				m_SortByCameraDistance = false;
+
+	SGpuBuffer						m_IndirectDraw;
+	RHI::SDrawIndexedIndirectArgs	*m_MappedIndirectBuffer = null;
+
+	RHI::PConstantSet				m_VertexBBOffsetsConstantSet; // (Positions0Offset, Positions1Offset, ..)
+
+	// Offsets for accessing each draw request gpu sim data streams
+	SGpuBuffer					m_SimStreamOffsets_Enableds;
+	SGpuBuffer					m_SimStreamOffsets_Positions0;
+	SGpuBuffer					m_SimStreamOffsets_Positions1;
+	SGpuBuffer					m_SimStreamOffsets_Positions2;
+
+	TStaticArray<u32*, 4>		m_MappedSimStreamOffsets;
+	SRHIAdditionalFieldBatchGPU	m_AdditionalFieldsSimStreamOffsets;
+	CGuid						m_ColorStreamIdx;
+
+	// Sorting
+	TArray<CGPUSorter>			m_CameraGPUSorters;
+	TArray<SGpuBuffer>			m_CameraSortIndirection;
+	TArray<SGpuBuffer>			m_CameraSortKeys;
+	SGpuBuffer					m_CustomSortKeysOffsets;
+	volatile u32				*m_MappedCustomSortKeysOffsets = null;
+	TArray<RHI::PConstantSet>	m_ComputeCameraSortKeysConstantSets;
+
+	// Static buffers
+	SGpuBuffer		m_DrawIndices;	// DrawIndexed indices
 	bool			m_Initialized = false;
 	bool			_InitStaticBuffers();
 };

@@ -201,6 +201,7 @@ bool	SMesh::_AddMeshBatch(const RHI::PApiManager &apiManager, CMeshNew *mesh, u3
 	apiManager->UnmapCpuView(meshBuffers.m_IndexBuffer);
 	meshBuffers.m_IndexCount = triangleBatch.m_IStream.IndexCount();
 	meshBuffers.m_IndexSize = triangleBatch.m_IStream.IndexByteWidth() == 2 ? RHI::IndexBuffer16Bit : RHI::IndexBuffer32Bit;
+	meshBuffers.m_IndexMode = triangleBatch.m_IStream.PrimitiveType() == CMeshIStream::TriangleStrips ? RHI::DrawModeTriangleStrip : RHI::DrawModeTriangle;
 
 	meshBuffers.m_BBox = mesh->BBox();
 //	buffers.PushBack(meshBuffers.m_IndexBuffer);	// NOTE(Julien): Removed, v2.b1 : unused
@@ -381,71 +382,6 @@ bool	SMesh::_LoadMap(const RHI::PApiManager &apiManager, STextureMap &map, CReso
 														map.m_Texture->GetMipmapCount());
 	if (map.m_Sampler == null)
 		return false;
-	return true;
-}
-
-//----------------------------------------------------------------------------
-
-bool	SMesh::RefreshSkinnedDatas(const RHI::PApiManager &apiManager, TMemoryView<const SSkinnedMeshData> skinnedDatas)
-{
-	PK_NAMEDSCOPEDPROFILE("Refresh backdrop skinned datas");
-
-	if (m_MeshResource == null || m_MeshResource->Empty())
-		return true;
-
-	const u32	batchCount = m_MeshBatches.Count();
-	for (u32 iBatch = 0; iBatch < batchCount; ++iBatch)
-	{
-		SMeshBatch	&batch = m_MeshBatches[iBatch];
-
-		PK_ASSERT(batch.m_BindPoseVertexBuffers != null);
-		for (u32 iInstance = 0; iInstance < batch.m_Instances.Count(); ++iInstance)
-			batch.m_Instances[iInstance].m_HasValidSkinnedData = false;
-	}
-	if (skinnedDatas.Empty())
-		return true;
-
-	PK_ASSERT(skinnedDatas.Count() == m_Transforms.Count());
-	const u32	skinnedDataCount = m_Transforms.Count();
-	for (u32 iData = 0; iData < skinnedDataCount; ++iData)
-	{
-		const SSkinnedMeshData	&skinnedData = skinnedDatas[iData];
-		if (!skinnedData.m_Valid)
-			continue;
-		for (const auto &submesh : skinnedData.m_SubMeshes)
-		{
-			if (!PK_VERIFY(m_MeshBatches.Count() > submesh.m_SubMeshID))
-				continue;
-			if (submesh.m_RawData.Empty())	// Nothing to update there
-				continue;
-
-			SMeshBatch				&batch = m_MeshBatches[submesh.m_SubMeshID];
-			SMeshBatch::SInstance	*instance = null;
-			if (iData >= batch.m_Instances.Count())
-			{
-				if (!PK_VERIFY(batch.m_Instances.PushBack().Valid()))
-					return false;
-				instance = &batch.m_Instances.Last();
-			}
-			else
-				instance = &batch.m_Instances[iData];
-
-			instance->m_HasValidSkinnedData = true;
-
-			// Transfer positions/normals
-			PK_ASSERT(submesh.m_RawData.SizeInBytes() == (batch.m_NormalsOffset / sizeof(CFloat3)) * ( 2 * sizeof(CFloat3) + sizeof(CFloat4)));
-			if (instance->m_SkinnedVertexBuffers == null)
-				instance->m_SkinnedVertexBuffers = apiManager->CreateGpuBuffer(RHI::SRHIResourceInfos("Mesh Skinned Vertex Buffer"), RHI::VertexBuffer, submesh.m_RawData.SizeInBytes());
-			if (!PK_VERIFY(instance->m_SkinnedVertexBuffers != null))
-				return false;
-
-			void	*mappedData = apiManager->MapCpuView(instance->m_SkinnedVertexBuffers);
-			if (mappedData == null)
-				return false;
-			PK_NAMESPACE::Mem::Copy(mappedData, submesh.m_RawData.RawDataPointer(), submesh.m_RawData.SizeInBytes());
-			apiManager->UnmapCpuView(instance->m_SkinnedVertexBuffers);
-		}
-	}
 	return true;
 }
 

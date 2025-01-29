@@ -233,6 +233,7 @@ namespace	MaterialToRHI
 			{
 				const u32	shaderOptions_Vertex = Option_VertexPassThrough | Option_TriangleVertexBillboarding;
 				success &= m_OptionsOverride.PushBack(static_cast<EShaderOptions>(shaderOptions_Vertex)).Valid();
+				success &= m_OptionsOverride.PushBack(static_cast<EShaderOptions>(shaderOptions_Vertex | Option_GPUStorage)).Valid();
 			}
 			else if (renderer->m_RendererType == ERendererClass::Renderer_Mesh)
 			{
@@ -1003,14 +1004,21 @@ namespace	MaterialToRHI
 		{
 			if (gpuStorage)
 			{
-				PK_ASSERT(args.m_RendererType == Renderer_Billboard || args.m_RendererType == Renderer_Ribbon);
-
 				// GPU sim: only a single raw buffer, offsets per stream, and define "BB_GPU_SIM"
 				success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("GPUSimData"));
 				success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_GPU_SIM")).Valid();
 				// Mandatory stream offsets
 				success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("EnabledsOffsets"));
-				success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("PositionsOffsets"));
+				if (args.m_RendererType == Renderer_Triangle)
+				{
+					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Positions0Offsets"));
+					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Positions1Offsets"));
+					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Positions2Offsets"));
+				}
+				else
+				{
+					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("PositionsOffsets"));
+				}
 				// Ribbon mandatory stream offsets
 				if (gpuSortRibbon)
 					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("ParentIDsOffsets"));
@@ -1282,7 +1290,8 @@ namespace	MaterialToRHI
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 						if (atlas)
 						{
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
+							if (!correctDeformation)
+								success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth)).Valid();
 						}
 						if (rawUV0)
@@ -1290,22 +1299,26 @@ namespace	MaterialToRHI
 						if (correctDeformation)
 						{
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
+							if (atlas)
+								success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1ScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVFactors", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
 						}
 					}
 					if (uv && atlas)
 						success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_Atlas")).Valid();
+					if (uv && correctDeformation)
+						success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_CorrectDeformation")).Valid();
 					if (customTextureU)
 						success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_CustomTextureU")).Valid();
 				}
 				else
 				{
-					// Vertex ribbon billboarding not implemented for CPU simulation
+					PK_ASSERT_NOT_REACHED_MESSAGE("GPU Ribbons have only Vertex-BB implemented");
 				}
 			}
 			else
 			{
-				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas, normal, tangent, rawUV0, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
+				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas && !correctDeformation, normal, tangent, rawUV0, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
 				if (correctDeformation)
 				{
 					success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("UVScaleAndOffset", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding)).Valid();
@@ -1314,6 +1327,15 @@ namespace	MaterialToRHI
 					++shaderLocationBinding;
 					++vBufferLocationBinding;
 					success &= outVertexInputBuffer.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat4))).Valid();
+					if (atlas)
+					{
+						success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("UV1ScaleAndOffset", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding)).Valid();
+						if (outShaderDesc != null)
+							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1ScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth, shaderLocationBinding)).Valid();
+						++shaderLocationBinding;
+						++vBufferLocationBinding;
+						success &= outVertexInputBuffer.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat4))).Valid();
+					}
 					success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("UVFactors", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding)).Valid();
 					if (outShaderDesc != null)
 						success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVFactors", RHI::TypeFloat4, RHI::InterpolationSmooth, shaderLocationBinding)).Valid();
@@ -2047,8 +2069,11 @@ namespace	MaterialToRHI
 	static const EShaderOptions	kShaderOptions_TriangleVertexBB[] =
 	{
 		Option_VertexPassThrough,
-
 		Option_VertexPassThrough | Option_TriangleVertexBillboarding,
+#if (PK_PARTICLES_UPDATER_USE_GPU != 0)
+		Option_VertexPassThrough | Option_TriangleVertexBillboarding | Option_GPUStorage,
+		Option_VertexPassThrough | Option_TriangleVertexBillboarding | Option_GPUStorage | Option_GPUSort,
+#endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
 	};
 
 

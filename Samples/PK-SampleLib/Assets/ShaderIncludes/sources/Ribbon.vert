@@ -11,18 +11,29 @@
 #	error config error
 #endif
 
-#if defined(VOUTPUT_fragUV1)
-#	if !defined(VOUTPUT_fragAtlasID)
+#if defined(VOUTPUT_fragAtlasID)
+#	if !defined(VOUTPUT_fragUV1) && !defined(VOUTPUT_fragUV1ScaleAndOffset)
 #		error "config error"
 #	endif
 #else
-#	if defined(VOUTPUT_fragAtlasID)
+#	if defined(VOUTPUT_fragUV1) || defined(VOUTPUT_fragUV1ScaleAndOffset)
 #		error "config error"
 #	endif
 #endif
 #if BB_Feature_Atlas
 #	if !defined(VRESOURCE_Atlas_TextureIDsOffsets)
 #		error missing TextureIDsOffsets SRV
+#	endif
+#endif
+#if BB_Feature_CorrectDeformation
+#	if !defined(VOUTPUT_fragUVScaleAndOffset)
+#		error missing UVScaleAndOffset SRV
+#	endif
+#	if !defined(VOUTPUT_fragUVFactors)
+#		error missing UVFactors SRV
+#	endif
+#	if BB_Feature_Atlas && !defined(VOUTPUT_fragUV1ScaleAndOffset)
+#		error missing UV1ScaleAndOffset SRV
 #	endif
 #endif
 
@@ -40,32 +51,34 @@
 #define	FLIP_BILLBOARDING_AXIS		1
 
 #if	!defined(CONST_BillboardInfo_DrawRequest)
-#error "Missing constant with infos for billboard"
+#	error "Missing constant with infos for billboard"
 #endif
 
 #if defined(CONST_BillboardInfo_DrawRequest)
-#define	BB_Flag_BillboardMask	7U	// 3 firsts bits
-#define	BB_Flag_VFlipU			8U	// 4th bit
-#define	BB_Flag_VFlipV			16U	// 5th bit
-#define	BB_Flag_VRotateTexture	32U	// 5th bit
+#	define	BB_Flag_BillboardMask		7U	// 3 firsts bits
+#	define	BB_Flag_VFlipU				8U	// 4th bit
+#	define	BB_Flag_VFlipV				16U	// 5th bit
+#	define	BB_Flag_VRotateTexture		32U	// 5th bit
 #endif
 
-#if		!defined(CONST_SceneInfo_BillboardingView)
+#if	!defined(CONST_SceneInfo_BillboardingView)
 #	error "Missing BillboardingView matrix in SceneInfo"
 #endif
-#if		!defined(CONST_SceneInfo_SideVector)
+#if	!defined(CONST_SceneInfo_SideVector)
 #	error "Missing View side vector in SceneInfo"
 #endif
-#if		!defined(CONST_SceneInfo_DepthVector)
+#if	!defined(CONST_SceneInfo_DepthVector)
 #	error "Missing View depth vector in SceneInfo"
 #endif
 
-//	DrawRequest:
-// x: Flags
-// y: NormalsBendingFactor
+// DrawRequest:
+//	x: Flags
+//	y: NormalsBendingFactor
 
 // RightHanded/LeftHanded:
 #define	myCross(a, b)  cross(a, b) * GET_CONSTANT(SceneInfo, Handedness)
+
+//----------------------------------------------------------------------------
 
 vec4	proj_position(IN(vec3) position VS_ARGS)
 {
@@ -75,6 +88,8 @@ vec4	proj_position(IN(vec3) position VS_ARGS)
 	return vec4(position, 1.0f);
 #endif
 }
+
+//----------------------------------------------------------------------------
 
 uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint inParticleID VS_ARGS)
 {
@@ -143,90 +158,85 @@ uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint
 	}
 #endif
 
-		
 	switch (billboarderType)
 	{
 #if RB_ViewposAligned
 	case RB_ViewposAligned:
-	{
-		const vec3	prevToNext = posNext - posPrev;
-		normal = pos - viewPos;
-		tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
-		tangent0 = normalize(myCross(normal, prevToNext));	
-		normal = normalize(myCross(tangent0, prevToNext));
-		tangent0 *= size * doRender;
-
+		{
+			const vec3	prevToNext = posNext - posPrev;
+			normal = pos - viewPos;
+			tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
+			tangent0 = normalize(myCross(normal, prevToNext));	
+			normal = normalize(myCross(tangent0, prevToNext));
+			tangent0 *= size * doRender;
+		}
 		break;
-	}
-#endif
+#endif	// RB_ViewposAligned
 #if RB_NormalAxisAligned
 	case RB_NormalAxisAligned:
-	{
-		const vec3	prevToNext = posNext - posPrev;
-		normal = -LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
-		tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
-		tangent0 = normalize(myCross(normal, prevToNext));
-		normal = normalize(myCross(tangent0, prevToNext));
-		tangent0 *= size * doRender;
-
+		{
+			const vec3	prevToNext = posNext - posPrev;
+			normal = -LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3));
+			tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
+			tangent0 = normalize(myCross(normal, prevToNext));
+			normal = normalize(myCross(tangent0, prevToNext));
+			tangent0 *= size * doRender;
+		}
 		break;
-	}
-#endif
-#if RB_SideAxisAligned	
+#endif	// RB_NormalAxisAligned
+#if RB_SideAxisAligned
 	case RB_SideAxisAligned:
-	{
-		const vec3	prevToNext = posNext - posPrev;
-		tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
-		tangent0 = -normalize(LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3)));		
-		normal = normalize(myCross(tangent0, prevToNext));
-		tangent0 *= size * doRender;
-
+		{
+			const vec3	prevToNext = posNext - posPrev;
+			tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
+			tangent0 = -normalize(LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3)));		
+			normal = normalize(myCross(tangent0, prevToNext));
+			tangent0 *= size * doRender;
+		}
 		break;
-	}
-#endif
+#endif	// RB_SideAxisAligned
 #if RB_SideAxisAlignedTube
 	case RB_SideAxisAlignedTube:
-	{
-		const vec3	prevToNext = posNext - posPrev;
-		tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
-		tangent0 = -normalize(LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3)));		
-		normal = normalize(myCross(tangent0, prevToNext));
-		tangent0 *= size * doRender;
+		{
+			const vec3	prevToNext = posNext - posPrev;
+			tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
+			tangent0 = -normalize(LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3)));		
+			normal = normalize(myCross(tangent0, prevToNext));
+			tangent0 *= size * doRender;
 
-		// Quaternion rotation of the normal vector around the prevToNext axis with an angle of quadId / quadCount * 2.0f * PI radiant (even rotation of each segment around 360 degrees).
-		const float	angle = 3.14159265358f * (quadId - 1) / quadCount;
-		const float	sintheta = sin(angle);
-		const float	r = cos(angle);
-		const vec3	u = normalize(prevToNext) * sintheta;
-		const vec3	uv = myCross(u, normal);
-		const vec3	uuv = myCross(u, uv);
-		normal = uv * (r + r) + (normal + (uuv + uuv));
+			// Quaternion rotation of the normal vector around the prevToNext axis with an angle of quadId / quadCount * 2.0f * PI radiant (even rotation of each segment around 360 degrees).
+			const float	angle = 3.14159265358f * (quadId - 1) / quadCount;
+			const float	sintheta = sin(angle);
+			const float	r = cos(angle);
+			const vec3	u = normalize(prevToNext) * sintheta;
+			const vec3	uv = myCross(u, normal);
+			const vec3	uuv = myCross(u, uv);
+			normal = uv * (r + r) + (normal + (uuv + uuv));
+		}
 		break;
-	}
-#endif
+#endif	// RB_SideAxisAlignedTube
 #if RB_SideAxisAlignedMultiPlane
 	case RB_SideAxisAlignedMultiPlane:
-	{
-		const vec3	prevToNext = posNext - posPrev;
-		tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
-		tangent0 = -normalize(LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3)));		
+		{
+			const vec3	prevToNext = posNext - posPrev;
+			tangent1 = isLeftSide ? (posNext - pos) : (pos - posPrev);	
+			tangent0 = -normalize(LOADF3(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Axis0sOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID * 3)));		
 
-		// Quaternion rotation of the tangent0 vector around the prevToNext axis with an angle of quadId / quadCount * PI radiant (even rotation of each plane tangent dir around 180 degrees).
-		const float	angle = 3.14159265358f * (quadId - 1) / quadCount * 0.5f;
-		const float	sintheta = sin(angle);
-		const float	r = cos(angle);
-		const vec3	u = normalize(prevToNext) * sintheta;
-		const vec3	uv = myCross(u, tangent0);
-		const vec3	uuv = myCross(u, uv);
-		tangent0 = uv * (r + r) + (tangent0 + (uuv + uuv));
+			// Quaternion rotation of the tangent0 vector around the prevToNext axis with an angle of quadId / quadCount * PI radiant (even rotation of each plane tangent dir around 180 degrees).
+			const float	angle = 3.14159265358f * (quadId - 1) / quadCount * 0.5f;
+			const float	sintheta = sin(angle);
+			const float	r = cos(angle);
+			const vec3	u = normalize(prevToNext) * sintheta;
+			const vec3	uv = myCross(u, tangent0);
+			const vec3	uuv = myCross(u, uv);
+			tangent0 = uv * (r + r) + (tangent0 + (uuv + uuv));
 
-		tangent0 *= size * doRender;
+			tangent0 *= size * doRender;
 
-		normal = normalize(myCross(tangent0, prevToNext));
-
+			normal = normalize(myCross(tangent0, prevToNext));
+		}
 		break;
-	}
-#endif
+#endif	// RB_SideAxisAlignedMultiPlane
 	default:
 		break;
 	}
@@ -246,7 +256,7 @@ uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint
 	// Remap corners from [-1 +1] to [0 1] texCoords
 	vec2		texCoords = cornerCoords * 0.5f + 0.5f; 
 
-#if BB_Feature_CustomTextureU
+#if BB_Feature_CustomTextureU && !BB_Feature_CorrectDeformation
 	texCoords.x = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(CustomTextureU_TextureUsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID));
 #endif
 
@@ -256,7 +266,7 @@ uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint
 	const bool	flipV = ((flags & BB_Flag_VFlipV) != 0U) != rotateUVs;
 
 	// If we have correct deformation, rotation is handled in fragment shader.
-#if !defined(VOUTPUT_fragUVFactors)
+#if !BB_Feature_CorrectDeformation
 	if (rotateUVs)
 		texCoords.xy = texCoords.yx;
 	if (flipU)
@@ -267,26 +277,7 @@ uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint
 
 	// UVs output 
 #if	defined(VOUTPUT_fragUV0)
-#	if BB_Feature_Atlas
-	const uint	maxAtlasID = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(0)) - 1U;
-	const float	textureID = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Atlas_TextureIDsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID));
-	const uint	atlasID0 = min(uint(textureID), maxAtlasID);
-	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 1));
-	vOutput.fragUV0 = texCoords * rect0.xy + rect0.zw;
-#	if defined (VOUTPUT_fragUV1)
-	const uint	atlasID1 = min(atlasID0 + 1U, maxAtlasID);
-	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 1));
-	vOutput.fragUV1 = texCoords * rect1.xy + rect1.zw;
-	vOutput.fragAtlasID = textureID;
-#	endif
-#	else
-		vOutput.fragUV0 = texCoords;
-#	endif // BB_Feature_Atlas
-#endif // defined(VOUTPUT_fragUV0)
-
-	// Correct deformation output
-#if defined(VOUTPUT_fragUVScaleAndOffset)
-#	if defined(VOUTPUT_fragUVFactors)
+#	if BB_Feature_CorrectDeformation
 	const float	otherSize = LOADF(GET_RAW_BUFFER(GPUSimData), sizesOffset + RAW_BUFFER_INDEX(isLeftSide ? particleIDNext : particleIDPrev));
 	float	ratio = size / otherSize;
 
@@ -298,14 +289,51 @@ uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint
 		outUVFactors.w = ratio;
 	if (isDownSide && !isLeftSide)
 		outUVFactors.y = ratio;
+	vOutput.fragUVFactors = outUVFactors;
 
 	vec2	flipscale = vec2(flipU ? -1.f : 1.f, flipV ? -1.f : 1.f);
 	vec2	flipoffset = vec2 (flipU ? 1.f : 0.f, flipV ? 1.f : 0.f);
+#		if BB_Feature_CustomTextureU
+	float	uoffset = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(CustomTextureU_TextureUsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(isLeftSide ? particleID : particleIDPrev));
+	float	uoffsetNext = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(CustomTextureU_TextureUsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(isLeftSide ? particleIDNext : particleID));
+	flipscale *= rotateUVs ? vec2(1.f, uoffsetNext - uoffset) : vec2(uoffsetNext - uoffset, 1.f);
+	flipoffset *= rotateUVs ? vec2(1.f, uoffsetNext - uoffset) : vec2(uoffsetNext - uoffset, 1.f);
+	flipoffset += rotateUVs ? vec2(0.f, uoffset) : vec2(uoffset, 0.f);
+#		endif // BB_Feature_CustomTextureU
+#	endif // BB_Feature_CorrectDeformation
 
+#	if BB_Feature_Atlas
+	const uint	maxAtlasID = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(0)) - 1U;
+	const float	textureID = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Atlas_TextureIDsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID));
+	const uint	atlasID0 = min(uint(textureID), maxAtlasID);
+	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 1));
+#		if defined (VOUTPUT_fragUV1) || defined (VOUTPUT_fragUV1ScaleAndOffset)
+	const uint	atlasID1 = min(atlasID0 + 1U, maxAtlasID);
+	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 1));
+	vOutput.fragAtlasID = textureID;
+#		endif // defined (VOUTPUT_fragUV1) || defined (VOUTPUT_fragUV1ScaleAndOffset)
+#	endif // BB_Feature_Atlas
+
+#	if BB_Feature_Atlas && !BB_Feature_CorrectDeformation
+	vOutput.fragUV0 = texCoords * rect0.xy + rect0.zw;
+#		if defined (VOUTPUT_fragUV1)
+	vOutput.fragUV1 = texCoords * rect1.xy + rect1.zw;
+#		endif // defined (VOUTPUT_fragUV1)
+#	else
+	vOutput.fragUV0 = texCoords;
+
+#		if BB_Feature_CorrectDeformation
+#			if BB_Feature_Atlas
+	vOutput.fragUVScaleAndOffset = vec4(flipscale * rect0.xy, flipoffset * rect0.xy + rect0.zw);
+#				if defined (VOUTPUT_fragUV1ScaleAndOffset)
+	vOutput.fragUV1ScaleAndOffset = vec4(flipscale * rect1.xy, flipoffset * rect1.xy + rect1.zw);
+#				endif // defined (VOUTPUT_fragUV1ScaleAndOffset)
+#			else
 	vOutput.fragUVScaleAndOffset = vec4(flipscale, flipoffset);
-	vOutput.fragUVFactors = outUVFactors;
-#	endif
-#endif
+#			endif // BB_Feature_Atlas
+#		endif // BB_Feature_CorrectDeformation
+#	endif // BB_Feature_Atlas && !BB_Feature_CorrectDeformation
+#endif // defined(VOUTPUT_fragUV0)
 
 	// Normal output
 #if defined(VOUTPUT_fragNormal)
@@ -321,7 +349,7 @@ uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint
 	}
 	else
 		vOutput.fragNormal = normalize(normal);
-#endif
+#endif	// defined(VOUTPUT_fragNormal)
 
 	// Tangent output
 #if defined(VOUTPUT_fragTangent)
@@ -330,7 +358,7 @@ uint	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uint
 	// w = -1.0f will work with default ribbon, but won't adapt to
 	// transforming the UVs / custom U. Fix that in CPU bb, then here. 
 	vOutput.fragTangent = vec4(normalize(tangent1), -1.0f);
-#endif
+#endif	// defined(VOUTPUT_fragTangent)
 
 	vOutput.VertexPosition = proj_position(vertexWorldPosition VS_PARAMS);
 #if defined(VOUTPUT_fragWorldPosition)

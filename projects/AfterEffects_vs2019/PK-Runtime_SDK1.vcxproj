@@ -82,7 +82,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Debug\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Debug\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>pk_compiler_warnings.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -109,7 +109,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Release\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Release\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>pk_compiler_warnings.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -142,7 +142,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;PK_RETAIL;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Retail\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Retail\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>pk_compiler_warnings.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -457,7 +457,6 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_maths\include\simd\sse\simd_vector8.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Kernels\D3D11\kernel_d3d11.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Kernels\D3D12\kernel_d3d12.h" />
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Kernels\D3D12U\kernel_d3d12U.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Renderers\ps_renderer_base.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Renderers\ps_renderer_billboard.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Renderers\ps_renderer_decal.h" />
@@ -478,7 +477,6 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12\mesh_gpu_d3d12.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12\rectangle_list_gpu_d3d12.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12\sampler_d3d12.h" />
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12U\sampler_d3d12U.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\GPU\sampler_gpu.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\Auto\storage_spatial_auto.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D11\storage_d3d11.h" />
@@ -488,8 +486,6 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12\storage_d3d12.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12\storage_d3d12_stream.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12\storage_spatial_d3d12.h" />
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12U\storage_d3d12U.h" />
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12U\storage_d3d12U_stream.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\GPU\storage_gpu.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\MainMemory\storage_ram.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\MainMemory\storage_ram_allocator.h" />
@@ -500,7 +496,6 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\CPU\updater_cpu.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\D3D11\updater_d3d11.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\D3D12\updater_d3d12.h" />
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\D3D12U\updater_d3d12U.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\GPU\updater_gpu.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\GPU\updater_gpu.inl" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\ps_annotation.h" />
@@ -571,6 +566,40 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_toolkit\include\pk_toolkit_modules.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_toolkit\include\pk_toolkit_process.h" />
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_toolkit\include\pk_toolkit_version.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_1.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12compatibility.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12video.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcommon.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcompiler.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_barriers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_check_feature_support.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_core.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_default.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_pipeline_state_stream.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_property_format_table.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_render_pass.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_resource_helpers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_root_signature.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_state_object.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcapi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcerrors.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcisense.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\PopcornFX\documentation\debugger\PopcornFX.natvis" />

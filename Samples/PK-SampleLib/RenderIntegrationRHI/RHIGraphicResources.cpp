@@ -1581,6 +1581,18 @@ PK_NOINLINE bool	SRendererCacheKey::UpdateThread_Prepare(const SPrepareArg &args
 		if (args.m_GpuCaps.m_SupportsShaderResourceViews)
 		{
 			PK_VERIFY(options.PushBack(Option_TriangleVertexBillboarding).Valid());
+
+#if (PK_PARTICLES_UPDATER_USE_GPU != 0)
+			// RenderStates
+			const u32	optCount = options.Count();
+			PK_VERIFY(options.PushBack(Option_TriangleVertexBillboarding | Option_GPUStorage).Valid());
+			MULT_OPTION(Option_GPUSort, optCount);
+			PK_VERIFY(computeShaderTypes.PushBack(ComputeType_ComputeSortKeys).Valid());
+			PK_VERIFY(computeShaderTypes.PushBack(ComputeType_ComputeSortKeys_CameraDistance).Valid());
+			PK_VERIFY(computeShaderTypes.PushBack(ComputeType_SortUpSweep).Valid());
+			PK_VERIFY(computeShaderTypes.PushBack(ComputeType_SortPrefixSum).Valid());
+			PK_VERIFY(computeShaderTypes.PushBack(ComputeType_SortDownSweep).Valid());
+#endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
 		}
 	}
 	else if (args.m_Renderer->m_RendererType == ERendererClass::Renderer_Mesh)
@@ -1847,8 +1859,8 @@ PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareA
 	// Create the constant set layout:
 	//------------------------------------------------------------
 	TArray<MaterialToRHI::STextureProperty>	textureProperties;
-	m_constantProperties.Clear();
-	if (!MaterialToRHI::CreateConstantSetLayout(MaterialToRHI::SGenericArgs(args), "Material", m_ConstSetLayout, &textureProperties, &m_constantProperties, &m_ContentHash))
+	m_ConstantProperties.Clear();
+	if (!MaterialToRHI::CreateConstantSetLayout(MaterialToRHI::SGenericArgs(args), "Material", m_ConstSetLayout, &textureProperties, &m_ConstantProperties, &m_ContentHash))
 		return false;
 
 	//------------------------------------------------------------
@@ -1937,7 +1949,6 @@ PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareA
 	const SRendererDeclaration	&decl = args.m_Renderer->m_Declaration;
 	m_HasAtlas = decl.IsFeatureEnabled(BasicRendererProperties::SID_Atlas());
 
-	
 	m_HasRawUV0 = m_HasAtlas && (args.m_Renderer->m_RendererType == Renderer_Billboard || args.m_Renderer->m_RendererType == Renderer_Ribbon) &&(decl.IsFeatureEnabled(BasicRendererProperties::SID_AlphaMasks()) || decl.IsFeatureEnabled(BasicRendererProperties::SID_UVDistortions()));
 
 	if (args.m_Renderer->m_RendererType == Renderer_Billboard ||
@@ -2042,47 +2053,47 @@ PRendererCacheInstance	SRendererCacheInstanceKey::RenderThread_CreateResource(co
 
 			// Fill the constant buffer
 			void	*buffer = args.m_ApiManager->MapCpuView(rendererCacheInstance->m_ConstValues);
-			u32		offset = 0;
-			for (u32 i = 0; i < m_constantProperties.Count(); ++i)
+			for (u32 i = 0; i < m_ConstantProperties.Count(); ++i)
 			{
 				const RHI::SConstantVarDesc	&varDesc = bufferDesc.m_Constants[i];
-				const SRendererFeaturePropertyValue	&prop = m_constantProperties[i];
+				const SRendererFeaturePropertyValue	&prop = m_ConstantProperties[i];
 
-				u32	datasize = varDesc.RawSizeInBytes();
+				const u32	datasize = varDesc.RawSizeInBytes();
+				void		*dataPtr = Mem::AdvanceRawPointer(buffer, varDesc.m_OffsetInBuffer);
 
-				// padding (std140)
-				if (datasize == 0x08)
+				switch (prop.m_Type)
 				{
-					const u32	offsetAdvance = Mem::Align<0x08>(offset) - offset;
-					offset += offsetAdvance;
-					buffer = Mem::AdvanceRawPointer(buffer, offsetAdvance);
-				}
-				else if (datasize > 0x08)
+				case PropertyType_Bool1:
+				case PropertyType_Feature:
 				{
-					const u32	offsetAdvance = Mem::Align<0x10>(offset) - offset;
-					offset += offsetAdvance;
-					datasize = Mem::Align<0x10>(datasize);
-					buffer = Mem::AdvanceRawPointer(buffer, offsetAdvance);
-				}
-
-				if	(prop.m_Type == PropertyType_Bool1)
-				{
+					PK_ASSERT(datasize == sizeof(CInt1));
 					const CInt1 valueI( (prop.m_ValueB) ? 1 : 0 );
-					Mem::Copy(buffer, &valueI, datasize);
+					Mem::Copy_Uncached(dataPtr, &valueI, datasize);
+					break;
 				}
-				else if	(	prop.m_Type == PropertyType_Int1 ||
-							prop.m_Type == PropertyType_Int2 ||
-							prop.m_Type == PropertyType_Int3 ||
-							prop.m_Type == PropertyType_Int4 )
-					Mem::Copy(buffer, prop.m_ValueI, datasize);
-				else
-					Mem::Copy(buffer, prop.m_ValueF, datasize);
-
-				offset += datasize;
-				buffer = Mem::AdvanceRawPointer(buffer, datasize);
+				case PropertyType_Int1:
+				case PropertyType_Int2:
+				case PropertyType_Int3:
+				case PropertyType_Int4:
+				case PropertyType_Enum:
+					PK_ASSERT(datasize <= sizeof(CInt4));
+					Mem::Copy_Uncached(dataPtr, prop.m_ValueI, datasize);
+					break;
+				case PropertyType_Float1:
+				case PropertyType_Float2:
+				case PropertyType_Float3:
+				case PropertyType_Float4:
+				case PropertyType_Orientation:
+					PK_ASSERT(datasize <= sizeof(CFloat4));
+					Mem::Copy_Uncached(dataPtr, prop.m_ValueF, datasize);
+					break;
+				default:
+					PK_ASSERT_NOT_REACHED();
+					Mem::Clear_Uncached(dataPtr, datasize);
+					break;
+				}
 			}
 			args.m_ApiManager->UnmapCpuView(rendererCacheInstance->m_ConstValues);
-			PK_ASSERT(offset == bufferDesc.m_ConstantBufferSize);
 		}
 	}
 

@@ -3,8 +3,8 @@
 //		_pksi_GBuffer_ProjectToNormal
 //
 //----------------------------------------------------------------------------
-
 // PK-SampleLib rendering normal unpack function
+
 float3	UnpackNormalSpheremap(float2 normal)
 {
 	float2	fenc = normal * 4.0f - 2.0f;
@@ -18,8 +18,8 @@ float3	UnpackNormalSpheremap(float2 normal)
 }
 
 //----------------------------------------------------------------------------
-
 // Outputs the GBuffer normal value at projected world position
+
 float3	Ext__pksi_GBuffer_ProjectToNormal_f32x3_CX(float3 position, inout int4 sceneCtx)
 {
 	float4	clipPosition = mul(ViewProj, float4(position, 1.0f));

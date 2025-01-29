@@ -403,6 +403,11 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::AllocBuffers(SRenderContext &ctx)
 	const u32	drCount = m_DrawPass->m_DrawRequests.Count();
 	const u32	drCountAligned = Mem::Align<0x10>(drCount);
 
+	if (m_DrawPass->m_DrawRequests.First()->BaseBillboardingRequest().m_Flags.m_NeedSort)
+	{
+		PK_ASSERT_NOT_IMPLEMENTED_MESSAGE("CRHIRendererBatch_BillboardGPU_GeomBB used with sort needed, but not implemented! Sorting is ignored.");
+	}
+
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Billboard DrawRequests Buffer"), true, m_ApiManager, m_IndirectDraw, RHI::IndirectDrawBuffer, drCountAligned * sizeof(RHI::SDrawIndirectArgs), drCount * sizeof(RHI::SDrawIndirectArgs)))
 		return false;
 
@@ -544,7 +549,6 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 
 		RHI::PGpuBuffer		bufferIsSelected = null;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-		// Editor only: for debugging purposes, we'll remove that from samples code later
 		PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
 #endif	// (PK_HAS_PARTICLES_SELECTION != 0)
@@ -797,7 +801,6 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::MapBuffers(SRenderContext &ctx)
 	(void)ctx;
 	const u32	drCount = m_DrawPass->m_DrawRequests.Count();
 
-	// If the billboard batch is null, we have GPU storage:
 	m_MappedIndirectBuffer = static_cast<RHI::SDrawIndexedIndirectArgs*>(m_ApiManager->MapCpuView(m_IndirectDraw.m_Buffer));
 
 	// Mandatory streams
@@ -1054,7 +1057,7 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::EmitDrawCall(SRenderContext &ctx, 
 
 				PK_ASSERT(drStreamBuffer != null);
 				// Sim data constant set are:
-				// raw stream + camera sort indirection buffer if needed + ribbon sort indirection and indirect draw buffers if needed
+				// raw stream + camera sort indirection buffer if needed
 				PK_ASSERT(vertexBBSimDataConstantSet->GetConstantValues().Count() == (1u + (m_NeedGPUSort ? 1u : 0u)));
 				u32	constantSetLocation = 0;
 				if (!PK_VERIFY(vertexBBSimDataConstantSet->SetConstants(drStreamBuffer, constantSetLocation++)))
@@ -1479,7 +1482,6 @@ bool	CRHIRendererBatch_Ribbon_GPU::MapBuffers(SRenderContext &ctx)
 	(void)ctx;
 	const u32	drCount = m_DrawPass->m_DrawRequests.Count();
 
-	// If the billboard batch is null, we have GPU storage:
 	m_MappedIndirectBuffer = static_cast<RHI::SDrawIndexedIndirectArgs*>(m_ApiManager->MapCpuView(m_IndirectDraw.m_Buffer));
 
 	m_MappedSimStreamOffsets[0] = static_cast<u32*>(m_ApiManager->MapCpuView(m_SimStreamOffsets_Enableds.m_Buffer));
@@ -2075,6 +2077,528 @@ bool	CRHIRendererBatch_Ribbon_GPU::_InitStaticBuffers()
 
 //----------------------------------------------------------------------------
 //
+// CRHIRendererBatch_Triangle_GPU
+//
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::Setup(const CRendererDataBase *renderer, const CParticleRenderMedium *owner, const CFrameCollector *fc, const CStringId &storageClass)
+{
+	if (!CRendererBatchJobs_Triangle_GPUBB::Setup(renderer, owner, fc, storageClass))
+			return false;
+
+	// Setup additional fields:
+	// The additional fields are supposed to be the same for all renderers in a batch.
+	// If not, then you can recompute then on the "Bind()" method.
+
+	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
+	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+
+	if (!PK_VERIFY(m_AdditionalFieldsSimStreamOffsets.m_Fields.Reserve(additionalFieldsCount)))
+		return false;
+
+	for (u32 i = 0; i < additionalFieldsCount; ++i)
+	{
+		// no ignored fields
+		m_AdditionalFieldsSimStreamOffsets.m_Fields.PushBackUnsafe(SAdditionalInputs(sizeof(u32) /* it contains the sim buffer offsets */, i));
+	}
+
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, toGenerate);
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::AreRenderersCompatible(const CRendererDataBase *rendererA, const CRendererDataBase *rendererB) const
+{
+	return	CRendererBatchJobs_Triangle_GPUBB::AreRenderersCompatible(rendererA, rendererB) &&
+			AreBillboardingBatchable(rendererA->m_RendererCache, rendererB->m_RendererCache);
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::AllocBuffers(SRenderContext &ctx)
+{
+	(void)ctx;
+
+	const u32	drCount = m_DrawPass->m_DrawRequests.Count();
+	const u32	drCountAligned = Mem::Align<0x10>(drCount);
+
+	m_NeedGPUSort = m_DrawPass->m_DrawRequests.First()->BaseBillboardingRequest().m_Flags.m_NeedSort;
+	m_SortByCameraDistance = m_DrawPass->m_DrawRequests.First()->BaseBillboardingRequest().m_SortByCameraDistance;
+
+	// GPU particles are rendered using DrawIndexedInstancedIndirect
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Indirect Draw Args Buffer"), true, m_ApiManager, m_IndirectDraw, RHI::IndirectDrawBuffer, drCountAligned *  sizeof(RHI::SDrawIndexedIndirectArgs), drCount * sizeof(RHI::SDrawIndexedIndirectArgs)))
+		return false;
+
+	// Camera sort
+	if (m_NeedGPUSort)
+	{
+		// For each draw request, we have indirection and sort key buffers
+		// and a GPU sorter object, handling intermediates work buffers
+		if (!PK_VERIFY(m_CameraSortIndirection.Resize(drCount)) ||
+			!PK_VERIFY(m_CameraSortKeys.Resize(drCount)) ||
+			!PK_VERIFY(m_CameraGPUSorters.Resize(drCount)))
+			return false;
+		for (u32 i = 0; i < drCount; i++)
+		{
+			if (!PK_VERIFY(m_DrawPass->m_DrawRequests[i]->RenderedParticleCount() > 0))
+				continue;
+			const u32	alignedParticleCount = Mem::Align<PK_GPU_SORT_NUM_KEY_PER_THREAD * PK_RH_GPU_THREADGROUP_SIZE>(m_DrawPass->m_DrawRequests[i]->RenderedParticleCount());
+			if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Camera Sort Indirection Buffer"), true, m_ApiManager, m_CameraSortIndirection[i], RHI::RawBuffer, alignedParticleCount * sizeof(u32), alignedParticleCount * sizeof(u32)) ||
+				!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Camera Sort Keys Buffer"), true, m_ApiManager, m_CameraSortKeys[i], RHI::RawBuffer, alignedParticleCount * sizeof(u32), alignedParticleCount * sizeof(u32)))
+				return false;
+			// 16 bits key
+			const u32	sortKeySizeInBits = 16;
+			// Init sorter if needed and allocate buffers
+			if (!PK_VERIFY(m_CameraGPUSorters[i].Init(sortKeySizeInBits, m_ApiManager)) ||
+				!PK_VERIFY(m_CameraGPUSorters[i].AllocateBuffers(m_DrawPass->m_DrawRequests[i]->RenderedParticleCount(), m_ApiManager)))
+				return false;
+		}
+		// Create compute sort key constant set
+		if (!PK_VERIFY(m_ComputeCameraSortKeysConstantSets.Reserve(drCount)))
+			return false;
+		RHI::SConstantSetLayout	layout;
+		PKSample::CreateComputeSortKeysConstantSetLayout(layout, m_SortByCameraDistance, false);
+		while (m_ComputeCameraSortKeysConstantSets.Count() < drCount)
+		{
+			RHI::PConstantSet	cs = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Camera Sort Keys Constant Set"), layout);
+			m_ComputeCameraSortKeysConstantSets.PushBackUnsafe(cs);
+		}
+	}
+
+	// Allocate once, max number of draw requests, indexed by DC from push constant
+	const u32	offsetsSizeInBytes = kMaxDrawRequestCount * sizeof(u32); // u32 offsets
+
+	// Particle positions stream
+	PK_ASSERT((m_DrawPass->m_ToGenerate.m_GeneratedInputs & Drawers::GenInput_ParticlePosition012) != 0);
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Offsets_Enableds Buffer"), true, m_ApiManager, m_SimStreamOffsets_Enableds, RHI::RawBuffer, offsetsSizeInBytes, offsetsSizeInBytes) ||
+		!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Offsets_Position0s Buffer"), true, m_ApiManager, m_SimStreamOffsets_Positions0, RHI::RawBuffer, offsetsSizeInBytes, offsetsSizeInBytes) ||
+		!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Offsets_Position1s Buffer"), true, m_ApiManager, m_SimStreamOffsets_Positions1, RHI::RawBuffer, offsetsSizeInBytes, offsetsSizeInBytes) ||
+		!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Offsets_Position2s Buffer"), true, m_ApiManager, m_SimStreamOffsets_Positions2, RHI::RawBuffer, offsetsSizeInBytes, offsetsSizeInBytes))
+		return false;
+
+	// GPU sort related offset buffers
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Offsets_CustomSortKeys Buffer"), m_NeedGPUSort && !m_SortByCameraDistance, m_ApiManager, m_CustomSortKeysOffsets, RHI::RawBuffer, offsetsSizeInBytes, offsetsSizeInBytes))
+		return false;
+
+	// (custom) Normals -> additional field
+
+	// (custom) UVs -> additional field
+
+	// Additional fields simStreamOffsets:
+	if (!m_AdditionalFieldsSimStreamOffsets.AllocBuffers(kMaxDrawRequestCount, m_ApiManager))
+		return false;
+
+	if (!m_Initialized)
+		m_Initialized = _InitStaticBuffers(); // Important: after alloctation of the Offsets_XXX buffers
+	if (!m_Initialized)
+		return false;
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::MapBuffers(SRenderContext &ctx)
+{
+	(void)ctx;
+	const u32	drCount = m_DrawPass->m_DrawRequests.Count();
+
+	m_MappedIndirectBuffer = static_cast<RHI::SDrawIndexedIndirectArgs*>(m_ApiManager->MapCpuView(m_IndirectDraw.m_Buffer));
+
+	m_MappedSimStreamOffsets[0] = static_cast<u32*>(m_ApiManager->MapCpuView(m_SimStreamOffsets_Enableds.m_Buffer));
+	m_MappedSimStreamOffsets[1] = static_cast<u32*>(m_ApiManager->MapCpuView(m_SimStreamOffsets_Positions0.m_Buffer));
+	m_MappedSimStreamOffsets[2] = static_cast<u32*>(m_ApiManager->MapCpuView(m_SimStreamOffsets_Positions1.m_Buffer));
+	m_MappedSimStreamOffsets[3] = static_cast<u32*>(m_ApiManager->MapCpuView(m_SimStreamOffsets_Positions2.m_Buffer));
+
+	// Additional streams
+	if (!m_AdditionalFieldsSimStreamOffsets.MapBuffers(drCount, m_ApiManager))
+		return false;
+
+	// Camera sort optional stream offsets
+	if (m_NeedGPUSort && !m_SortByCameraDistance)
+	{
+		m_MappedCustomSortKeysOffsets = static_cast<u32*>(m_ApiManager->MapCpuView(m_CustomSortKeysOffsets.m_Buffer));
+		if (!PK_VERIFY(m_MappedCustomSortKeysOffsets != null))
+			return false;
+	}
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::LaunchCustomTasks(SRenderContext &ctx)
+{
+	(void)ctx;
+	const u32	drCount = m_DrawPass->m_DrawRequests.Count();
+
+	PK_ASSERT(m_MappedIndirectBuffer != null);
+	for (u32 dri = 0; dri < drCount; ++dri)
+	{
+		// Indirect buffer
+		m_MappedIndirectBuffer[dri].m_InstanceCount = m_DrawPass->m_DrawRequests[dri]->RenderedParticleCount(); // will be overwritten by the GPU command.
+		m_MappedIndirectBuffer[dri].m_IndexOffset = 0;
+		m_MappedIndirectBuffer[dri].m_VertexOffset = 0;
+		m_MappedIndirectBuffer[dri].m_InstanceOffset = 0;
+		m_MappedIndirectBuffer[dri].m_IndexCount = 3;
+	}
+
+#if (PK_PARTICLES_UPDATER_USE_GPU != 0)
+	const u32	streamMaxCount = 4 + (m_NeedGPUSort && !m_SortByCameraDistance ? 1 : 0) + m_AdditionalFieldsSimStreamOffsets.m_MappedFields.Count();
+
+	// Store offsets in a stack view ([PosOffsetDr0][PosOffsetDr1][SizeOffsetDr0][SizeOffsetDr1]..)
+	PK_STACKALIGNEDMEMORYVIEW(u32, streamsOffsets, drCount * streamMaxCount, 0x10);
+
+	for (u32 iDr = 0; iDr < drCount; ++iDr)
+	{
+		// Fill in stream offsets for each draw request
+		const CParticleStreamToRender_GPU				*streamToRender = m_DrawPass->m_DrawRequests[iDr]->StreamToRender_GPU();
+		PK_ASSERT(streamToRender != null);
+		const Drawers::SBase_DrawRequest			*dr = m_DrawPass->m_DrawRequests[iDr];
+		const Drawers::SBase_BillboardingRequest	baseBr = dr->BaseBillboardingRequest();
+
+		u32		offset = 0;
+
+		// Mandatory streams
+		streamsOffsets[offset++ * drCount + iDr] = streamToRender->StreamOffset(baseBr.m_EnabledStreamId);
+
+		const Drawers::STriangle_DrawRequest	*triDr = static_cast<const Drawers::STriangle_DrawRequest *>(dr);
+		streamsOffsets[offset++ * drCount + iDr] = streamToRender->StreamOffset(triDr->m_BB.m_PositionStreamId);
+		streamsOffsets[offset++ * drCount + iDr] = streamToRender->StreamOffset(triDr->m_BB.m_Position2StreamId);
+		streamsOffsets[offset++ * drCount + iDr] = streamToRender->StreamOffset(triDr->m_BB.m_Position3StreamId);
+
+		// Add all non-virtual stream additional inputs
+		for (auto &addField : m_AdditionalFieldsSimStreamOffsets.m_Fields)
+			streamsOffsets[offset++ * drCount + iDr] = streamToRender->StreamOffset(baseBr.m_AdditionalInputs[addField.m_AdditionalInputIndex].m_StreamId);
+
+		if (m_NeedGPUSort && !m_SortByCameraDistance)
+			streamsOffsets[offset++ * drCount + iDr] = streamToRender->StreamOffset(baseBr.m_SortKeyStreamId);
+
+		PK_ASSERT(offset <= streamMaxCount);
+	}
+
+	// Non temporal writes to gpu mem, aligned and contiguous
+	u32	streamOffset = 0;
+	Mem::Copy_Uncached(m_MappedSimStreamOffsets[0], &streamsOffsets[streamOffset++ * drCount], sizeof(u32) * drCount);
+	Mem::Copy_Uncached(m_MappedSimStreamOffsets[1], &streamsOffsets[streamOffset++ * drCount], sizeof(u32) * drCount);
+	Mem::Copy_Uncached(m_MappedSimStreamOffsets[2], &streamsOffsets[streamOffset++ * drCount], sizeof(u32) * drCount);
+	Mem::Copy_Uncached(m_MappedSimStreamOffsets[3], &streamsOffsets[streamOffset++ * drCount], sizeof(u32) * drCount);
+
+	for (u32 iInput = 0; iInput < m_AdditionalFieldsSimStreamOffsets.m_MappedFields.Count(); ++iInput)
+		Mem::Copy_Uncached(m_AdditionalFieldsSimStreamOffsets.m_MappedFields[iInput].m_Storage.m_RawDataPtr, &streamsOffsets[streamOffset++ * drCount], sizeof(u32) * drCount);
+
+	if (m_MappedCustomSortKeysOffsets != null && !m_SortByCameraDistance)
+		Mem::Copy_Uncached(m_MappedCustomSortKeysOffsets, &streamsOffsets[streamOffset++ * drCount], sizeof(u32) * drCount);
+
+#endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::UnmapBuffers(SRenderContext &ctx)
+{
+	(void)ctx;
+
+	m_IndirectDraw.UnmapIFN(m_ApiManager);
+	m_MappedIndirectBuffer = null;
+
+	m_CustomSortKeysOffsets.UnmapIFN(m_ApiManager);
+	m_MappedCustomSortKeysOffsets = null;
+
+	// GPU stream offsets
+	m_SimStreamOffsets_Enableds.UnmapIFN(m_ApiManager);
+	m_SimStreamOffsets_Positions0.UnmapIFN(m_ApiManager);
+	m_SimStreamOffsets_Positions1.UnmapIFN(m_ApiManager);
+	m_SimStreamOffsets_Positions2.UnmapIFN(m_ApiManager);
+	Mem::Clear(m_MappedSimStreamOffsets);
+
+	m_AdditionalFieldsSimStreamOffsets.UnmapBuffers(m_ApiManager);
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::EmitDrawCall(SRenderContext &ctx, const SDrawCallDesc &toEmit)
+{
+	SRHIRenderContext	&renderContext = static_cast<SRHIRenderContext&>(ctx);
+
+	// !Currently, there is no batching for gpu particles!
+	// So we'll emit one draw call per draw request
+	// Some data are indexed by the draw-requests. So "EmitDrawCall" shoudl be called once, with all draw-requests.
+	PK_ASSERT(toEmit.m_DrawRequests.Count() == m_DrawPass->m_DrawRequests.Count());
+	const u32	drCount = m_DrawPass->m_DrawRequests.Count();
+
+	// No need to iterate on all draw requests, just take the first as reference as they wouldn't have been batched if not compatible
+	CRendererCacheInstance_UpdateThread		*renderCacheInstance = static_cast<CRendererCacheInstance_UpdateThread*>(toEmit.m_RendererCaches.First().Get());
+	if (!PK_VERIFY(renderCacheInstance != null))
+	{
+		CLog::Log(PK_ERROR, "Invalid renderer cache instance");
+		return false;
+	}
+	PKSample::PCRendererCacheInstance	rCacheInstance = renderCacheInstance->RenderThread_GetCacheInstance();
+	if (!PK_VERIFY(rCacheInstance != null))
+		return false;
+
+	for (u32 dri = 0; dri < drCount; ++dri)
+	{
+		PK_ASSERT(toEmit.m_DrawRequests[dri] != null);
+		const Drawers::STriangle_DrawRequest			*dr = static_cast<const Drawers::STriangle_DrawRequest*>(toEmit.m_DrawRequests[dri]);
+		const Drawers::STriangle_BillboardingRequest	&bbRequest = dr->m_BB;
+		const CParticleStreamToRender					*streamToRender = &dr->StreamToRender();
+
+		u32		dummyOffset = 0;
+		RHI::PGpuBuffer		drStreamBuffer = _RetrieveStorageBuffer(m_ApiManager, streamToRender, bbRequest.m_PositionStreamId, dummyOffset);
+		RHI::PGpuBuffer		drStreamSizeBuffer = _RetrieveParticleInfoBuffer(m_ApiManager, streamToRender);
+
+		if (!PK_VERIFY(drStreamBuffer != null) ||
+			!PK_VERIFY(drStreamSizeBuffer != null))
+			return false;
+
+		// Camera GPU sort (must be done after the ribbon GPU sort)
+		if (m_NeedGPUSort)
+		{
+			// Compute: Compute sort keys and init indirection buffer
+			{
+				// For radix sort, a thread computes PK_GPU_SORT_NUM_KEY_PER_THREAD keys (see shader definition and RHIGPUSorter.cpp),
+				// so a group computes (PK_GPU_SORT_NUM_KEY_PER_THREAD * PK_RH_GPU_THREADGROUP_SIZE) keys
+				const u32	sortGroupCount = (dr->RenderedParticleCount() + PK_GPU_SORT_NUM_KEY_PER_THREAD * PK_RH_GPU_THREADGROUP_SIZE - 1) / (PK_GPU_SORT_NUM_KEY_PER_THREAD * PK_RH_GPU_THREADGROUP_SIZE);
+				PKSample::SRHIComputeDispatchs	computeDispatch = PKSample::SRHIComputeDispatchs();
+
+				// Constant set
+				computeDispatch.m_NeedSceneInfoConstantSet = m_SortByCameraDistance;
+				RHI::PConstantSet	computeConstantSet = m_ComputeCameraSortKeysConstantSets[dri];
+				computeConstantSet->SetConstants(drStreamSizeBuffer, 0);
+				computeConstantSet->SetConstants(drStreamBuffer, 1);
+				computeConstantSet->SetConstants(m_SortByCameraDistance ? m_SimStreamOffsets_Positions0.m_Buffer : m_CustomSortKeysOffsets.m_Buffer, 2);
+				computeConstantSet->SetConstants(m_CameraSortKeys[dri].m_Buffer, 3);
+				computeConstantSet->SetConstants(m_CameraSortIndirection[dri].m_Buffer, 4);
+
+				computeConstantSet->UpdateConstantValues();
+				computeDispatch.m_ConstantSet = computeConstantSet;
+
+				// Push constant
+				if (!PK_VERIFY(computeDispatch.m_PushConstants.PushBack().Valid()))
+					return false;
+				u32	*drPushConstant = reinterpret_cast<u32*>(&computeDispatch.m_PushConstants.Last());
+				drPushConstant[0] = dri;
+
+				// State
+				const PKSample::EComputeShaderType	type = m_SortByCameraDistance ? ComputeType_ComputeSortKeys_CameraDistance : ComputeType_ComputeSortKeys;
+				computeDispatch.m_State = rCacheInstance->m_Cache->GetComputeState(type);
+				if (!PK_VERIFY(computeDispatch.m_State != null))
+					return false;
+
+				// Dispatch args
+				// For the sort key computation dispatch, we need exactly twice the sort group count
+				// so that every thread associated key is initialized. Overflowing keys are initialized
+				// to 0xFFFF, sorted last (and ultimately not rendered).
+				computeDispatch.m_ThreadGroups = CInt3(sortGroupCount * PK_GPU_SORT_NUM_KEY_PER_THREAD, 1, 1);
+
+				renderContext.m_DrawOutputs.m_ComputeDispatchs.PushBack(computeDispatch);
+			}
+
+			// Compute: Sort computes
+			{
+				m_CameraGPUSorters[dri].SetInOutBuffers(m_CameraSortKeys[dri].m_Buffer, m_CameraSortIndirection[dri].m_Buffer);
+				m_CameraGPUSorters[dri].AppendDispatchs(rCacheInstance, renderContext.m_DrawOutputs.m_ComputeDispatchs);
+			}
+		}
+
+		// Emit draw call
+		{
+			const u32				shaderOptions = Option_GPUStorage | Option_VertexPassThrough | Option_TriangleVertexBillboarding | (m_NeedGPUSort ? Option_GPUSort : 0);
+			const RHI::PGpuBuffer	cameraSortIndirection = m_NeedGPUSort ? m_CameraSortIndirection[dri].m_Buffer : null;
+			RHI::PConstantSet		vertexBBSimDataConstantSet;
+			// create the local constant-set
+			{
+				const RHI::SConstantSetLayout	*simDataConstantSetLayout = null;
+				const RHI::SConstantSetLayout	*offsetsConstantSetLayout = null;
+				if (!PK_VERIFY(rCacheInstance->m_Cache->GetGPUStorageConstantSets(static_cast<PKSample::EShaderOptions>(shaderOptions), simDataConstantSetLayout, offsetsConstantSetLayout)) ||
+					!PK_VERIFY(simDataConstantSetLayout != null) ||
+					!PK_VERIFY(offsetsConstantSetLayout != null) ||
+					simDataConstantSetLayout->m_Constants.Empty() ||
+					offsetsConstantSetLayout->m_Constants.Empty())
+					return false;
+
+				vertexBBSimDataConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Sim Data Constant Set"), *simDataConstantSetLayout);
+				if (!PK_VERIFY(vertexBBSimDataConstantSet != null))
+					return false;
+
+				PK_ASSERT(drStreamBuffer != null);
+				// Sim data constant set are:
+				// raw stream + camera sort indirection buffer if needed
+				PK_ASSERT(vertexBBSimDataConstantSet->GetConstantValues().Count() == (1u + (m_NeedGPUSort ? 1u : 0u)));
+				u32	constantSetLocation = 0;
+				if (!PK_VERIFY(vertexBBSimDataConstantSet->SetConstants(drStreamBuffer, constantSetLocation++)))
+					return false;
+				if (m_NeedGPUSort)
+				{
+					if (!PK_VERIFY(cameraSortIndirection != null) ||
+						!PK_VERIFY(vertexBBSimDataConstantSet->SetConstants(cameraSortIndirection, constantSetLocation++)))
+						return false;
+				}
+				vertexBBSimDataConstantSet->UpdateConstantValues();
+			}
+
+			if (!PK_VERIFY(renderContext.m_DrawOutputs.m_DrawCalls.PushBack().Valid()))
+			{
+				CLog::Log(PK_ERROR, "Failed to create a draw-call");
+				return false;
+			}
+			SRHIDrawCall		&outDrawCall = renderContext.m_DrawOutputs.m_DrawCalls.Last();
+
+			outDrawCall.m_Batch = this;
+			outDrawCall.m_RendererCacheInstance = renderCacheInstance;
+			outDrawCall.m_Type = SRHIDrawCall::DrawCall_IndexedInstancedIndirect;
+			outDrawCall.m_ShaderOptions = shaderOptions;
+			outDrawCall.m_RendererType = Renderer_Triangle;
+			outDrawCall.m_GPUStorageSimDataConstantSet = vertexBBSimDataConstantSet;
+
+			// Some meta-data (the Editor uses them)
+			{
+				outDrawCall.m_BBox = toEmit.m_BBox;
+				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
+				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+			}
+
+			outDrawCall.m_GPUStorageOffsetsConstantSet = m_VertexBBOffsetsConstantSet;
+
+			{
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+				PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+				RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
+				if (bufferIsSelected != null)
+				{
+					RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
+					selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
+					RHI::PConstantSet	selectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
+					if (PK_VERIFY(selectionConstantSet != null) && PK_VERIFY(selectionConstantSet->SetConstants(bufferIsSelected, 0)))
+					{
+						selectionConstantSet->UpdateConstantValues();
+						outDrawCall.m_SelectionConstantSet = selectionConstantSet;
+					}
+				}
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+			}
+
+			// Fill the semantics for the debug draws:
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Enabled] = m_SimStreamOffsets_Enableds.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition0] = m_SimStreamOffsets_Positions0.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition1] = m_SimStreamOffsets_Positions1.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition2] = m_SimStreamOffsets_Positions2.m_Buffer;
+			if (m_ColorStreamIdx.Valid())
+				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsSimStreamOffsets.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
+			outDrawCall.m_IndexOffset = 0;
+			outDrawCall.m_IndexSize = RHI::IndexBuffer16Bit;
+			outDrawCall.m_IndexBuffer = m_DrawIndices.m_Buffer;
+
+			outDrawCall.m_IndirectBuffer = m_IndirectDraw.m_Buffer;
+			outDrawCall.m_IndirectBufferOffset = dri * sizeof(RHI::SDrawIndexedIndirectArgs);
+			outDrawCall.m_EstimatedParticleCount = dr->RenderedParticleCount();
+
+			if (!PK_VERIFY(renderContext.m_DrawOutputs.m_CopyCommands.PushBack().Valid()))
+				return false;
+
+			SRHICopyCommand		&copyCommand = renderContext.m_DrawOutputs.m_CopyCommands.Last();
+
+			// We retrieve the particles info buffer:
+			copyCommand.m_SrcBuffer = drStreamSizeBuffer;
+			copyCommand.m_SrcOffset = 0;
+			copyCommand.m_DstBuffer = m_IndirectDraw.m_Buffer;
+			copyCommand.m_DstOffset = dri * sizeof(RHI::SDrawIndexedIndirectArgs) + PK_MEMBER_OFFSET(RHI::SDrawIndexedIndirectArgs, m_InstanceCount);
+			copyCommand.m_SizeToCopy = sizeof(u32);
+
+			// No batching with GPU storage, so here this is constant within a drawcall (uses push constant).
+			if (!PK_VERIFY(outDrawCall.m_PushConstants.PushBack().Valid()))
+				return false;
+			PK_STATIC_ASSERT(sizeof(Drawers::STriangleDrawRequest) == 8);
+			Drawers::STriangleDrawRequest	&desc = *reinterpret_cast<Drawers::STriangleDrawRequest*>(&outDrawCall.m_PushConstants.Last());
+			desc.Setup(bbRequest);
+
+			// GPUBillboardPushConstants
+			if (!PK_VERIFY(outDrawCall.m_PushConstants.PushBack().Valid()))
+				return false;
+			SVertexBillboardingConstants	&indices = *reinterpret_cast<SVertexBillboardingConstants*>(&outDrawCall.m_PushConstants.Last());
+			indices.m_IndicesOffset = toEmit.m_IndexOffset;
+			indices.m_StreamOffsetsIndex = dri;
+		}
+	}
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Triangle_GPU::_InitStaticBuffers()
+{
+	// Index buffer
+	// RHI currently doesn't support DrawInstanced (without indices)
+	{
+		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("VertexBB Draw Indices Buffer"), true, m_ApiManager, m_DrawIndices, RHI::IndexBuffer, 8 * sizeof(u16), 3 * sizeof(u16)))
+			return false;
+		volatile u16	*indices = static_cast<u16*>(m_ApiManager->MapCpuView(m_DrawIndices.m_Buffer, 0, 3 * sizeof(u16)));
+		if (!PK_VERIFY(indices != null))
+			return false;
+		indices[0] = 0;
+		indices[1] = 1;
+		indices[2] = 2;
+		m_DrawIndices.Unmap(m_ApiManager);
+	}
+
+	// Constant-Set
+	{
+		CRendererCacheInstance_UpdateThread		*renderCacheInstance = static_cast<CRendererCacheInstance_UpdateThread*>(m_DrawPass->m_RendererCaches.First().Get());
+		PK_ASSERT(renderCacheInstance != null);
+		const PCRendererCacheInstance	cacheInstance = renderCacheInstance->RenderThread_GetCacheInstance();
+		if (cacheInstance == null)
+			return false;
+
+		const u32	shaderOptions = Option_GPUStorage | Option_VertexPassThrough | Option_TriangleVertexBillboarding | (m_NeedGPUSort ? Option_GPUSort : 0);
+
+		const RHI::SConstantSetLayout	*simDataConstantSetLayout = null;
+		const RHI::SConstantSetLayout	*offsetsConstantSetLayout = null;
+		if (!PK_VERIFY(cacheInstance->m_Cache->GetGPUStorageConstantSets(static_cast<PKSample::EShaderOptions>(shaderOptions), simDataConstantSetLayout, offsetsConstantSetLayout)) ||
+			!PK_VERIFY(offsetsConstantSetLayout != null) ||
+			offsetsConstantSetLayout->m_Constants.Empty())
+			return false;
+
+		m_VertexBBOffsetsConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Offsets Constant Set"), *offsetsConstantSetLayout);
+		if (!PK_VERIFY(m_VertexBBOffsetsConstantSet != null))
+			return false;
+
+		// Fill offsets constant sets.
+		u32 i = 0;
+		{
+			if (!PK_VERIFY(m_VertexBBOffsetsConstantSet->SetConstants(m_SimStreamOffsets_Enableds.m_Buffer, i++)))
+				return false;
+			if (!PK_VERIFY(m_VertexBBOffsetsConstantSet->SetConstants(m_SimStreamOffsets_Positions0.m_Buffer, i++)))
+				return false;
+			if (!PK_VERIFY(m_VertexBBOffsetsConstantSet->SetConstants(m_SimStreamOffsets_Positions1.m_Buffer, i++)))
+				return false;
+			if (!PK_VERIFY(m_VertexBBOffsetsConstantSet->SetConstants(m_SimStreamOffsets_Positions2.m_Buffer, i++)))
+				return false;
+
+			for (auto &additionalSimStreamOffset : m_AdditionalFieldsSimStreamOffsets.m_Fields)
+			{
+				if (!PK_VERIFY(m_VertexBBOffsetsConstantSet->SetConstants(additionalSimStreamOffset.m_Buffer.m_Buffer, i++)))
+					return false;
+			}
+		}
+		PK_ASSERT(m_VertexBBOffsetsConstantSet->GetConstantValues().Count() == i);
+		m_VertexBBOffsetsConstantSet->UpdateConstantValues();
+	}
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+//
 // CRHIRendererBatch_Mesh_GPU
 //
 //----------------------------------------------------------------------------
@@ -2215,7 +2739,7 @@ bool	CRHIRendererBatch_Mesh_GPU::AllocBuffers(SRenderContext &ctx)
 				const Utils::GpuBufferViews	&bufferView = rCacheInstance->m_AdditionalGeometry->m_PerGeometryViews[i];
 
 				// Get index count
-				u32	indexCount;
+				u32	indexCount = 0;
 				if (bufferView.m_IndexBufferSize == RHI::IndexBuffer16Bit)
 					indexCount = bufferView.m_IndexBuffer->GetByteSize() / sizeof(u16);
 				else if (bufferView.m_IndexBufferSize == RHI::IndexBuffer32Bit)
@@ -2510,7 +3034,6 @@ bool	CRHIRendererBatch_Mesh_GPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 		m_OffsetsConstantSet->UpdateConstantValues();
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-		// Editor only: for debugging purposes, we'll remove that from samples code later
 		PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 		RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
 		RHI::PConstantSet	selectionConstantSet;

@@ -47,6 +47,7 @@ struct	SRHICommonCPUBillboardBuffers
 	SGpuBuffer				m_RawTexCoords0;
 	SGpuBuffer				m_UVFactors;
 	SGpuBuffer				m_UVRemap;
+	SGpuBuffer				m_UV1Remap;
 
 	// View dependent buffers:
 	struct	SPerView

@@ -91,9 +91,6 @@
     <Filter Include="Particles\Headers\Kernels\D3D12">
       <UniqueIdentifier>{078FAF36-7372-BE76-7C75-ECB2E8D784C7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Particles\Headers\Kernels\D3D12U">
-      <UniqueIdentifier>{3C70A10C-28C1-8C4E-5125-7B103DD51FB8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Particles\Headers\Renderers">
       <UniqueIdentifier>{B026337A-1C34-6160-A51A-5D4B11272D17}</UniqueIdentifier>
     </Filter>
@@ -109,9 +106,6 @@
     <Filter Include="Particles\Headers\Samplers\D3D12">
       <UniqueIdentifier>{9A276702-8678-5244-AFDC-40069B8CE5AD}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Particles\Headers\Samplers\D3D12U">
-      <UniqueIdentifier>{2F1B4C4F-9B89-A1CE-E472-5CCE5020976A}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Particles\Headers\Samplers\GPU">
       <UniqueIdentifier>{E8FF2D7F-D425-F8E5-BD6B-7DB1A9301DB2}</UniqueIdentifier>
     </Filter>
@@ -126,9 +120,6 @@
     </Filter>
     <Filter Include="Particles\Headers\Storage\D3D12">
       <UniqueIdentifier>{8839146B-F41C-23AB-FD1F-51E76982E9FB}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Particles\Headers\Storage\D3D12U">
-      <UniqueIdentifier>{DD6A9BCD-C9BB-860F-F21F-75D1DECF1979}</UniqueIdentifier>
     </Filter>
     <Filter Include="Particles\Headers\Storage\GPU">
       <UniqueIdentifier>{56BEF1A7-C2D6-D8D1-8B83-686BF75A6D6B}</UniqueIdentifier>
@@ -151,9 +142,6 @@
     <Filter Include="Particles\Headers\Updaters\D3D12">
       <UniqueIdentifier>{3BCBD0B6-271C-BCF8-5080-AABA3C304F62}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Particles\Headers\Updaters\D3D12U">
-      <UniqueIdentifier>{F032EA90-5CA1-3F10-A58A-FA0F113835AC}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Particles\Headers\Updaters\GPU">
       <UniqueIdentifier>{4947E81B-356D-B282-1EB3-374E0A78D74E}</UniqueIdentifier>
     </Filter>
@@ -162,6 +150,15 @@
     </Filter>
     <Filter Include="Toolkit\Headers">
       <UniqueIdentifier>{3642EB15-A2CD-58DA-ABDE-DBCE17E9B4DA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External">
+      <UniqueIdentifier>{07CD4F05-7337-047C-BC75-B521281FE2D0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\DX">
+      <UniqueIdentifier>{B2545DA7-9EB7-EC4B-473D-2502337FB8CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_External\DX\Headers">
+      <UniqueIdentifier>{5DF51B81-4984-A54A-F2A2-B945DE10B6F0}</UniqueIdentifier>
     </Filter>
     <Filter Include="_Natvis">
       <UniqueIdentifier>{D972AB51-4552-2AED-4E6A-B5C3BAC8904E}</UniqueIdentifier>
@@ -1032,9 +1029,6 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Kernels\D3D12\kernel_d3d12.h">
       <Filter>Particles\Headers\Kernels\D3D12</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Kernels\D3D12U\kernel_d3d12U.h">
-      <Filter>Particles\Headers\Kernels\D3D12U</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Renderers\ps_renderer_base.h">
       <Filter>Particles\Headers\Renderers</Filter>
     </ClInclude>
@@ -1095,9 +1089,6 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12\sampler_d3d12.h">
       <Filter>Particles\Headers\Samplers\D3D12</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\D3D12U\sampler_d3d12U.h">
-      <Filter>Particles\Headers\Samplers\D3D12U</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Samplers\GPU\sampler_gpu.h">
       <Filter>Particles\Headers\Samplers\GPU</Filter>
     </ClInclude>
@@ -1124,12 +1115,6 @@
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12\storage_spatial_d3d12.h">
       <Filter>Particles\Headers\Storage\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12U\storage_d3d12U.h">
-      <Filter>Particles\Headers\Storage\D3D12U</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\D3D12U\storage_d3d12U_stream.h">
-      <Filter>Particles\Headers\Storage\D3D12U</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Storage\GPU\storage_gpu.h">
       <Filter>Particles\Headers\Storage\GPU</Filter>
@@ -1160,9 +1145,6 @@
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\D3D12\updater_d3d12.h">
       <Filter>Particles\Headers\Updaters\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\D3D12U\updater_d3d12U.h">
-      <Filter>Particles\Headers\Updaters\D3D12U</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_particles\include\Updaters\GPU\updater_gpu.h">
       <Filter>Particles\Headers\Updaters\GPU</Filter>
@@ -1373,6 +1355,108 @@
     </ClInclude>
     <ClInclude Include="..\..\ExternalLibs\Runtime\pk_toolkit\include\pk_toolkit_version.h">
       <Filter>Toolkit\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_1.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_2.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_3.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_4.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11sdklayers.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11shader.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12compatibility.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12sdklayers.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12shader.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12video.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcommon.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcompiler.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_barriers.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_check_feature_support.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_core.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_default.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_pipeline_state_stream.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_property_format_table.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_render_pass.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_resource_helpers.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_root_signature.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_state_object.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcapi.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcerrors.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcisense.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_2.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_3.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_4.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h">
+      <Filter>_External\DX\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h">
+      <Filter>_External\DX\Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

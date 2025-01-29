@@ -43,14 +43,6 @@ void	CBillboard_Exec_WireframeDiscard::operator()(const Drawers::SBillboard_Exec
 	if (batch.m_DrawRequest->RenderedParticleCount() == 0)
 		return;
 
-	for (const auto &renderSelection : m_SrcParticleSelected.m_AllRendererSelectionsView)
-	{
-		if (renderSelection.m_Renderers.Contains(batch.m_DrawRequest->BaseBillboardingRequest()._UnsafeRenderer()))
-		{
-			Mem::Fill32(&m_DstSelectedParticles[batch.m_VertexOffset], bit_cast<u32>(DebugColorGrey), outCount * vertexPerParticle);
-		}
-	}
-
 	CGuid	particleId_First;
 
 	TMemoryView<const SMediumParticleSelection>	&srcSelection = m_SrcParticleSelected.m_AllParticleSelectionsView;
@@ -76,7 +68,11 @@ void	CBillboard_Exec_WireframeDiscard::operator()(const Drawers::SBillboard_Exec
 					u32		rangeOut_count = range_count;
 					if (hasEnabled)
 					{
-						PK_ASSERT(particleId_in <= range_startId); // Warning: it only works when "m_Ranges" are in ascending order and not overlapping. Otherwise, find another way !!!
+						if (particleId_in > range_startId) // restart over (when "m_Ranges" are not in ascending order)
+						{
+							particleId_in = 0;
+							particleId_out = 0;
+						}
 						while (particleId_in < range_startId)
 						{
 							if (enableds[particleId_in] != 0)
@@ -134,14 +130,6 @@ void	CCopyStream_Exec_WireframeDiscard::operator()(const Drawers::SCopyStream_Ex
 	if (batch.m_DrawRequest->RenderedParticleCount() == 0)
 		return;
 
-	for (const auto &renderSelection : m_SrcParticleSelected.m_AllRendererSelectionsView)
-	{
-		if (renderSelection.m_Renderers.Contains(batch.m_DrawRequest->BaseBillboardingRequest()._UnsafeRenderer()))
-		{
-			Mem::Fill32(&m_DstSelectedParticles[batch.m_ParticleOffset], bit_cast<u32>(DebugColorGrey), outCount);
-		}
-	}
-
 	CGuid	particleId_First;
 
 	// Build the array of particle ranges for this page:
@@ -168,7 +156,11 @@ void	CCopyStream_Exec_WireframeDiscard::operator()(const Drawers::SCopyStream_Ex
 					u32		rangeOut_count = range_count;
 					if (hasEnabled)
 					{
-						PK_ASSERT(particleId_in <= range_startId); // Warning: it only works when "m_Ranges" are in ascending order and not overlapping. Otherwise, find another way !!!
+						if (particleId_in > range_startId) // restart over (when "m_Ranges" are not in ascending order)
+						{
+							particleId_in = 0;
+							particleId_out = 0;
+						}
 						while (particleId_in < range_startId)
 						{
 							if (enableds[particleId_in] != 0)
@@ -233,14 +225,6 @@ void	CRibbon_Exec_WireframeDiscard::operator()(const Drawers::SRibbon_ExecBatch 
 	const u32	pageCount = dr->m_PageCaches.Count();
 
 	// Flag selected particles
-
-	for (const auto &renderSelection : m_SrcParticleSelected.m_AllRendererSelectionsView)
-	{
-		if (renderSelection.m_Renderers.Contains(dr->m_DrawRequest->BaseBillboardingRequest()._UnsafeRenderer()))
-		{
-			Mem::Fill32(&m_DstSelectedParticles[vertexOffset], bit_cast<u32>(DebugColorGrey), ribbonData.m_VertexCount);
-		}
-	}
 
 	bool								particleFirstInitialized = false;
 	CRibbonBillboarder::SCentersIndex	particleFirst;
@@ -416,14 +400,6 @@ void	CMesh_Exec_WireframeDiscard::operator()(const Drawers::SMesh_ExecPage &batc
 	{
 		Mem::Clear(&m_DstSelectedParticles[batch.m_ParticleOffset], sizeof(float) * outCount);
 
-		for (const auto &renderSelection : m_SrcParticleSelected.m_AllRendererSelectionsView)
-		{
-			if (renderSelection.m_Renderers.Contains(batch.m_DrawRequest->BaseBillboardingRequest()._UnsafeRenderer()))
-			{
-				Mem::Fill32(&m_DstSelectedParticles[batch.m_ParticleOffset], bit_cast<u32>(DebugColorGrey), outCount);
-			}
-		}
-
 		CGuid	particleId_First;
 
 		TMemoryView<const SMediumParticleSelection>	&srcSelection = m_SrcParticleSelected.m_AllParticleSelectionsView;
@@ -449,7 +425,11 @@ void	CMesh_Exec_WireframeDiscard::operator()(const Drawers::SMesh_ExecPage &batc
 						u32		rangeOut_count = range_count;
 						if (hasEnabled)
 						{
-							PK_ASSERT(particleId_in <= range_startId); // Warning: it only works when "m_Ranges" are in ascending order and not overlapping. Otherwise, find another way !!!
+							if (particleId_in > range_startId) // restart over (when "m_Ranges" are not in ascending order)
+							{
+								particleId_in = 0;
+								particleId_out = 0;
+							}
 							while (particleId_in < range_startId)
 							{
 								if (enableds[particleId_in] != 0)
@@ -499,14 +479,6 @@ void	CMesh_Exec_WireframeDiscard::operator()(const Drawers::SMesh_ExecPage &batc
 
 		TSemiDynamicArray<SRangeAndFocusedMedium, 0x100>	currentParticleRanges;  // 1kb of stack space ?!! I know we should hunt allocs down but isn't there a better way? that's pretty horrible
 
-		for (const auto &renderSelection : m_SrcParticleSelected.m_AllRendererSelectionsView)
-		{
-			if (renderSelection.m_Renderers.Contains(batch.m_DrawRequest->BaseBillboardingRequest()._UnsafeRenderer()))
-			{
-				currentParticleRanges.PushBack(SMediumParticleSelection::SRange(0, batch.m_Page->InputParticleCount()));
-			}
-		}
-
 		CGuid	particleId_First;
 
 		TMemoryView<const SMediumParticleSelection>	&srcSelection = m_SrcParticleSelected.m_AllParticleSelectionsView;
@@ -532,7 +504,11 @@ void	CMesh_Exec_WireframeDiscard::operator()(const Drawers::SMesh_ExecPage &batc
 						u32		rangeOut_count = range_count;
 						if (hasEnabled)
 						{
-							PK_ASSERT(particleId_in <= range_startId); // Warning: it only works when "m_Ranges" are in ascending order and not overlapping. Otherwise, find another way !!!
+							if (particleId_in > range_startId) // restart over (when "m_Ranges" are not in ascending order)
+							{
+								particleId_in = 0;
+								particleId_out = 0;
+							}
 							while (particleId_in < range_startId)
 							{
 								if (enableds[particleId_in] != 0)
@@ -614,14 +590,6 @@ void CTriangle_Exec_WireframeDiscard::operator()(const Drawers::STriangle_ExecPa
 	if (batch.m_DrawRequest->RenderedParticleCount() == 0)
 		return;
 
-	for (const auto &renderSelection : m_SrcParticleSelected.m_AllRendererSelectionsView)
-	{
-		if (renderSelection.m_Renderers.Contains(batch.m_DrawRequest->BaseBillboardingRequest()._UnsafeRenderer()))
-		{
-			Mem::Fill32(&m_DstSelectedParticles[batch.m_VertexOffset], bit_cast<u32>(DebugColorGrey), outCount * 3);
-		}
-	}
-
 	CGuid	particleId_First;
 
 	// Build the array of particle ranges for this page:
@@ -648,7 +616,11 @@ void CTriangle_Exec_WireframeDiscard::operator()(const Drawers::STriangle_ExecPa
 					u32		rangeOut_count = range_count;
 					if (hasEnabled)
 					{
-						PK_ASSERT(particleId_in <= range_startId); // Warning: it only works when "m_Ranges" are in ascending order and not overlapping. Otherwise, find another way !!!
+						if (particleId_in > range_startId) // restart over (when "m_Ranges" are not in ascending order)
+						{
+							particleId_in = 0;
+							particleId_out = 0;
+						}
 						while (particleId_in < range_startId)
 						{
 							if (enableds[particleId_in] != 0)
@@ -714,6 +686,18 @@ RHI::PGpuBuffer	 GetIsSelectedBuffer(const SEffectParticleSelectionView &selecti
 //----------------------------------------------------------------------------
 
 RHI::PGpuBuffer	 GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::SMesh_DrawRequest &dr)
+{
+	for (const auto &s : selectionView.m_AllParticleSelectionsView_GPU)
+	{
+		if (s.m_Selection->m_Medium == dr.m_BB._UnsafeMedium())
+			return s.m_DstBuffer;
+	}
+	return null;
+}
+
+//----------------------------------------------------------------------------
+
+RHI::PGpuBuffer	 GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::STriangle_DrawRequest &dr)
 {
 	for (const auto &s : selectionView.m_AllParticleSelectionsView_GPU)
 	{

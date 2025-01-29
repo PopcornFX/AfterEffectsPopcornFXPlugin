@@ -709,7 +709,7 @@ private:
 	CConstantAtlasManager::CResourceId				m_Atlas;
 	CDigestMD5										m_ContentHash;
 	// Tmp data
-	TArray<SRendererFeaturePropertyValue>			m_constantProperties;
+	TArray<SRendererFeaturePropertyValue>			m_ConstantProperties;
 };
 
 //----------------------------------------------------------------------------

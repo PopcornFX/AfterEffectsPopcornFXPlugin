@@ -4,7 +4,7 @@
 //
 //----------------------------------------------------------------------------
 
-float3    DepthToWorldPos(float depth, float2 screenUVs)
+float3	DepthToWorldPos(float depth, float2 screenUVs)
 {
 	float2	clipSpace = screenUVs * 2 - 1;
 	float4	projPos = float4(clipSpace, depth, 1);
@@ -14,8 +14,8 @@ float3    DepthToWorldPos(float depth, float2 screenUVs)
 }
 
 //----------------------------------------------------------------------------
-
 // Outputs the SceneDepth map value at projected world position
+
 float3	Ext__pksi_GBuffer_ProjectToPosition_f32x3_CX(float3 position, inout int4 sceneCtx)
 {
 	float4	clipPosition = mul(ViewProj, float4(position, 1.0f));

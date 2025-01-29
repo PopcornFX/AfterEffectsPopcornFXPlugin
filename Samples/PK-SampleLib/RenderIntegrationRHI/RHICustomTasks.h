@@ -166,23 +166,17 @@ struct	SEffectParticleSelection
 {
 	TArray<SMediumParticleSelection>				m_AllParticleSelections;
 	TArray<SMediumParticleSelection_GPU_Context>	m_AllParticleSelections_GPU;
-	TArray<SRendererSelection>						m_AllRendererSelections;
 	CGuid											m_FocusedMedium; // address one of the 'm_AllParticleSelections' or 'm_AllParticleSelections_GPU'
 
 	SEffectParticleSelection() {}
 
-	bool	Empty() const { return m_AllParticleSelections.Empty() && m_AllParticleSelections_GPU.Empty() && m_AllRendererSelections.Empty(); }
+	bool	Empty() const { return m_AllParticleSelections.Empty() && m_AllParticleSelections_GPU.Empty(); }
 
 	void	ClearParticleSelection()
 	{
 		m_AllParticleSelections.Clear();
 		m_AllParticleSelections_GPU.Clear();
 		m_FocusedMedium = CGuid::INVALID;
-	}
-
-	void	ClearRendererSelection()
-	{
-		m_AllRendererSelections.Clear();
 	}
 };
 
@@ -192,7 +186,6 @@ struct	SEffectParticleSelectionView
 {
 	TMemoryView<const SMediumParticleSelection>					m_AllParticleSelectionsView;
 	TMemoryView<const SMediumParticleSelection_GPU_Context>		m_AllParticleSelectionsView_GPU;
-	TMemoryView<const SRendererSelection>						m_AllRendererSelectionsView;
 	CGuid														m_FocusedMedium;
 
 	SEffectParticleSelectionView() {}
@@ -200,20 +193,17 @@ struct	SEffectParticleSelectionView
 	SEffectParticleSelectionView(const SEffectParticleSelection &fromSelection)
 	:	m_AllParticleSelectionsView(fromSelection.m_AllParticleSelections)
 	,	m_AllParticleSelectionsView_GPU(fromSelection.m_AllParticleSelections_GPU)
-	,	m_AllRendererSelectionsView(fromSelection.m_AllRendererSelections)
 	,	m_FocusedMedium(fromSelection.m_FocusedMedium)
 	{
 	}
 
 	bool	HasParticlesSelected() const { return !m_AllParticleSelectionsView.Empty(); }
 	bool	HasGPUParticlesSelected() const { return !m_AllParticleSelectionsView_GPU.Empty(); }
-	bool	HasRendersSelected() const { return !m_AllRendererSelectionsView.Empty(); }
 
 	void	ClearAllViews()
 	{
 		m_AllParticleSelectionsView.Clear();
 		m_AllParticleSelectionsView_GPU.Clear();
-		m_AllRendererSelectionsView.Clear();
 	}
 };
 
@@ -292,6 +282,7 @@ public:
 RHI::PGpuBuffer	GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::SBillboard_DrawRequest &dr);
 RHI::PGpuBuffer	GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::SRibbon_DrawRequest &dr);
 RHI::PGpuBuffer	GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::SMesh_DrawRequest &dr);
+RHI::PGpuBuffer	GetIsSelectedBuffer(const SEffectParticleSelectionView &selectionView, const Drawers::STriangle_DrawRequest &dr);
 
 //----------------------------------------------------------------------------
 __PK_SAMPLE_API_END

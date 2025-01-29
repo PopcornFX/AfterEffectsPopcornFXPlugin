@@ -272,6 +272,30 @@ struct	SBackdropsData
 		float			m_Intensity = 0.0f;
 	};
 
+	struct	SWind
+	{
+		CFloat3	m_Center;
+		float	m_RadiusIn;
+		CFloat3	m_VolumeWind;
+		float	m_RadiusOut;
+		CFloat3	m_ConstantWind;
+		float	__padding0;
+
+		bool operator==(const SWind &other) const
+		{
+			return	m_Center == other.m_Center &&
+					m_RadiusIn == other.m_RadiusIn &&
+					m_VolumeWind == other.m_VolumeWind &&
+					m_RadiusOut == other.m_RadiusOut &&
+					m_ConstantWind == other.m_ConstantWind;
+		}
+
+		bool operator!=(const SWind &other) const
+		{
+			return !(*this == other);
+		}
+	};
+
 	bool								m_ShowGrid = false;
 	u32									m_BackdropGridVersion = 0;	// This is incremented each time the backdrops actually change. Avoids having to make inefficient and ineffective compares
 	float								m_GridSize = 1;
@@ -299,10 +323,9 @@ struct	SBackdropsData
 	CFloat4x4							m_MeshBackdropTransforms = CFloat4x4::IDENTITY;
 	TSemiDynamicArray<u32, 4>			m_MeshFilteredSubmeshes;
 
-	TArray<CFloat4x4>					m_FXInstancesTransforms;
-	TArray<SSkinnedMeshData>			m_FXInstancesSkinnedDatas;
-
 	TArray<CLight>						m_Lights;
+
+	SWind								m_WindInfo;
 
 	CString								m_EnvironmentMapPath;
 	float								m_EnvironmentMapIntensity = 1.0f;
@@ -425,9 +448,11 @@ public:
 //	void						BindMiscTrisOpaque(const TMemoryView<const CFloat3> &positions, const TMemoryView<const CFloat4> &colors, const TMemoryView<const u32> &indices);
 //	void						BindMiscTrisAdditive(const TMemoryView<const CFloat3> &positions, const TMemoryView<const CFloat4> &colors, const TMemoryView<const u32> &indices);
 
+	// Getters useful for GPU sim-interfaces
 	const SSamplableRenderTarget	&GBufferRT(SPassDescription::EGBufferRT renderTargetType) const { PK_ASSERT(renderTargetType < SPassDescription::__GBufferRTCount); return m_GBufferRTs[static_cast<u32>(renderTargetType)]; }
 	const CGuid						GBufferRTIdx(SPassDescription::EGBufferRT renderTargetType) const { PK_ASSERT(renderTargetType < SPassDescription::__GBufferRTCount); return m_GBufferRTsIdx[static_cast<u32>(renderTargetType)]; }
 	const RHI::PGpuBuffer			&SceneInfoBuffer() const { return m_SceneInfoConstantBuffer; }
+	const RHI::PGpuBuffer			&WindInfoBuffer() const { return m_WindInfoConstantBuffer; }
 
 	void						ClearMiscGeom();
 
@@ -472,6 +497,8 @@ protected:
 	RHI::PGpuBuffer					m_SceneInfoConstantBuffer;
 	RHI::SConstantSetLayout			m_SceneInfoConstantSetLayout;
 	RHI::PConstantSet				m_SceneInfoConstantSet;
+
+	RHI::PGpuBuffer					m_WindInfoConstantBuffer;
 
 	bool							m_EnableParticleRender;
 	bool							m_EnableBackdropRender;
@@ -607,7 +634,9 @@ protected:
 
 	RHI::SConstantSetLayout			m_MeshConstSetLayout;
 	RHI::PRenderState				m_MeshRenderState;
+	RHI::PRenderState				m_MeshRenderStateStrips;
 	RHI::PRenderState				m_MeshRenderStateVertexColor;
+	RHI::PRenderState				m_MeshRenderStateVertexColorStrips;
 
 	// Misc:
 	struct	SLinePointsColorBuffer

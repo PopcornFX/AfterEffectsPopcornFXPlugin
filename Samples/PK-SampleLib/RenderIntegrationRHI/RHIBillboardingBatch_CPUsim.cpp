@@ -210,6 +210,8 @@ bool	SRHICommonCPUBillboardBuffers::AllocBuffers(u32 indexCount, u32 vertexCount
 	// Specific to ribbons (necessary for the CorrectDeformation feature)
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("UVRemaps Vertex Buffer"), (viewIndependentInputs & Drawers::GenInput_UVRemap) != 0, manager, m_UVRemap, RHI::VertexBuffer, vertexCountAligned * sizeof(CFloat4), vertexCount * sizeof(CFloat4)))
 		return false;
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("UV1Remaps Vertex Buffer"), (viewIndependentInputs & Drawers::GenInput_UV1Remap) != 0, manager, m_UV1Remap, RHI::VertexBuffer, vertexCountAligned * sizeof(CFloat4), vertexCount * sizeof(CFloat4)))
+		return false;
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("UVFactors Vertex Buffer"), (viewIndependentInputs & Drawers::GenInput_UVFactors) != 0, manager, m_UVFactors, RHI::VertexBuffer, vertexCountAligned * sizeof(CFloat4), vertexCount * sizeof(CFloat4)))
 		return false;
 
@@ -256,6 +258,7 @@ void	SRHICommonCPUBillboardBuffers::UnmapBuffers(RHI::PApiManager manager)
 	m_TexCoords1.UnmapIFN(manager);
 	m_RawTexCoords0.UnmapIFN(manager);
 	m_UVRemap.UnmapIFN(manager);
+	m_UV1Remap.UnmapIFN(manager);
 	m_UVFactors.UnmapIFN(manager);
 
 	for (u32 i = 0; i < m_PerViewBuffers.Count(); ++i)
@@ -381,9 +384,8 @@ bool	CRHIRendererBatch_Billboard_CPUBB::AllocBuffers(PopcornFX::SRenderContext &
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::VertexBuffer, Mem::Align<0x100>(totalVertexCount) * sizeof(float), totalVertexCount * sizeof(float)))
 			return false;
@@ -462,6 +464,7 @@ bool	CRHIRendererBatch_Billboard_CPUBB::MapBuffers(SRenderContext &ctx)
 	}
 
 	PK_ASSERT((toMap.m_GeneratedInputs & Drawers::GenInput_UVRemap) == 0);
+	PK_ASSERT((toMap.m_GeneratedInputs & Drawers::GenInput_UV1Remap) == 0);
 	PK_ASSERT((toMap.m_GeneratedInputs & Drawers::GenInput_UVFactors) == 0);
 
 	// View dependent inputs:
@@ -513,9 +516,8 @@ bool	CRHIRendererBatch_Billboard_CPUBB::MapBuffers(SRenderContext &ctx)
 	m_BBJobs_Billboard.m_Exec_CopyField.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BillboardCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -536,9 +538,8 @@ bool	CRHIRendererBatch_Billboard_CPUBB::LaunchCustomTasks(SRenderContext &ctx)
 {
 	(void)ctx;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BB_Billboard.AddExecPage(&m_BillboardCustomParticleSelectTask);
 	}
@@ -682,9 +683,8 @@ bool	CRHIRendererBatch_Billboard_CPUBB::EmitDrawCall(SRenderContext &ctx, const 
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if ((ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected()) && m_IsParticleSelected.Used())
+	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 	}
@@ -793,9 +793,8 @@ bool	CRHIRendererBatch_Billboard_GeomBB::AllocBuffers(SRenderContext &ctx)
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::VertexBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
 			return false;
@@ -897,9 +896,8 @@ bool	CRHIRendererBatch_Billboard_GeomBB::MapBuffers(SRenderContext &ctx)
 	m_BBJobs_Billboard.m_Exec_CopyAdditionalFields.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_CopyCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -920,9 +918,8 @@ bool	CRHIRendererBatch_Billboard_GeomBB::LaunchCustomTasks(SRenderContext &ctx)
 {
 	(void)ctx;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BB_Billoard.AddExecAsyncPage(&m_CopyCustomParticleSelectTask);
 	}
@@ -1064,9 +1061,8 @@ bool	CRHIRendererBatch_Billboard_GeomBB::EmitDrawCall(SRenderContext &ctx, const
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if ((ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected()) && m_IsParticleSelected.Used())
+	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 	}
@@ -1179,9 +1175,8 @@ bool	CRHIRendererBatch_Billboard_VertexBB::AllocBuffers(SRenderContext &ctx)
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::RawBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
 			return false;
@@ -1282,9 +1277,8 @@ bool	CRHIRendererBatch_Billboard_VertexBB::MapBuffers(SRenderContext &ctx)
 	m_BBJobs_Billboard.m_Exec_CopyAdditionalFields.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_GeomBillboardCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -1305,9 +1299,8 @@ bool	CRHIRendererBatch_Billboard_VertexBB::LaunchCustomTasks(SRenderContext &ctx
 {
 	(void)ctx;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BB_Billoard.AddExecAsyncPage(&m_GeomBillboardCustomParticleSelectTask);
 	}
@@ -1467,7 +1460,7 @@ bool	CRHIRendererBatch_Billboard_VertexBB::EmitDrawCall(SRenderContext &ctx, con
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (m_SelectionConstantSet != null)
 		{
@@ -1625,9 +1618,8 @@ bool	CRHIRendererBatch_Ribbon_CPU::AllocBuffers(PopcornFX::SRenderContext &ctx)
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::VertexBuffer, Mem::Align<0x100>(totalVertexCount) * sizeof(float), totalVertexCount * sizeof(float)))
 			return false;
@@ -1691,6 +1683,7 @@ bool	CRHIRendererBatch_Ribbon_CPU::MapBuffers(SRenderContext &ctx)
 	if (toMap.m_GeneratedInputs & Drawers::GenInput_UV1)
 	{
 		PK_ASSERT(m_CommonBuffers.m_TexCoords1.Used());
+		PK_ASSERT((toMap.m_GeneratedInputs & Drawers::GenInput_UV1Remap) == 0);
 		void	*mappedValue = m_ApiManager->MapCpuView(m_CommonBuffers.m_TexCoords1.m_Buffer, 0, totalVertexCount * sizeof(CFloat2));
 		if (!PK_VERIFY(mappedValue != null))
 			return false;
@@ -1711,6 +1704,16 @@ bool	CRHIRendererBatch_Ribbon_CPU::MapBuffers(SRenderContext &ctx)
 		if (!PK_VERIFY(mappedValue != null))
 			return false;
 		m_BBJobs_Ribbon.m_Exec_UVRemap.m_UVRemap = TStridedMemoryView<CFloat4>(static_cast<CFloat4*>(mappedValue), totalVertexCount);
+		m_BBJobs_Ribbon.m_Exec_Texcoords.m_ForUVFactor = true;
+	}
+	if (toMap.m_GeneratedInputs & Drawers::GenInput_UV1Remap)
+	{
+		PK_ASSERT(m_CommonBuffers.m_UV1Remap.Used());
+		PK_ASSERT((toMap.m_GeneratedInputs & Drawers::GenInput_UV1) == 0);
+		void	*mappedValue = m_ApiManager->MapCpuView(m_CommonBuffers.m_UV1Remap.m_Buffer, 0, totalVertexCount * sizeof(CFloat4));
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_UVRemap.m_UV1Remap = TStridedMemoryView<CFloat4>(static_cast<CFloat4*>(mappedValue), totalVertexCount);
 		m_BBJobs_Ribbon.m_Exec_Texcoords.m_ForUVFactor = true;
 	}
 	if (toMap.m_GeneratedInputs & Drawers::GenInput_UVFactors)
@@ -1778,9 +1781,8 @@ bool	CRHIRendererBatch_Ribbon_CPU::MapBuffers(SRenderContext &ctx)
 	m_BBJobs_Ribbon.m_Exec_CopyField.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_RibbonCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -1801,9 +1803,8 @@ bool	CRHIRendererBatch_Ribbon_CPU::LaunchCustomTasks(SRenderContext &ctx)
 {
 	(void)ctx;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BB_Ribbon.AddExecBatch(&m_RibbonCustomParticleSelectTask);
 	}
@@ -1847,6 +1848,7 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 
 	const bool	hasAtlas = rCacheInstance->m_HasAtlas;
 	const bool	hasRawUV0 = rCacheInstance->m_HasRawUV0;
+	const bool	hasCorrectDeformation = m_CommonBuffers.m_UVRemap.Used();
 
 	if (!PK_VERIFY(renderContext.m_DrawOutputs.m_DrawCalls.PushBack().Valid()))
 	{
@@ -1906,7 +1908,7 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 			return false;
 
 		// Atlas renderer feature enabled: None/Linear atlas blending share the same vertex declaration, so we just push empty buffers when blending is disabled
-		if (hasAtlas || m_CommonBuffers.m_TexCoords1.Used())
+		if ((hasAtlas && !hasCorrectDeformation) || m_CommonBuffers.m_TexCoords1.Used())
 		{
 			// If we have invalid m_TexCoords1, bind a dummy vertex buffer, here m_TexCoords0
 			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_TexCoords1.Used() ? m_CommonBuffers.m_TexCoords1.m_Buffer : m_CommonBuffers.m_TexCoords0.m_Buffer).Valid()))
@@ -1919,8 +1921,16 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 		}
 	}
 
-	if (m_CommonBuffers.m_UVRemap.Used() && !PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_UVRemap.m_Buffer).Valid()))
-		return false;
+	if (hasCorrectDeformation)
+	{
+		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_UVRemap.m_Buffer).Valid()))
+			return false;
+		if (hasAtlas)
+		{
+			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_UV1Remap.Used() ? m_CommonBuffers.m_UV1Remap.m_Buffer : m_CommonBuffers.m_UVRemap.m_Buffer).Valid()))
+				return false;
+		}
+	} 
 
 	if (!m_CommonBuffers.m_PerViewBuffers.Empty() && m_CommonBuffers.m_PerViewBuffers[0].m_Positions.Used())
 	{
@@ -1948,9 +1958,8 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if ((ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected()) && m_IsParticleSelected.Used())
+	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 	}
@@ -2020,9 +2029,8 @@ bool	CRHIRendererBatch_Mesh_CPU::AllocBuffers(PopcornFX::SRenderContext &ctx)
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::VertexBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
 			return false;
@@ -2055,9 +2063,8 @@ bool	CRHIRendererBatch_Mesh_CPU::MapBuffers(SRenderContext &ctx)
 	m_BBJobs_Mesh.m_Exec_CopyField.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_MeshCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -2078,9 +2085,8 @@ bool	CRHIRendererBatch_Mesh_CPU::LaunchCustomTasks(SRenderContext &ctx)
 {
 	(void)ctx;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BB_Mesh.AddExecPage(&m_MeshCustomParticleSelectTask);
 	}
@@ -2258,9 +2264,8 @@ bool	CRHIRendererBatch_Mesh_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 		}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-		// Editor only: for debugging purposes, we'll remove that from samples code later
 		PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-		if ((ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected()) && m_IsParticleSelected.Used())
+		if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 		{
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 			outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = particleOffset * u32(sizeof(float));
@@ -2352,9 +2357,8 @@ bool	CRHIRendererBatch_Decal_CPU::AllocBuffers(PopcornFX::SRenderContext &ctx)
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::VertexBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
 			return false;
@@ -2392,9 +2396,8 @@ bool	CRHIRendererBatch_Decal_CPU::MapBuffers(SRenderContext &ctx)
 	m_CopyAdditionalFieldsTask.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_CopyStreamCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -2418,9 +2421,8 @@ bool	CRHIRendererBatch_Decal_CPU::LaunchCustomTasks(SRenderContext &ctx)
 		return false;
 	m_CopyTasks.AddExecAsyncPage(&m_CopyAdditionalFieldsTask);
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_CopyTasks.AddExecAsyncPage(&m_CopyStreamCustomParticleSelectTask);
 	}
@@ -2547,9 +2549,8 @@ bool	CRHIRendererBatch_Decal_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawC
 	outDrawCall.m_InstanceCount = m_DrawPass->m_TotalParticleCount;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if ((ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected()) && m_IsParticleSelected.Used())
+	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = 0;
@@ -2640,9 +2641,8 @@ bool	CRHIRendererBatch_Triangle_CPUBB::AllocBuffers(PopcornFX::SRenderContext &c
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::VertexBuffer, totalVertexCountAligned * sizeof(float), totalVertexCount * sizeof(float)))
 			return false;
@@ -2708,9 +2708,8 @@ bool	CRHIRendererBatch_Triangle_CPUBB::MapBuffers(SRenderContext &ctx)
 	m_BBJobs_Triangle.m_Exec_CopyField.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_TriangleCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -2731,9 +2730,8 @@ bool	CRHIRendererBatch_Triangle_CPUBB::LaunchCustomTasks(SRenderContext &ctx)
 {
 	(void)ctx;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BB_Triangle.AddExecPage(&m_TriangleCustomParticleSelectTask);
 	}
@@ -2827,9 +2825,8 @@ bool	CRHIRendererBatch_Triangle_CPUBB::EmitDrawCall(SRenderContext &ctx, const S
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if ((ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected()) && m_IsParticleSelected.Used())
+	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 	}
@@ -2905,9 +2902,9 @@ bool	CRHIRendererBatch_Triangle_VertexBB::AllocBuffers(SRenderContext &ctx)
 	}
 
 	// Vertex positions streams
-	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Position0s Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticlePosition0) != 0, m_ApiManager, m_VertexPositions0, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat4), totalParticleCount * sizeof(CFloat4)) ||
-		!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Position1s Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticlePosition1) != 0, m_ApiManager, m_VertexPositions1, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat3), totalParticleCount * sizeof(CFloat3)) ||
-		!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Position2s Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticlePosition2) != 0, m_ApiManager, m_VertexPositions2, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat3), totalParticleCount * sizeof(CFloat3)))
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Position0s Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticlePosition012) != 0, m_ApiManager, m_VertexPositions0, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat4), totalParticleCount * sizeof(CFloat4)) ||
+		!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Position1s Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticlePosition012) != 0, m_ApiManager, m_VertexPositions1, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat3), totalParticleCount * sizeof(CFloat3)) ||
+		!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Position2s Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticlePosition012) != 0, m_ApiManager, m_VertexPositions2, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat3), totalParticleCount * sizeof(CFloat3)))
 		return false;
 
 	// Constant buffer filled by CPU task, will contain simple contants per draw request (normals bending factor, ...)
@@ -2920,9 +2917,8 @@ bool	CRHIRendererBatch_Triangle_VertexBB::AllocBuffers(SRenderContext &ctx)
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::RawBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
 			return false;
@@ -2940,10 +2936,8 @@ bool	CRHIRendererBatch_Triangle_VertexBB::MapBuffers(SRenderContext &ctx)
 	const u32		totalParticleCount = m_BB_Triangle.TotalParticleCount();
 	const auto		&toMap = m_DrawPass->m_ToGenerate;
 
-	if (toMap.m_GeneratedInputs & Drawers::GenInput_ParticlePosition0)
+	if (toMap.m_GeneratedInputs & Drawers::GenInput_ParticlePosition012)
 	{
-		PK_ASSERT(toMap.m_GeneratedInputs & Drawers::GenInput_ParticlePosition1);
-		PK_ASSERT(toMap.m_GeneratedInputs & Drawers::GenInput_ParticlePosition2);
 		PK_ASSERT(m_VertexPositions0.Used());
 		PK_ASSERT(m_VertexPositions1.Used());
 		PK_ASSERT(m_VertexPositions2.Used());
@@ -2993,9 +2987,8 @@ bool	CRHIRendererBatch_Triangle_VertexBB::MapBuffers(SRenderContext &ctx)
 	m_BBJobs_Triangle.m_Exec_CopyAdditionalFields.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_GeomBillboardCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -3016,9 +3009,8 @@ bool	CRHIRendererBatch_Triangle_VertexBB::LaunchCustomTasks(SRenderContext &ctx)
 {
 	(void)ctx;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_BB_Triangle.AddExecAsyncPage(&m_GeomBillboardCustomParticleSelectTask);
 	}
@@ -3144,7 +3136,7 @@ bool	CRHIRendererBatch_Triangle_VertexBB::EmitDrawCall(SRenderContext &ctx, cons
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (m_SelectionConstantSet != null)
 		{
@@ -3269,9 +3261,8 @@ bool	CRHIRendererBatch_Light_CPU::AllocBuffers(SRenderContext &ctx)
 		return false;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::VertexBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
 			return false;
@@ -3303,9 +3294,8 @@ bool	CRHIRendererBatch_Light_CPU::MapBuffers(SRenderContext &ctx)
 	m_CopyAdditionalFieldsTask.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_CopyStreamCustomParticleSelectTask.Clear();
 		PK_ASSERT(m_IsParticleSelected.Used());
@@ -3330,9 +3320,8 @@ bool	CRHIRendererBatch_Light_CPU::LaunchCustomTasks(SRenderContext &ctx)
 	m_CopyTasks.AddExecAsyncPage(&m_BB_Lights);
 	m_CopyTasks.AddExecAsyncPage(&m_CopyAdditionalFieldsTask);
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if (ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected())
+	if (ctxEditor.Selection().HasParticlesSelected())
 	{
 		m_CopyTasks.AddExecAsyncPage(&m_CopyStreamCustomParticleSelectTask);
 	}
@@ -3478,9 +3467,8 @@ bool	CRHIRendererBatch_Light_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawC
 	outDrawCall.m_InstanceCount = toEmit.m_TotalParticleCount;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	// Editor only: for debugging purposes, we'll remove that from samples code later
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-	if ((ctxEditor.Selection().HasParticlesSelected() || ctxEditor.Selection().HasRendersSelected()) && m_IsParticleSelected.Used())
+	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = 0;

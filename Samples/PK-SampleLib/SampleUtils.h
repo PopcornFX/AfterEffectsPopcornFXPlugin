@@ -96,24 +96,29 @@ namespace	Utils
 		:	m_VertexCount(vertexCount)
 		,	m_VertexData(vertexViews)
 		,	m_IndexData16(indexViews)
-		{}
+		{
+		}
 
 		VertexHelper(u64 vertexCount, TMemoryView<const TMemoryView<const float>> vertexViews, TMemoryView<const u32> indexViews)
 		:	m_VertexCount(vertexCount)
 		,	m_VertexData(vertexViews)
 		,	m_IndexData32(indexViews)
-		{}
+		{
+		}
 
 		VertexHelper(u64 vertexCount, TMemoryView<const TMemoryView<const float>> vertexViews)
 		:	m_VertexCount(vertexCount)
 		,	m_VertexData(vertexViews)
-		{}
+		{
+		}
 
 		u32	IndexCount() const
 		{
 			PK_ASSERT(m_IndexData16.Empty() || m_IndexData32.Empty());
-			if (!m_IndexData16.Empty()) return m_IndexData16.Count();
-			if (!m_IndexData32.Empty()) return m_IndexData32.Count();
+			if (!m_IndexData16.Empty())
+				return m_IndexData16.Count();
+			if (!m_IndexData32.Empty())
+				return m_IndexData32.Count();
 			return 0;
 		}
 	};

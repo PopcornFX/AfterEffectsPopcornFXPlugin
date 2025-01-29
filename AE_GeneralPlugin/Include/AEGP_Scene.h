@@ -103,6 +103,7 @@ public:
 			u32									m_SubMeshID;
 			TStridedMemoryView<const CFloat3>	m_Positions;
 			TStridedMemoryView<const CFloat3>	m_Normals;
+			TArray<float>						m_RawDataForRendering;
 			SSkinnedDataSubMesh() : m_SubMeshID(0) {}
 		};
 

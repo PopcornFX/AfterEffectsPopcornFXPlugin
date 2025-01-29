@@ -570,7 +570,10 @@ bool	CAAEScene::UpdateAttributes(SLayerHolder *layer)
 	{
 		SAttributeSamplerDesc	*descriptor = static_cast<SAttributeSamplerDesc*>(it->m_Desc);
 		if (descriptor == null) // Corrupt attribute on AE Side
+		{
 			it->m_Deleted = true;
+			continue;
+		}
 
 		switch (descriptor->m_Type)
 		{
@@ -1955,84 +1958,60 @@ void	CAAEScene::_FillAdditionnalDataForRender()
 	if (instance == null)
 		return;
 	if (!PK_VERIFY(outSkinnedDatas.PushBack().Valid()))
-	{
-		outSkinnedDatas.Clear();
 		return;
-	}
 
 	SSkinnedDataSimple	&skinnedDataSimple = outSkinnedDatas.Last();
 
 	skinnedDataSimple.m_Valid = (instance->m_SkinnedMesh != null && instance->m_SkinnedMesh->Valid() && instance->m_SkinnedMesh->HasGeometry());
+	skinnedDataSimple.m_SubMeshes.Clear();
+
 	if (skinnedDataSimple.m_Valid)
 	{
-		if (!PK_VERIFY(skinnedDataSimple.m_SubMeshes.Resize(instance->m_SkinnedMesh->SubMeshCount())))
-		{
-			skinnedDataSimple.m_SubMeshes.Clear();
+		if (!PK_VERIFY(skinnedDataSimple.m_SubMeshes.Reserve(instance->m_SkinnedMesh->SubMeshCount())))
 			return;
-		}
+
 		for (u32 smidx = 0, smCount = instance->m_SkinnedMesh->SubMeshCount(); smidx < smCount; smidx++)
 		{
-			auto	&submesh = skinnedDataSimple.m_SubMeshes[smidx];
+			SSkinnedDataSimple::SSkinnedDataSubMesh	submesh;
 			submesh.m_SubMeshID = smidx;
 			submesh.m_Positions = instance->m_SkinnedMesh->Positions(smidx);
 			submesh.m_Normals = instance->m_SkinnedMesh->Normals(smidx);
-		}
-		for (u32 smidx = 0; smidx < skinnedDataSimple.m_SubMeshes.Count(); smidx++)
-		{
-			auto	&submesh = skinnedDataSimple.m_SubMeshes[smidx];
-			if (submesh.m_Positions.Empty() &&
-				submesh.m_Normals.Empty())
-				skinnedDataSimple.m_SubMeshes.Remove(smidx--);
+			if (!submesh.m_Positions.Empty() && !submesh.m_Normals.Empty())
+				skinnedDataSimple.m_SubMeshes.PushBackUnsafe(submesh);
 		}
 	}
 
-	if (!PK_VERIFY(m_BackdropData.m_FXInstancesSkinnedDatas.Resize(1)))
-		return;
-
 	for (u32 iInstance = 0; iInstance < 1; ++iInstance)
 	{
-		const SSkinnedDataSimple	&skinnedData = m_FXInstancesSkinnedData[iInstance];
-		PKSample::SSkinnedMeshData	&skinnedDataForRender = m_BackdropData.m_FXInstancesSkinnedDatas[iInstance];
-
-		skinnedDataForRender.m_Valid = false;
-
-		if (!skinnedData.m_Valid ||
-			skinnedData.m_SubMeshes.Empty() ||
-			!PK_VERIFY(skinnedDataForRender.m_SubMeshes.Resize(skinnedData.m_SubMeshes.Count())))
-		{
-			skinnedDataForRender.m_SubMeshes.Clear();
+		SSkinnedDataSimple	&skinnedData = m_FXInstancesSkinnedData[iInstance];
+		if (!skinnedData.m_Valid)
 			continue;
-		}
 
-		skinnedDataForRender.m_Valid = skinnedData.m_Valid;
-
+		// Generate data for render.
+#if 1 // This data is not used ??? If so, just if-0
 		for (u32 smidx = 0; smidx < skinnedData.m_SubMeshes.Count(); smidx++)
 		{
-			const auto	&submesh = skinnedData.m_SubMeshes[smidx];
-			auto		&submeshForRender = skinnedDataForRender.m_SubMeshes[smidx];
+			auto	&submesh = skinnedData.m_SubMeshes[smidx];
 
-			submeshForRender.m_SubMeshID = submesh.m_SubMeshID;
-
-			// skinned data is 0x10 aligned, submeshForRender has same alignment as final vb so we can memcpy
 			const u32	posCount = submesh.m_Positions.Count();
-			const u32	pnStride = sizeof(CFloat3);
-			const u32	posSizeInBytes = posCount * pnStride;
-			const u32	totalSizeInBytes = posSizeInBytes + submesh.m_Normals.Count() * pnStride;
-			PK_ASSERT(totalSizeInBytes > 0);
-			PK_ASSERT(posCount == submesh.m_Normals.Count() || submesh.m_Normals.Empty());
-			if (!PK_VERIFY(submeshForRender.m_RawData.Resize(totalSizeInBytes)))
+			PK_ASSERT(posCount != 0 && posCount == submesh.m_Normals.Count());
+			const u32	totalSizeInFloats = posCount * 3 + submesh.m_Normals.Count() * 3;
+			PK_ASSERT(totalSizeInFloats > 0);
+			if (!PK_VERIFY(submesh.m_RawDataForRendering.Resize(totalSizeInFloats)))
 			{
-				submeshForRender.m_RawData.Clear();
+				skinnedData.m_Valid = false; // discard the entire instance
 				continue;
 			}
 
-			CFloat3						*dstData = reinterpret_cast<CFloat3*>(submeshForRender.m_RawData.RawDataPointer());
-			TStridedMemoryView<CFloat3>	dstPositions(dstData, posCount, pnStride);
-			TStridedMemoryView<CFloat3>	dstNormals(dstData + posCount, posCount, pnStride);
-
+			CFloat3						*dstData = reinterpret_cast<CFloat3*>(submesh.m_RawDataForRendering.RawDataPointer());
+			TStridedMemoryView<CFloat3>	dstPositions(dstData, posCount, sizeof(CFloat3));
+			TStridedMemoryView<CFloat3>	dstNormals(dstData + posCount, posCount, sizeof(CFloat3));
 			Mem::CopyStreamToStream(dstPositions, submesh.m_Positions);
 			Mem::CopyStreamToStream(dstNormals, submesh.m_Normals);
 		}
+#else
+		skinnedData.m_Valid = false; // No render-data generated
+#endif
 	}
 }
 

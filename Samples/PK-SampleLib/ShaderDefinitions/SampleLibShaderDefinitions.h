@@ -99,6 +99,7 @@ void	CreateCubemapSamplerConstantSetLayout(RHI::SConstantSetLayout &layout);
 //----------------------------------------------------------------------------
 
 bool	CreateSceneInfoConstantLayout(RHI::SConstantSetLayout &sceneInfoLayout);
+bool	CreateWindInfoConstantLayout(RHI::SConstantSetLayout &windInfoLayout);
 bool	CreateLightingSceneInfoConstantLayout(	RHI::SConstantSetLayout &lightLayout,
 												RHI::SConstantSetLayout &shadowLayout,
 												RHI::SConstantSetLayout &brdfLUTLayout,

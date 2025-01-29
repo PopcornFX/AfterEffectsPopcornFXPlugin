@@ -50,24 +50,6 @@ struct	SMeshFragmentConstant
 
 //----------------------------------------------------------------------------
 
-// Render ready skinned data
-struct	SSkinnedMeshData
-{
-	struct	SSkinnedDataSubMesh
-	{
-		u32			m_SubMeshID;
-		TArray<u8>	m_RawData;
-		SSkinnedDataSubMesh() : m_SubMeshID(0) {}
-	};
-
-	bool		m_Valid;
-	TSemiDynamicArray<SSkinnedDataSubMesh, 4>	m_SubMeshes;
-
-	SSkinnedMeshData() : m_Valid(false) { }
-};
-
-//----------------------------------------------------------------------------
-
 struct	SMesh
 {
 	SMesh();
@@ -104,6 +86,7 @@ struct	SMesh
 
 		RHI::PGpuBuffer			m_IndexBuffer;
 		RHI::EIndexBufferSize	m_IndexSize;
+		RHI::EDrawMode			m_IndexMode = RHI::DrawModeTriangle;
 		u32						m_IndexCount;
 
 		CAABB					m_BBox;
@@ -138,7 +121,6 @@ struct	SMesh
 	TAtomic<u32>					m_ResourceDirtyKey;	// written by update thread
 	u32								m_ResourceCleanKey;	// written by render thread
 
-	bool							RefreshSkinnedDatas(const RHI::PApiManager &apiManager, TMemoryView<const SSkinnedMeshData> skinnedDatas);
 	bool							IsDirty() const { return m_ResourceDirtyKey.Load() != m_ResourceCleanKey; }
 
 private:

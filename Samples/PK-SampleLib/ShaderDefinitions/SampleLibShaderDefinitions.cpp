@@ -287,6 +287,27 @@ bool	CreateSceneInfoConstantLayout(RHI::SConstantSetLayout &sceneInfoLayout)
 
 //----------------------------------------------------------------------------
 
+bool	CreateWindInfoConstantLayout(RHI::SConstantSetLayout &windInfoLayout)
+{
+	bool	success = true;
+
+	windInfoLayout.Reset();
+
+	RHI::SConstantBufferDesc	bufferLayout("WindInfo");
+
+	success &= bufferLayout.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat3, "WindInfoCenter"));
+	success &= bufferLayout.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat, "WindInfoRadiusIn"));
+	success &= bufferLayout.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat3, "WindInfoVolumeWind"));
+	success &= bufferLayout.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat, "WindInfoRadiusOut"));
+	success &= bufferLayout.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat3, "WindInfoConstantWind"));
+
+	success &= windInfoLayout.AddConstantsLayout(bufferLayout);
+
+	return success;
+}
+
+//----------------------------------------------------------------------------
+
 bool	CreateLightingSceneInfoConstantLayout(	RHI::SConstantSetLayout &lightLayout,
 												RHI::SConstantSetLayout &shadowLayout,
 												RHI::SConstantSetLayout &brdfLUTLayout,

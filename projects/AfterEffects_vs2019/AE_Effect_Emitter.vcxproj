@@ -67,7 +67,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -79,7 +79,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
@@ -96,7 +96,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -112,7 +112,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;MSWindows;WIN32;_WINDOWS;PK_BUILD_WITH_FMODEX_SUPPORT=0;PK_BUILD_WITH_SDL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\AE_Effect_Emitter\Sources;..\..\AE_Effect_Emitter\Include;..\..\AE_Effect_Emitter\Precompiled;..\..\AE_Suites;..\..\External\AE SDK\Resources;..\..\External\AE SDK\Headers;..\..\External\AE SDK\Util;..\..\External\AE SDK\Headers\SP;..\..\External\AE SDK\Headers\adobesdk;..\..\External\AE SDK\Headers\SP\artemis;..\..\External\AE SDK\Headers\SP\photoshop;..\..\External\AE SDK\Headers\SP\artemis\config;..\..\External\AE SDK\Headers\SP\photoshop\config;..\..\External\AE SDK\Headers\adobesdk\config;..\..\External\AE SDK\Headers\adobesdk\drawbotsuite;..\..\ExternalLibs\fmodex\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
@@ -144,6 +144,40 @@
     <ClInclude Include="..\..\External\AE SDK\Util\Smart_Utils.h" />
     <ClInclude Include="..\..\External\AE SDK\Util\String_Utils.h" />
     <ClInclude Include="..\..\External\AE SDK\Util\entry.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_1.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12compatibility.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12video.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcommon.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcompiler.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_barriers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_check_feature_support.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_core.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_default.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_pipeline_state_stream.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_property_format_table.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_render_pass.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_resource_helpers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_root_signature.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_state_object.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcapi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcerrors.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcisense.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h" />
     <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.h" />
     <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod.hpp" />
     <ClInclude Include="..\..\ExternalLibs\fmodex\inc\fmod_codec.h" />

@@ -106,7 +106,7 @@ bool	CRHIParticleRenderDataFactory::RenderThread_BuildPendingCaches(const RHI::P
 		PRendererCacheInstance_UpdateThread	rendererCache = m_PendingCaches[iMat];
 		PK_ASSERT(rendererCache != null);
 
-			if (!rendererCache->RenderThread_Build(apiManager, m_HBOContext))
+		if (!rendererCache->RenderThread_Build(apiManager, m_HBOContext))
 		{
 			CLog::Log(PK_ERROR, "Could not create the graphical resources for an effect created this frame");
 			success = false;
@@ -148,8 +148,11 @@ CRendererBatchDrawer *CRHIParticleRenderDataFactory::CreateBillboardingBatch2(ER
 		//case	Renderer_Decal:
 		//	return PK_NEW(CRHIRendererBatch_Decal_GPU(m_ApiManager));
 
-		//case	Renderer_Triangle:
-		//	return PK_NEW(CRHIRendererBatch_Triangle_GPU(m_ApiManager));
+		case	Renderer_Triangle:
+			if (m_GPUCaps.m_SupportsShaderResourceViews)
+				return PK_NEW(CRHIRendererBatch_Triangle_GPU(m_ApiManager));
+			else
+				return null;
 
 		default:
 			break;

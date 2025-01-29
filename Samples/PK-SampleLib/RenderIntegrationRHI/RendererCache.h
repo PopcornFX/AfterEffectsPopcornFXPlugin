@@ -41,18 +41,34 @@ public:
 	static void		RenderThread_ClearAllGpuResources();
 	static void		RenderThread_DestroyAllResources();
 
-	bool			operator == (const CRendererCacheInstance_UpdateThread &oth) const { return m_RendererCacheInstanceId == oth.m_RendererCacheInstanceId; }
+	bool			operator == (const CRendererCacheInstance_UpdateThread &oth) const
+	{
+		return	m_RendererCacheInstanceId == oth.m_RendererCacheInstanceId &&
+				m_CastShadows == oth.m_CastShadows &&
+				m_IsHighlighted == oth.m_IsHighlighted &&
+				m_IsHidden == oth.m_IsHidden;
+	}
 
+	// Editor specific features (but that can be plugged in any other RHI integration)
 	bool			CastShadows() const { return m_CastShadows; }
+	bool			IsHighlighted() const { return m_IsHighlighted; }
+	void			SetHighlighted(bool isHighlighted) { m_IsHighlighted = isHighlighted; }
+	bool			IsHidden() const { return m_IsHidden; }
+	void			SetHidden(bool isHidden) { m_IsHidden = isHidden; }
 
 private:
 	void			_OnMeshReloaded(CResourceMesh *mesh);
 
 	CRenderPassArray							m_RenderPasses;
 	bool										m_LastResolveSucceed = true;
-	bool										m_CastShadows = false;
+
 	CRendererCacheInstanceManager::CResourceId	m_RendererCacheInstanceId;
 	TResourcePtr<CResourceMesh>					m_MeshResource;
+
+	bool	m_CastShadows = false;
+	bool	m_IsHighlighted = false;
+	bool	m_IsHidden = false;
+
 };
 PK_DECLARE_REFPTRCLASS(RendererCacheInstance_UpdateThread);
 

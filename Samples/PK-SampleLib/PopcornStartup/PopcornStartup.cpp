@@ -44,6 +44,10 @@
 #	endif
 #endif // KR_PROFILER_ENABLED != 0
 
+#if defined(PK_USE_JSONSERIALIZER)
+#	include <json_hbo_serializer.h>
+#endif
+
 //----------------------------------------------------------------------------
 
 PK_LOG_MODULE_DEFINE();
@@ -224,9 +228,19 @@ bool	PopcornStartup(bool logOnStdOut, File::FnNewFileSystem newFileSys, Schedule
 #	endif
 #endif
 
+	HBO::ISerializer *serializers[] =
+	{
+		new (HBO::CSerializerPKBO),
+#if defined(PK_USE_JSONSERIALIZER)
+		new (JsonHBO::CSerializerJSON),
+#endif
+	};
+	CPKBaseObject::Config  configBaseObject;
+	configBaseObject.m_CustomSerializers = serializers;
+
 	// Startup all PopcornFX critical modules, each module's config can be overridden
 	if (CPKKernel::Startup(engineVersion, configKernel) &&
-		CPKBaseObject::Startup(engineVersion, CPKBaseObject::Config()) &&
+		CPKBaseObject::Startup(engineVersion, configBaseObject) &&
 		CPKEngineUtils::Startup(engineVersion, CPKEngineUtils::Config()) &&
 		CPKCompiler::Startup(engineVersion, CPKCompiler::Config()) &&
 		CPKImaging::Startup(engineVersion, CPKImaging::Config()) &&
@@ -259,6 +273,14 @@ bool	PopcornStartup(bool logOnStdOut, File::FnNewFileSystem newFileSys, Schedule
 	}
 
 	PopcornShutdown();	// shutdown the modules we were able to load...
+
+	if (serializers[0] != null)
+		delete serializers[0];
+#if defined(PK_USE_JSONSERIALIZER)
+	if (serializers[1] != null)
+		delete serializers[1];
+#endif
+
 	return false;
 }
 

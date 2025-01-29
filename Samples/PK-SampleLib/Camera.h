@@ -29,27 +29,24 @@ struct	SCamera
 	CFloat3				m_Position;
 	CFloat4x4			m_ViewInv;
 	CFloat4x4			m_ProjInv;
-	CFrustum			m_ViewFrustum;
 	CFloat2				m_WinSize;
 	float				m_ProjFovy;
 	float				m_ProjNear;
 	float				m_ProjFar;
+	CAABB				m_ClipSpaceLimits; // (.x: side, .y: vertical, .z: depth)
 
 	CFloat3				Ray(const CFloat2 &mousePosPixel) const;
 	const CFloat3		&Position() const { return m_Position; }
 	const CFloat4x4		&Proj() const { return m_Proj; }
-	const CFrustum		&ViewFrustum() const { return m_ViewFrustum; }
 	const CFloat4x4		&View() const { return m_View; }
 	const CFloat2		WindowSize() const { return m_WinSize; }
 	const CFloat2		ZLimits() const { return CFloat2(m_ProjNear, m_ProjFar); }
+	const CAABB			ClipSpaceLimits() const { return m_ClipSpaceLimits; }
 
 	void				Update()
 	{
 		m_ViewInv = m_View.Inverse();
 		m_ProjInv = m_Proj.Inverse();
-
-		const CFloat4x4	viewProj = m_View * m_Proj;
-		m_ViewFrustum.SetupFromMatrix(viewProj, CAABB::NORMALIZED_M1P1);
 	}
 
 	SCamera()
@@ -62,6 +59,7 @@ struct	SCamera
 	,	m_ProjFovy(0)
 	,	m_ProjNear(0)
 	,	m_ProjFar(0)
+	,	m_ClipSpaceLimits(CAABB::NORMALIZED_M1P1)
 	{
 	}
 };
@@ -89,10 +87,10 @@ public:
 	const CFloat3		&Position() const { return m_Cam.m_Position; }
 	const CFloat3		&LookAt() const { return m_LookAt; }
 	const CFloat4x4		&View() const { return m_Cam.View(); }
-	const CFrustum		&ViewFrustum() const { return m_Cam.ViewFrustum(); }
 	const CFloat4x4		&Proj() const { return m_Cam.Proj(); }
 	CFloat2				ZLimits() const { return m_Cam.ZLimits(); }
 	float				BoundingZOffset(float radius, bool useLargestFov) const;
+	const CAABB			ClipSpaceLimits() const { return m_Cam.ClipSpaceLimits(); }
 
 	CFloat2				WindowSize() const { return m_Cam.WindowSize(); }
 

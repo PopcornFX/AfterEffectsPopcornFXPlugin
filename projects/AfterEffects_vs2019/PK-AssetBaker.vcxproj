@@ -65,7 +65,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;Z_PREFIX;Z_PREFIX_CUSTOM=pk_z_;PK_USE_RENDER_HELPERS=0;USE_FBXIMPORTER;USE_IMAGE_PLUGIN_HDR;USE_IMAGE_PLUGIN_TIFF;USE_IMAGE_PLUGIN_PKM;USE_IMAGE_PLUGIN_PVR;USE_IMAGE_PLUGIN_EXR;USE_COMPILER_BACKEND_D3D;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\PK-AssetBaker;..\..\ExternalLibs\PK-AssetBakerLib;..\..\ExternalLibs\pk_upgraderlib\include;..\..\SDK\Samples\Common\PKFX;..\..\ExternalLibs\Runtime\libs\zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\PK-AssetBaker;..\..\ExternalLibs\PK-AssetBakerLib;..\..\ExternalLibs\pk_upgraderlib\include;..\..\SDK\Samples\Common\PKFX;..\..\ExternalLibs\Runtime\libs\zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -94,7 +94,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;Z_PREFIX;Z_PREFIX_CUSTOM=pk_z_;PK_USE_RENDER_HELPERS=0;USE_FBXIMPORTER;USE_IMAGE_PLUGIN_HDR;USE_IMAGE_PLUGIN_TIFF;USE_IMAGE_PLUGIN_PKM;USE_IMAGE_PLUGIN_PVR;USE_IMAGE_PLUGIN_EXR;USE_COMPILER_BACKEND_D3D;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\PK-AssetBaker;..\..\ExternalLibs\PK-AssetBakerLib;..\..\ExternalLibs\pk_upgraderlib\include;..\..\SDK\Samples\Common\PKFX;..\..\ExternalLibs\Runtime\libs\zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\PK-AssetBaker;..\..\ExternalLibs\PK-AssetBakerLib;..\..\ExternalLibs\pk_upgraderlib\include;..\..\SDK\Samples\Common\PKFX;..\..\ExternalLibs\Runtime\libs\zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -135,6 +135,40 @@
     <ClInclude Include="..\..\ExternalLibs\Runtime\libs\zlib-1.2.8\zutil.h" />
     <ClInclude Include="..\..\SDK\Samples\Common\PKFX\FxPlugins.h" />
     <ClInclude Include="..\..\SDK\Samples\Common\PKFX\FxStartup.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_1.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12compatibility.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12video.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcommon.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcompiler.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_barriers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_check_feature_support.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_core.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_default.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_pipeline_state_stream.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_property_format_table.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_render_pass.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_resource_helpers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_root_signature.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_state_object.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcapi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcerrors.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcisense.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h" />
     <ClInclude Include="..\..\ExternalLibs\PK-AssetBaker\AssetBaker.h" />
     <ClInclude Include="..\..\ExternalLibs\PK-AssetBaker\AssetBaker_EditorMaterialProxy.h" />
     <ClInclude Include="..\..\ExternalLibs\PK-AssetBaker\precompiled.h" />

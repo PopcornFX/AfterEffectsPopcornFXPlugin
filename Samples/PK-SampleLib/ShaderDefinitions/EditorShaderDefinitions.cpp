@@ -231,14 +231,24 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 			simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("GPUSimData"));
 
 			streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("EnabledsOffsets"));
-			streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("PositionsOffsets"));
+
+			if (rendererType == Renderer_Triangle)
+			{
+				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Positions0Offsets"));
+				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Positions1Offsets"));
+				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Positions2Offsets"));
+			}
+			else
+			{
+				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("PositionsOffsets"));
+			}
 		}
 		else
 		{
 			simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Indices")); // Right now, always add the indices raw buffer. Later, shader permutation
 			if (rendererType == Renderer_Billboard)
 				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Positions"));
-			else
+			else // rendererType == Renderer_Triangle
 			{
 				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("VertexPosition0"));
 				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("VertexPosition1"));
@@ -652,6 +662,19 @@ void	AddEditorDebugVertexBBParticleDefinition(TArray<SShaderCombination> &shader
 		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Error, static_cast<EParticleDebugBillboarderType>(bbType), true, &description);
 		shaders.Last().m_ShaderDescriptions.PushBack(description); // PUSH SHADER DESCRIPTION
 	}
+
+	PK_VERIFY(shaders.PushBack().Valid());
+	shaders.Last().m_VertexShader = "DebugParticleVertexTri.vert";
+	shaders.Last().m_FragmentShader = "DebugDrawColor.frag";
+
+	FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_White, EParticleDebugBillboarderType::ParticleDebugBT_TriangleVertexBillboarding, true, &description);
+	PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
+	FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Color, EParticleDebugBillboarderType::ParticleDebugBT_TriangleVertexBillboarding, true, &description);
+	PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
+	FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Selection, EParticleDebugBillboarderType::ParticleDebugBT_TriangleVertexBillboarding, true, &description);
+	PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
+	FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Error, EParticleDebugBillboarderType::ParticleDebugBT_TriangleVertexBillboarding, true, &description);
+	PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
 #endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
 }
 

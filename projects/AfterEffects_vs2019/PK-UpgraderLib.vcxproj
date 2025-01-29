@@ -83,7 +83,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\ExternalLibs\pk_upgraderlib\src;..\..\ExternalLibs\pk_upgraderlib\src\precompiled;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\ExternalLibs\pk_upgraderlib\src;..\..\ExternalLibs\pk_upgraderlib\src\precompiled;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>pk_compiler_warnings.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -111,7 +111,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\ExternalLibs\pk_upgraderlib\src;..\..\ExternalLibs\pk_upgraderlib\src\precompiled;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\ExternalLibs\pk_upgraderlib\src;..\..\ExternalLibs\pk_upgraderlib\src\precompiled;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>pk_compiler_warnings.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -145,7 +145,7 @@
       <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;PK_RETAIL;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\ExternalLibs\pk_upgraderlib\src;..\..\ExternalLibs\pk_upgraderlib\src\precompiled;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ExternalLibs\DX\include;..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs;..\..\ExternalLibs\pk_upgraderlib\src;..\..\ExternalLibs\pk_upgraderlib\src\precompiled;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>pk_compiler_warnings.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -172,6 +172,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_1.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d11shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12compatibility.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12sdklayers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12shader.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3d12video.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcommon.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dcompiler.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_barriers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_check_feature_support.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_core.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_default.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_pipeline_state_stream.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_property_format_table.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_render_pass.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_resource_helpers.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_root_signature.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\d3dx12\d3dx12_state_object.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcapi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcerrors.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxcisense.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_2.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_3.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_4.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h" />
+    <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\include\upg_helper_axis_system.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\include\upg_helper_core_upgrade.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\include\upg_helper_file.h" />
@@ -765,6 +799,27 @@
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.20.1.21978\Library_PopcornFXCore_Shaders_includes_FeatureDithering_h_2_20_1_21978.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.20.1.21978\Library_PopcornFXCore_Shaders_includes_FeatureEmissive_h_2_20_1_21978.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.20.1.21978\Library_PopcornFXCore_Templates_Core_pkfx_2_20_1_21978.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Editor_Presets_Effects_Basic_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Editor_Presets_Effects_FX_Simple_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Materials_Interface_Default_pkri_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Materials_Interface_Legacy_pkri_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Materials_Ribbon_AnimatedMasked_pkma_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Materials_Ribbon_CorrectDeformation_Opaque_pkma_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Materials_Ribbon_CorrectDeformation_Transparent_pkma_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Shaders_Legacy_Default_Ribbon_frag_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Shaders_Particle_Master_frag_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Shaders_includes_FeatureRibbonCorrectDeformation_h_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Templates_Core_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Templates_Dynamics_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Templates_Events_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Templates_Legacy_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Templates_Placement_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Templates_Samplers_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\Library_PopcornFXCore_Templates_Utils_pkfx_2_21_0_22636.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22818\Library_PopcornFXCore_Shaders_Particle_Master_frag_2_21_0_22818.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22818\Library_PopcornFXCore_Templates_Dynamics_pkfx_2_21_0_22818.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22818\Library_PopcornFXCore_Templates_Events_pkfx_2_21_0_22818.h" />
+    <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22818\Library_PopcornFXCore_Templates_Legacy_pkfx_2_21_0_22818.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.3.0.59136\Editor_Templates_Basic_pkfx_2_3_0_59136.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.3.0.59136\Editor_Templates_FX_Simple_pkfx_2_3_0_59136.h" />
     <ClInclude Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.3.0.59136\Library_PopcornFXCore_Materials_Default_Billboard_pkma_2_3_0_59136.h" />
@@ -1092,6 +1147,8 @@
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.20.0.21121\core_upgrader_2_20_0_21121.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.20.0.21896\core_upgrader_2_20_0_21896.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.20.1.21978\core_upgrader_2_20_1_21978.cpp" />
+    <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22636\core_upgrader_2_21_0_22636.cpp" />
+    <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.21.0.22818\core_upgrader_2_21_0_22818.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.3.0.59136\core_upgrader_2_3_0_59136.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.3.0.59175\core_upgrader_2_3_0_59175.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\Data\2.3.0.59344\core_upgrader_2_3_0_59344.cpp" />
@@ -1473,6 +1530,7 @@
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\upg_upgrades_v2.19.0.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\upg_upgrades_v2.2.0.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\upg_upgrades_v2.20.0.cpp" />
+    <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\upg_upgrades_v2.21.0.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\upg_upgrades_v2.3.0.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\upg_upgrades_v2.4.0.cpp" />
     <ClCompile Include="..\..\ExternalLibs\pk_upgraderlib\src\Upgrades\upg_upgrades_v2.5.0.cpp" />

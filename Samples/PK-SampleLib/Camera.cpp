@@ -67,6 +67,7 @@ void	CCameraBase::SetProj(float fovyDegrees, const CFloat2 &winDimPixel, float z
 									0, _fY, 0, 0,
 									0, 0, kA, -1,
 									0, 0, 2 * kB, 0);
+		m_Cam.m_ClipSpaceLimits = CAABB::NORMALIZED_M1P1;
 	}
 	else if (api == RHI::GApi_Orbis || api == RHI::GApi_UNKNOWN2)
 	{
@@ -75,6 +76,7 @@ void	CCameraBase::SetProj(float fovyDegrees, const CFloat2 &winDimPixel, float z
 									0, fY, 0, 0,
 									0, 0, kA, -1,
 									0, 0, 2 * kB, 0);
+		m_Cam.m_ClipSpaceLimits = CAABB::NORMALIZED_M1P1;
 	}
 	else if (api == RHI::GApi_Vulkan || api == RHI::GApi_D3D11 || api == RHI::GApi_D3D12 || api == RHI::GApi_Metal)
 	{
@@ -83,6 +85,7 @@ void	CCameraBase::SetProj(float fovyDegrees, const CFloat2 &winDimPixel, float z
 									0, -fY, 0, 0,
 									0, 0, 0.5f * kA - 0.5f, -1,
 									0, 0, kB, 0);
+		m_Cam.m_ClipSpaceLimits = CAABB(CFloat3(-1.f, -1.f, 0.f), CFloat3::ONE);
 	}
 	else
 	{
@@ -122,6 +125,7 @@ void	CCameraBase::SetProj(const CFloat2 &winDimPixel, float zNear, float zFar, R
 									0, _fY, 0, 0,
 									0, 0, kA, 0,
 									0, 0, kB, 1);
+		m_Cam.m_ClipSpaceLimits = CAABB::NORMALIZED_M1P1;
 	}
 	else if (api == RHI::GApi_Orbis || api == RHI::GApi_UNKNOWN2)
 	{
@@ -130,6 +134,7 @@ void	CCameraBase::SetProj(const CFloat2 &winDimPixel, float zNear, float zFar, R
 									0, fY, 0, 0,
 									0, 0, kA, 0,
 									0, 0, kB, 1);
+		m_Cam.m_ClipSpaceLimits = CAABB::NORMALIZED_M1P1;
 	}
 	else if (api == RHI::GApi_Vulkan || api == RHI::GApi_D3D11 || api == RHI::GApi_D3D12 || api == RHI::GApi_Metal)
 	{
@@ -138,6 +143,7 @@ void	CCameraBase::SetProj(const CFloat2 &winDimPixel, float zNear, float zFar, R
 									0, -fY, 0, 0,
 									0, 0, kRcpRange, 0,
 									0, 0, zNear * kRcpRange, 1);
+		m_Cam.m_ClipSpaceLimits = CAABB(CFloat3(-1.f, -1.f, 0.f), CFloat3::ONE);
 	}
 	else
 	{

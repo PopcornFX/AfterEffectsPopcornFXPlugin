@@ -48,6 +48,8 @@
 // RightHanded/LeftHanded:
 #define	myCross(a, b)  cross(a, b) * GET_CONSTANT(SceneInfo, Handedness)
 
+//----------------------------------------------------------------------------
+
 void	swap(inout vec2 a, inout vec2 b)
 {
 	vec2	s = a;
@@ -62,34 +64,40 @@ void	swap(inout vec4 a, inout vec4 b)
 	b = s;
 }
 
+//----------------------------------------------------------------------------
+
 vec2	get_radius(in SPrimitives gInput)
 {
-#if		defined(HAS_SizeFloat2)
+#if	defined(HAS_SizeFloat2)
 	return gInput.geomSize;
 #else
 	return vec2(gInput.geomSize, gInput.geomSize);
 #endif
 }
 
+//----------------------------------------------------------------------------
+
 #if defined(BB_ScreenAligned) || defined(BB_ViewposAligned) || defined(BB_PlaneAligned)
 void	rotate_axis(in SPrimitives gInput, inout vec3 xAxis, inout vec3 yAxis)
 {
-#if		defined(GINPUT_geomRotation)
+#	if	defined(GINPUT_geomRotation)
 	float	c = cos(gInput.geomRotation);
 	float	s = sin(gInput.geomRotation);
 	vec3	xa = xAxis;
 	xAxis = yAxis * s + xAxis * c;
 	yAxis = yAxis * c - xa * s;
-#endif
+#	endif
 }
-#endif
+#endif	// defined(BB_ScreenAligned) || defined(BB_ViewposAligned) || defined(BB_PlaneAligned)
+
+//----------------------------------------------------------------------------
 
 #if	BB_ScreenAligned
 void	bb_ScreenAlignedQuad(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis, out vec3 nAxis)
 {
-#if		!defined(CONST_SceneInfo_BillboardingView)
-#error "Missing View matrix in SceneInfo"
-#endif
+#	if	!defined(CONST_SceneInfo_BillboardingView)
+#		error "Missing View matrix in SceneInfo"
+#	endif
 	xAxis = GET_MATRIX_X_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 	yAxis = GET_MATRIX_Y_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 	rotate_axis(gInput, xAxis, yAxis);
@@ -98,14 +106,16 @@ void	bb_ScreenAlignedQuad(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis,
 	yAxis *= radius.y;
 	nAxis = GET_MATRIX_Z_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 }
-#endif
+#endif	// BB_ScreenAligned
+
+//----------------------------------------------------------------------------
 
 #if	BB_ViewposAligned
 void	bb_ViewposAlignedQuad(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis, out vec3 nAxis)
 {
-#if		!defined(CONST_SceneInfo_BillboardingView)
-#error "Missing View matrix in SceneInfo"
-#endif
+#	if	!defined(CONST_SceneInfo_BillboardingView)
+#		error "Missing View matrix in SceneInfo"
+#	endif
 	vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 	vec3	viewUpAxis = GET_MATRIX_Y_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 	vec3	camToParticle = normalize(gInput.VertexPosition.xyz - viewPos);
@@ -120,14 +130,16 @@ void	bb_ViewposAlignedQuad(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis
 	yAxis *= radius.y;
 	nAxis = -camToParticle;
 }
-#endif
+#endif	// BB_ViewposAligned
+
+//----------------------------------------------------------------------------
 
 #if	BB_AxisAligned
 void	bb_VelocityAxisAligned(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis, out vec3 nAxis)
 {
-#if		!defined(CONST_SceneInfo_BillboardingView)
-#error "Missing View matrix in SceneInfo"
-#endif
+#	if	!defined(CONST_SceneInfo_BillboardingView)
+#		error "Missing View matrix in SceneInfo"
+#	endif
 	vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 
 	vec3	camToParticle = normalize(gInput.VertexPosition.xyz - viewPos);
@@ -151,14 +163,16 @@ void	bb_VelocityAxisAligned(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxi
 	yAxis = gInput.geomAxis0 * 0.5f;
 	nAxis = -camToParticle;
 }
-#endif
+#endif	// BB_AxisAligned
+
+//----------------------------------------------------------------------------
 
 #if	BB_AxisAlignedSpheroid
 void	bb_VelocitySpheroidalAlign(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis, out vec3 nAxis)
 {
-#if		!defined(CONST_SceneInfo_BillboardingView)
-#error "Missing View matrix in SceneInfo"
-#endif
+#	if	!defined(CONST_SceneInfo_BillboardingView)
+#		error "Missing View matrix in SceneInfo"
+#	endif
 	vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 
 	vec3	camToParticle = normalize(gInput.VertexPosition.xyz - viewPos);
@@ -184,7 +198,9 @@ void	bb_VelocitySpheroidalAlign(in SPrimitives gInput, out vec3 xAxis, out vec3 
 	// Warning: xAxis and yAxis are not orthogonal.
 	nAxis = normalize(myCross(xAxis, yAxis));
 }
-#endif
+#endif	// BB_AxisAlignedSpheroid
+
+//----------------------------------------------------------------------------
 
 #if	BB_PlaneAligned
 void	bb_PlanarAlignedQuad(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis, out vec3 nAxis)
@@ -218,14 +234,16 @@ void	bb_PlanarAlignedQuad(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis,
 	// Specific to planar aligned quads, flip X
 	xAxis = -xAxis;
 }
-#endif
+#endif	// BB_PlaneAligned
+
+//----------------------------------------------------------------------------
 
 #if	BB_AxisAlignedCapsule
 void	bb_VelocityCapsuleAlign(in SPrimitives gInput, out vec3 xAxis, out vec3 yAxis, out vec3 upVec, out vec3 nAxis)
 {
-#if		!defined(CONST_SceneInfo_BillboardingView)
-#error "Missing View matrix in SceneInfo"
-#endif
+#	if	!defined(CONST_SceneInfo_BillboardingView)
+#		error "Missing View matrix in SceneInfo"
+#	endif
 	vec3	viewPos = GET_MATRIX_W_AXIS(GET_CONSTANT(SceneInfo, BillboardingView)).xyz;
 
 	vec3	camToParticle = normalize(gInput.VertexPosition.xyz - viewPos);
@@ -248,64 +266,66 @@ void	bb_VelocityCapsuleAlign(in SPrimitives gInput, out vec3 xAxis, out vec3 yAx
 
 	upVec = myCross(sideVec, camToParticle);
 	xAxis = sideVec;
-#if FLIP_BILLBOARDING_AXIS
+#	if FLIP_BILLBOARDING_AXIS
 	xAxis *= -1.0f;
-#endif
+#	endif
 	yAxis = gInput.geomAxis0 * 0.5f;
 	nAxis = normalize(myCross(sideVec, yAxis));
 }
-#endif
+#endif	// BB_AxisAlignedCapsule
+
+//----------------------------------------------------------------------------
 
 void	billboard_quad(in SPrimitives gInput, uint bb, out vec3 xAxis, out vec3 yAxis, out vec3 nAxis)
 {
-#if 0
-	bb_ScreenAlignedQuad(gInput, xAxis, yAxis, nAxis);
-#else
 	switch (bb)
 	{
 #if BB_ScreenAligned
 	case BB_ScreenAligned:
 		bb_ScreenAlignedQuad(gInput, xAxis, yAxis, nAxis);
 		break;
-#endif
+#endif	// BB_ScreenAligned
 #if BB_ViewposAligned
 	case BB_ViewposAligned:
 		bb_ViewposAlignedQuad(gInput, xAxis, yAxis, nAxis);
 		break;
-#endif
+#endif	// BB_ViewposAligned
 #if BB_AxisAligned
 	case BB_AxisAligned:
 		bb_VelocityAxisAligned(gInput, xAxis, yAxis, nAxis);
 		break;
-#endif
+#endif	// BB_AxisAligned
 #if BB_AxisAlignedSpheroid
 	case BB_AxisAlignedSpheroid:
 		bb_VelocitySpheroidalAlign(gInput, xAxis, yAxis, nAxis);
 		break;
-#endif
+#endif	// BB_AxisAlignedSpheroid
 #if BB_PlaneAligned
 	case BB_PlaneAligned:
 		bb_PlanarAlignedQuad(gInput, xAxis, yAxis, nAxis);
 		break;
-#endif
+#endif	// BB_PlaneAligned
 	default:
 		bb_ScreenAlignedQuad(gInput, xAxis, yAxis, nAxis);
 		break;
 	}
-#endif
 #if FLIP_BILLBOARDING_AXIS
 	yAxis *= -1.0f; // We need to flip the y axis to get the same result as the CPU billboarders
 #endif
 }
 
+//----------------------------------------------------------------------------
+
 vec4	proj_position(vec3 position)
 {
-#if		defined(CONST_SceneInfo_ViewProj)
+#if	defined(CONST_SceneInfo_ViewProj)
 	return mul(GET_CONSTANT(SceneInfo, ViewProj), vec4(position, 1.0f));
 #else
 	return vec4(position, 1.0f);
 #endif
 }
+
+//----------------------------------------------------------------------------
 
 #if 	defined(GOUTPUT_fragUV0) && defined(GOUTPUT_fragUV1)
 void	bb_billboardUV(in SPrimitives gInput, inout vec4 c00, inout vec4 c01, inout vec4 c10, inout vec4 c11, inout float atlasId, inout vec4 rectA, inout vec4 rectB)
@@ -335,7 +355,7 @@ void	bb_billboardUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, inout
 	c01 = c01 * maddm + madda;
 	c10 = c10 * maddm + madda;
 	c11 = c11 * maddm + madda;
-#endif
+#endif	// BB_Feature_Atlas
 
 	if ((flags & BB_Flag_FlipV) != 0U)
 	{
@@ -349,7 +369,9 @@ void	bb_billboardUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, inout
 	}
 }
 
-#if 	defined(GOUTPUT_fragRawUV0)
+//----------------------------------------------------------------------------
+
+#if	defined(GOUTPUT_fragRawUV0)
 void	bb_billboardRawUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, inout vec2 c10, inout vec2 c11)
 {
 	uint	drId = asuint(gInput.VertexPosition.w);
@@ -366,15 +388,16 @@ void	bb_billboardRawUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, in
 		swap(c01, c11);
 	}
 }
-#endif
+#endif	// defined(GOUTPUT_fragRawUV0)
 
-void	bb_billboardNormal(
-	float nFactor,
-	out vec3 n0, out vec3 n1, out vec3 n2, out vec3 n3,
-	#if BB_AxisAlignedCapsule
-	out vec3 n4, out vec3 n5,
-	#endif
-	in vec3 xAxis, in vec3 yAxis, in vec3 nAxis)
+//----------------------------------------------------------------------------
+
+void	bb_billboardNormal(	float nFactor,
+							out vec3 n0, out vec3 n1, out vec3 n2, out vec3 n3,
+#if BB_AxisAlignedCapsule
+							out vec3 n4, out vec3 n5,
+#endif
+							in vec3 xAxis, in vec3 yAxis, in vec3 nAxis)
 {
 	float	nw = (1.0f - nFactor); // weight
 	vec3	xAxisNorm = normalize(xAxis);
@@ -402,20 +425,21 @@ void	bb_billboardNormal(
 	#endif
 }
 
-void	bb_billboardTangent(
-	float nFactor,
-	out vec4 t0, out vec4 t1, out vec4 t2, out vec4 t3,
-	#if BB_AxisAlignedCapsule
-	out vec4 t4, out vec4 t5,
-	#endif
-	in vec3 xAxis, in vec3 yAxis, in vec3 nAxis, in bool flipU, in bool flipV)
+//----------------------------------------------------------------------------
+
+void	bb_billboardTangent(float nFactor,
+							out vec4 t0, out vec4 t1, out vec4 t2, out vec4 t3,
+#if BB_AxisAlignedCapsule
+							out vec4 t4, out vec4 t5,
+#endif
+							in vec3 xAxis, in vec3 yAxis, in vec3 nAxis, in bool flipU, in bool flipV)
 {
 	float	nw = (1.0f - nFactor); // weight
 	vec3	xAxisNorm = normalize(xAxis);
 	vec3	yAxisNorm = normalize(yAxis);
 	vec3	n = nAxis; // normal
 
-	#if BB_AxisAlignedCapsule
+#if BB_AxisAlignedCapsule
 	vec3	t = normalize(xAxisNorm + yAxisNorm) * nw;
 	float	rlen = rsqrt(nw * nw + 2.0f * nFactor * nFactor);
 	t *= rlen;
@@ -430,7 +454,7 @@ void	bb_billboardTangent(
 	t3 = t1;
 	t4 = vec4(t + n + xAxisNorm * tangentDir, tangentW);
 	t5 = vec4(t - n + xAxisNorm * tangentDir, tangentW);
-	#else
+#else
 	vec3	t = xAxisNorm * nw;
 	n *= nFactor;
 	xAxisNorm *= nFactor;
@@ -441,8 +465,10 @@ void	bb_billboardTangent(
 	t1 = vec4(normalize(t - n + xAxisNorm + yAxisNorm) * tangentDir, tangentW);
 	t2 = vec4(normalize(t + n + xAxisNorm + yAxisNorm) * tangentDir, tangentW);
 	t3 = vec4(normalize(t + n + xAxisNorm - yAxisNorm) * tangentDir, tangentW);
-	#endif
+#endif
 }
+
+//----------------------------------------------------------------------------
 
 void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARGS)
 {
@@ -458,13 +484,12 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	vec2	rawC10 = vec2(1, 0);
 	vec2	rawC11 = vec2(1, 1);
 #if	defined(GOUTPUT_fragUV0) && defined(GOUTPUT_fragUV1)
-
 #	define	setUV0(_uv, _value)	_uv = _value.xy;
 # 	define	setUV1(_uv, _value)	_uv = _value.zw;
 #	if	defined(GOUTPUT_fragRawUV0) 
-# 	define	setRawUV0(_uv, _value) _uv = _value.xy;
+# 		define	setRawUV0(_uv, _value) _uv = _value.xy;
 #	else
-# 	define	setRawUV0(_uv, _value)
+# 		define	setRawUV0(_uv, _value)
 #	endif
 	vec4	c00 = vec4(0, 0, 0, 0);
 	vec4	c01 = vec4(0, 1, 0, 1);
@@ -476,10 +501,10 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 #	if	defined(GOUTPUT_fragRawUV0)
 	bb_billboardRawUV(gInput.Primitives[0], rawC00, rawC01, rawC10, rawC11);
 #	endif
-#elif 	defined(GOUTPUT_fragUV0)
-# define	setUV0(_uv, _value)	_uv = _value;
-# define	setUV1(_uv, _value)
-# define	setRawUV0(_uv, _value)
+#elif	defined(GOUTPUT_fragUV0)
+#	define	setUV0(_uv, _value)	_uv = _value;
+#	define	setUV1(_uv, _value)
+#	define	setRawUV0(_uv, _value)
 	vec2	c00 = vec2(0, 0);
 	vec2	c01 = vec2(0, 1);
 	vec2	c10 = vec2(1, 0);
@@ -487,9 +512,9 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	vec4	rect0 = vec4(0, 0, 0, 0);
 	bb_billboardUV(gInput.Primitives[0], c00, c01, c10, c11, rect0);
 #else
-# define	setUV0(_uv, _value)
-# define	setUV1(_uv, _value)
-# define	setRawUV0(_uv, _value)
+#	define	setUV0(_uv, _value)
+#	define	setUV1(_uv, _value)
+#	define	setRawUV0(_uv, _value)
 #endif
 
 	// Axis y/x to create the quad + normal
@@ -509,53 +534,52 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	vec3	xmy = xAxis - yAxis;
 
 	// fragViewProjPosition
-#if		defined(GOUTPUT_fragViewProjPosition)
-	#define	setViewProjPosition(_position, _value)	_position = _value;
+#if	defined(GOUTPUT_fragViewProjPosition)
+#	define	setViewProjPosition(_position, _value)	_position = _value;
 #else
-	#define	setViewProjPosition(_position, _value)
+#	define	setViewProjPosition(_position, _value)
 #endif
 
 	// fragWorldPosition
-#if		defined(GOUTPUT_fragWorldPosition)
-	#define	setWorldPosition(_position, _value)		_position = _value;
+#if	defined(GOUTPUT_fragWorldPosition)
+#	define	setWorldPosition(_position, _value)		_position = _value;
 #else
-	#define	setWorldPosition(_position, _value)
+#	define	setWorldPosition(_position, _value)
 #endif
 
-#if		defined(GOUTPUT_fragNormal) || defined(GOUTPUT_fragTangent)
+#if	defined(GOUTPUT_fragNormal) || defined(GOUTPUT_fragTangent)
 	float	nFactor = GET_CONSTANT(BillboardInfo, DrawRequest)[drId].y;
 #endif
 
 	// Normals
-#if		defined(GOUTPUT_fragNormal)
-#define	setNormal(_normal, _value)	_normal = _value;
+#if	defined(GOUTPUT_fragNormal)
+#	define	setNormal(_normal, _value)	_normal = _value;
 	vec3	n0, n1, n2, n3;
-	#if BB_AxisAlignedCapsule
-		vec3	n4, n5;
-		bb_billboardNormal(nFactor, n0, n1, n2, n3, n4, n5, xAxis, yAxis, nAxis);
-	#else
-		bb_billboardNormal(nFactor, n0, n1, n2, n3, xAxis, yAxis, nAxis);
-	#endif
+#	if BB_AxisAlignedCapsule
+	vec3	n4, n5;
+	bb_billboardNormal(nFactor, n0, n1, n2, n3, n4, n5, xAxis, yAxis, nAxis);
+#	else
+	bb_billboardNormal(nFactor, n0, n1, n2, n3, xAxis, yAxis, nAxis);
+#	endif
 #else
-#define	setNormal(_normal, _value)
+#	define	setNormal(_normal, _value)
 #endif
 
 	// Tangent
-#if		defined(GOUTPUT_fragTangent)
-#define	setTangent(_tangent, _value)	_tangent = _value;
+#if	defined(GOUTPUT_fragTangent)
+#	define	setTangent(_tangent, _value)	_tangent = _value;
 	vec4	t0, t1, t2, t3;
-	#if BB_AxisAlignedCapsule
-		vec4	t4, t5;
-		bb_billboardTangent(nFactor, t0, t1, t2, t3, t4, t5, xAxis, yAxis, nAxis, flipU, flipV);
-	#else
-		bb_billboardTangent(nFactor, t0, t1, t2, t3, xAxis, yAxis, nAxis, flipU, flipV);
-	#endif
+#	if BB_AxisAlignedCapsule
+	vec4	t4, t5;
+	bb_billboardTangent(nFactor, t0, t1, t2, t3, t4, t5, xAxis, yAxis, nAxis, flipU, flipV);
+#	else
+	bb_billboardTangent(nFactor, t0, t1, t2, t3, xAxis, yAxis, nAxis, flipU, flipV);
+#	endif
 #else
-#define	setTangent(_tangent, _value)
+#	define	setTangent(_tangent, _value)
 #endif
 
 	// Emit 4 / 6 vertex
-
 #define emittr(pos, uv, normal, tangent, rawUV)	\
 	gOutput.VertexPosition = proj_position(pos); \
 	setViewProjPosition(gOutput.fragViewProjPosition, gOutput.VertexPosition); \
