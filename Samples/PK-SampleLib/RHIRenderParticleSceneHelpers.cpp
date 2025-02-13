@@ -1239,6 +1239,9 @@ bool	CRHIParticleSceneRenderHelper::RenderScene(	ERenderTargetDebug		renderTarge
 	RHI::PCommandBuffer	preOpaqueCmdBuff = m_ApiManager->CreateCommandBuffer(RHI::SRHIResourceInfos("PK-RHI Pre Opaque command buffer"));
 	RHI::PCommandBuffer	postOpaqueCmdBuff = m_ApiManager->CreateCommandBuffer(RHI::SRHIResourceInfos("PK-RHI Post Opaque command buffer"));
 
+	if (!PK_VERIFY(preOpaqueCmdBuff != null && postOpaqueCmdBuff != null))
+		return false;
+
 	preOpaqueCmdBuff->Start();
 
 	if (!PK_VERIFY(m_EnvironmentMap.GenerateCubemap(preOpaqueCmdBuff)))

@@ -77,7 +77,7 @@ public:
 	~CSdlContext();
 
 	virtual bool				InitImgui(const RHI::PApiManager &manager) override;
-	virtual bool				Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI = false) override; // Opens the context for the specified graphical Api
+	virtual bool				Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI = false, const CUint2 &windowSize = CUint2(1920, 1080)) override; // Opens the context for the specified graphical Api
 	virtual bool				Destroy() override;
 	virtual bool				ProcessEvents() override;
 

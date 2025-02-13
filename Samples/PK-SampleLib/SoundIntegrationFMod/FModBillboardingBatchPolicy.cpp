@@ -58,7 +58,8 @@ bool	CFModRendererBatch_CPU::EmitDrawCall(PopcornFX::SRenderContext &ctx, const 
 		}
 
 		const CParticleStreamToRender_MainMemory	*streamToRender = dr->StreamToRender_MainMemory();
-		PK_ASSERT(streamToRender != null);
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		// Map the sound-pool with particles
 		for (u32 pageIdx = 0; pageIdx < streamToRender->PageCount(); ++pageIdx)

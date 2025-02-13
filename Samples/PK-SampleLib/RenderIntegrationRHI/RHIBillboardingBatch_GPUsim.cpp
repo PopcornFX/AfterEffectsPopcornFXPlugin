@@ -856,7 +856,8 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::LaunchCustomTasks(SRenderContext &
 	{
 		// Fill in stream offsets for each draw request
 		const CParticleStreamToRender_GPU				*streamToRender = m_DrawPass->m_DrawRequests[iDr]->StreamToRender_GPU();
-		PK_ASSERT(streamToRender != null);
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 		const Drawers::SBase_DrawRequest			*dr = m_DrawPass->m_DrawRequests[iDr];
 		const Drawers::SBase_BillboardingRequest	baseBr = dr->BaseBillboardingRequest();
 
@@ -1532,7 +1533,8 @@ bool	CRHIRendererBatch_Ribbon_GPU::LaunchCustomTasks(SRenderContext &ctx)
 	{
 		// Fill in stream offsets for each draw request
 		const CParticleStreamToRender_GPU				*streamToRender = m_DrawPass->m_DrawRequests[iDr]->StreamToRender_GPU();
-		PK_ASSERT(streamToRender != null);
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 		const Drawers::SBase_DrawRequest			*dr = m_DrawPass->m_DrawRequests[iDr];
 		const Drawers::SBase_BillboardingRequest	baseBr = dr->BaseBillboardingRequest();
 
@@ -2324,6 +2326,8 @@ bool	CRHIRendererBatch_Mesh_GPU::LaunchCustomTasks(SRenderContext &ctx)
 		const Drawers::SMesh_DrawRequest			*dr = static_cast<const Drawers::SMesh_DrawRequest*>(m_DrawPass->m_DrawRequests[dri]);
 		const Drawers::SMesh_BillboardingRequest	*bbRequest = static_cast<const Drawers::SMesh_BillboardingRequest*>(&dr->BaseBillboardingRequest());
 		const CParticleStreamToRender_GPU			*streamToRender = dr->StreamToRender_GPU();
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		u32		offset = 0;
 		streamsOffsets[offset++ * drCount + dri] = streamToRender->StreamOffset(bbRequest->m_PositionStreamId);
@@ -2469,6 +2473,8 @@ bool	CRHIRendererBatch_Mesh_GPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 		const Drawers::SMesh_DrawRequest				*dr = static_cast<const Drawers::SMesh_DrawRequest*>(toEmit.m_DrawRequests[dri]);
 		const Drawers::SMesh_BillboardingRequest		*bbRequest = static_cast<const Drawers::SMesh_BillboardingRequest*>(&dr->BaseBillboardingRequest());
 		const CParticleStreamToRender_GPU				*streamToRender = dr->StreamToRender_GPU();
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		// Get particle sim info GPU buffer
 		RHI::PGpuBuffer									particleSimInfo = _RetrieveParticleInfoBuffer(m_ApiManager, streamToRender);

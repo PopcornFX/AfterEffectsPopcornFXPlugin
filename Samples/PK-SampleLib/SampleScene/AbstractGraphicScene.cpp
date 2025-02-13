@@ -110,7 +110,7 @@ CAbstractGraphicScene::~CAbstractGraphicScene()
 
 //----------------------------------------------------------------------------
 
-bool	CAbstractGraphicScene::Init(RHI::EGraphicalApi api, bool forceDirectDraw/* = false*/, const CString &windowTitle /*= CString::EmptyString*/, bool renderOffscreen/* = false*/)
+bool	CAbstractGraphicScene::Init(RHI::EGraphicalApi api, bool forceDirectDraw/* = false*/, const CString &windowTitle /*= CString::EmptyString*/, bool renderOffscreen/* = false*/, const CUint2 &windowSize/* = CUint2(800, 600)*/)
 {
 #if	(PK_BUILD_WITH_SDL != 0)
 	if (renderOffscreen)
@@ -120,7 +120,10 @@ bool	CAbstractGraphicScene::Init(RHI::EGraphicalApi api, bool forceDirectDraw/* 
 #elif defined(PK_DURANGO) && !defined(PK_GDK)
 	m_WindowContext = PK_NEW(CDurangoApplicationContext);
 #elif defined(PK_GDK)
-	m_WindowContext = PK_NEW(CGdkWindowContext);
+	if (renderOffscreen)
+		m_WindowContext = PK_NEW(COffscreenContext);
+	else
+		m_WindowContext = PK_NEW(CGdkWindowContext);
 #elif defined(PK_GGP)
 	m_WindowContext = PK_NEW(CGgpContext);
 #elif defined(PK_NX)
@@ -209,7 +212,7 @@ bool	CAbstractGraphicScene::Init(RHI::EGraphicalApi api, bool forceDirectDraw/* 
 		return false;
 
 	// Init window context
-	if (!m_WindowContext->Init(api, windowTitle))
+	if (!m_WindowContext->Init(api, windowTitle, false, windowSize))
 	{
 		CLog::Log(PK_ERROR, "m_WindowContext->Init failed");
 		return false;
