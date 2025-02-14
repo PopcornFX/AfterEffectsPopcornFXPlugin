@@ -39,11 +39,12 @@ bool	COffscreenContext::InitImgui(const RHI::PApiManager &manager)
 
 //----------------------------------------------------------------------------
 
-bool	COffscreenContext::Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI)
+bool	COffscreenContext::Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI, const CUint2 &windowSize)
 {
 	(void)title;
 	(void)allowHighDPI;
 	m_UsedApi = api;
+	m_WindowSize = windowSize;
 
 	return true;
 }

@@ -247,10 +247,10 @@ CNXApplicationContext::CNXApplicationContext()
 
 //----------------------------------------------------------------------------
 
-bool	CNXApplicationContext::Init(RHI::EGraphicalApi api, const CString &title, bool)
+bool	CNXApplicationContext::Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI, const CUint2 &windowSize)
 {
-	(void)api; (void)title;
-
+	(void)api; (void)title; (void)allowHighDPI;
+	m_WindowSize = windowSize;
 	return m_NXController.Init();
 }
 
@@ -319,21 +319,21 @@ bool	CNXApplicationContext::HasWindowChanged()
 
 CUint2	CNXApplicationContext::GetWindowSize() const
 {
-	return CUint2(1920, 1080); // TODO: properly handle changing sizes
+	return m_WindowSize;
 }
 
 //----------------------------------------------------------------------------
 
 CUint2	CNXApplicationContext::GetDrawableSize() const
 {
-	return CUint2(3840, 2160); // TODO: properly handle changing sizes
+	return m_WindowSize * GetPixelRatio();
 }
 
 //----------------------------------------------------------------------------
 
 float	CNXApplicationContext::GetPixelRatio() const
 {
-	return 2.0f;
+	return 1.0f;
 }
 
 //----------------------------------------------------------------------------

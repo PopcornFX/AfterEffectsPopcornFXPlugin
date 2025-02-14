@@ -32,7 +32,7 @@ public:
 	CAbstractGraphicScene();
 	virtual ~CAbstractGraphicScene();
 
-	virtual bool		Init(RHI::EGraphicalApi api, bool forceDirectDraw = false, const CString &windowTitle = CString::EmptyString, bool renderOffscreen = false);
+	virtual bool		Init(RHI::EGraphicalApi api, bool forceDirectDraw = false, const CString &windowTitle = CString::EmptyString, bool renderOffscreen = false, const CUint2 &windowSize = CUint2(1920, 1080));
 	virtual bool		Run();
 	virtual bool		Quit();
 

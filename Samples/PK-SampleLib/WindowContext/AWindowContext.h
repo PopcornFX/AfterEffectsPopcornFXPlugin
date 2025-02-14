@@ -95,7 +95,7 @@ public:
 	~CAbstractWindowContext() {}
 
 	virtual bool				InitImgui(const RHI::PApiManager &manager) = 0;
-	virtual bool				Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI = false) = 0;
+	virtual bool				Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI = false, const CUint2 &windowSize = CUint2(800, 600)) = 0;
 	virtual bool				Destroy() = 0;
 	virtual bool				ProcessEvents(); // Process the window events
 

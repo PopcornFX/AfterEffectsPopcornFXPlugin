@@ -158,6 +158,32 @@ VKAPI_ATTR VkBool32 VKAPI_CALL	VulkanDebugMessengerCallback(	VkDebugUtilsMessage
 
 //----------------------------------------------------------------------------
 
+#ifdef PK_NX
+void	*NXAllocate(size_t size, size_t alignment, void *pUserData)
+{
+	(void)pUserData;
+	return aligned_alloc(alignment, nn::util::align_up(size, alignment));
+}
+
+//----------------------------------------------------------------------------
+
+void	*NXReallocate(void *addr, size_t newSize, void *userPtr)
+{
+	(void)userPtr;
+	return realloc(addr, newSize);
+}
+
+//----------------------------------------------------------------------------
+
+void NXFree(void *addr, void *userPtr)
+{
+	(void)userPtr;
+	free(addr);
+}
+#endif
+
+//----------------------------------------------------------------------------
+
 VKAPI_ATTR void* VKAPI_CALL	VulkanAllocate(void *pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
 	(void)pUserData; (void)allocationScope;
@@ -167,16 +193,6 @@ VKAPI_ATTR void* VKAPI_CALL	VulkanAllocate(void *pUserData, size_t size, size_t 
 	else
 		return kVulkanInvalidMallocValue;
 }
-
-#ifdef PK_NX
-void* NXAllocate(size_t size, size_t alignment, void *pUserData) {
-	(void)pUserData;
-	if (size != 0)
-		return PK_MALLOC_ALIGNED(static_cast<u32>(size), alignment);
-	else
-		return kVulkanInvalidMallocValue;
-}
-#endif
 
 //----------------------------------------------------------------------------
 
@@ -206,32 +222,6 @@ VKAPI_ATTR void* VKAPI_CALL	VulkanReallocate(void *pUserData, void *pOriginal, s
 	}
 }
 
-#ifdef PK_NX
-void*	NXReallocate(void* addr, size_t newSize, void *userPtr)
-{
-	(void)userPtr;
-	if (userPtr == kVulkanInvalidMallocValue)
-	{
-		if (newSize == 0)
-			return kVulkanInvalidMallocValue;
-		else
-			return PK_MALLOC(static_cast<u32>(newSize));
-	}
-	else
-	{
-		if (newSize == 0)
-		{
-			PK_FREE(addr);
-			return kVulkanInvalidMallocValue;
-		}
-		else
-		{
-			return PK_REALLOC_ALIGNED(addr, static_cast<u32>(newSize), PTR_TO_ALLOC_UNIT(addr)->Alignment());
-		}
-	}
-}
-#endif
-
 //----------------------------------------------------------------------------
 
 VKAPI_ATTR void VKAPI_CALL	VulkanFree(void *pUserData, void *pMemory)
@@ -240,15 +230,6 @@ VKAPI_ATTR void VKAPI_CALL	VulkanFree(void *pUserData, void *pMemory)
 	if (pMemory != kVulkanInvalidMallocValue)
 		PK_FREE(pMemory);
 }
-
-#ifdef PK_NX
-void NXFree(void *addr, void *userPtr)
-{
-	(void)userPtr;
-	if (addr != kVulkanInvalidMallocValue)
-		PK_FREE(addr);
-}
-#endif
 
 //----------------------------------------------------------------------------
 
@@ -314,7 +295,7 @@ bool	CVulkanContext::InitRenderApiContext(bool debug, PAbstractWindowContext win
 	nn::Result result = nn::vi::OpenDefaultDisplay(&display);
 	PK_ASSERT(result.IsSuccess());
 
-	result = nn::vi::CreateLayer(&layer, display);
+	result = nn::vi::CreateLayer(&layer, display, windowSize.x(), windowSize.y());
 	PK_ASSERT(result.IsSuccess());
 #endif
 
@@ -962,6 +943,7 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateSwapChain(RHI::SVulkanB
 	{
 		imageCount = capabilities.maxImageCount;
 	}
+	imageCount = PKMin(imageCount, static_cast<u32>(RHI::kMaxSwapChainImages));
 
 	VkSwapchainKHR				newSwapChain;
 	PK_ASSERT(basicCtx.m_GraphicalQueueFamily >= 0 && basicCtx.m_PresentQueueFamily >= 0);

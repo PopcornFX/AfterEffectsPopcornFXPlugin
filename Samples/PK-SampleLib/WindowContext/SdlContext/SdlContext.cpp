@@ -302,7 +302,7 @@ bool	CSdlContext::InitImgui(const RHI::PApiManager &manager)
 
 //----------------------------------------------------------------------------
 
-bool	CSdlContext::Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI)
+bool	CSdlContext::Init(RHI::EGraphicalApi api, const CString &title, bool allowHighDPI, const CUint2 &windowSize)
 {
 #if	defined(PK_PRINT_SDL_VERSION)
 	SDL_version compiled;
@@ -330,7 +330,7 @@ bool	CSdlContext::Init(RHI::EGraphicalApi api, const CString &title, bool allowH
 	if (m_UsedApi == RHI::GApi_OpenGL || m_UsedApi == RHI::GApi_OES)
 		sdlWindowFlags |= SDL_WINDOW_OPENGL;
 	m_Window = SDL_CreateWindow(title.Data(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-								DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,
+								windowSize.x(), windowSize.y(),
 								sdlWindowFlags);
 	if (m_Window == null)
 	{
