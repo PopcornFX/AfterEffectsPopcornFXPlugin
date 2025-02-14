@@ -274,7 +274,7 @@ bool	CNXApplicationContext::InitImgui(const RHI::PApiManager &manager)
 bool	CNXApplicationContext::Destroy()
 {
 	ImGuiPkRHI::ReleaseViewport();
-	PKSample::ImGuiPkRHI::QuitIFN();
+	PKSample::ImGuiPkRHI::Quit();
 	return true;
 }
 

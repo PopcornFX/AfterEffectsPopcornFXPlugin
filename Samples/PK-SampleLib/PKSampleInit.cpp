@@ -87,7 +87,7 @@ bool	CPKSampleBase::InternalShutdown()
 	PKSample::SConstantNoiseTextureKey::ClearConstantSetLayoutIFN();
 	PKSample::SConstantDrawRequests::ClearConstantSetLayoutsIFN();
 
-	PKSample::ImGuiPkRHI::QuitIFN();
+	PKSample::ImGuiPkRHI::Quit();
 
 	PKSample::CRHIRenderingSettings::UnregisterHandler();
 	PKSample::CRHIRenderingFeature::UnregisterHandler();

@@ -95,20 +95,13 @@ bool	ImGuiPkRHI::Init(const SImguiInit &initData)
 void	ImGuiPkRHI::Quit()
 {
 	PK_SCOPEDPROFILE();
-	ImGui::SetCurrentContext(m_Instance->m_DefaultContext);
-	ImGui::DestroyContext();
-	PK_ASSERT(m_Instance != null);
-	PK_DELETE(m_Instance);
-	m_Instance = null;
-}
-
-//----------------------------------------------------------------------------
-
-void	ImGuiPkRHI::QuitIFN()
-{
 	if (m_Instance != null)
 	{
-		Quit();
+		ImGui::SetCurrentContext(m_Instance->m_DefaultContext);
+		ImGui::DestroyContext();
+		PK_ASSERT(m_Instance != null);
+		PK_DELETE(m_Instance);
+		m_Instance = null;
 	}
 }
 

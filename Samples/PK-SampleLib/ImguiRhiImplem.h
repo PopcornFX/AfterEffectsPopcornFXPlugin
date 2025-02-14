@@ -97,7 +97,7 @@ public:
 	// This should be called on the same thread
 	static bool			Init(const SImguiInit &initData);
 	static void			Quit();
-	static void			QuitIFN();
+	static void			QuitIFN() { return Quit(); }	// Useless, will be deprecated in v2.22
 	static bool			CreateRenderInfo(	const RHI::PApiManager &apiManager,
 											CShaderLoader &loader,
 											const TMemoryView<const RHI::SRenderTargetDesc> &frameBufferLayout,

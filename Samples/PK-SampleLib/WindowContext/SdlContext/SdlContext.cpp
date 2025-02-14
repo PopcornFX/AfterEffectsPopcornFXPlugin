@@ -354,7 +354,7 @@ bool	CSdlContext::HasWindowChanged()
 bool	CSdlContext::Destroy()
 {
 	ImGuiPkRHI::ReleaseViewport();
-	PKSample::ImGuiPkRHI::QuitIFN();
+	PKSample::ImGuiPkRHI::Quit();
 	SDL_DestroyWindow(m_Window);
 	SDL_Quit();
 	return true;
