@@ -133,6 +133,8 @@ CRendererBatchDrawer *CRHIParticleRenderDataFactory::CreateBillboardingBatch2(ER
 				return PK_NEW(CRHIRendererBatch_BillboardGPU_VertexBB(m_ApiManager));
 			else if (m_GPUCaps.m_SupportsGeometryShaders)
 				return PK_NEW(CRHIRendererBatch_BillboardGPU_GeomBB(m_ApiManager));
+			else if (m_GPUCaps.m_SupportsShaderResourceViews)
+				return PK_NEW(CRHIRendererBatch_BillboardGPU_VertexBB(m_ApiManager));
 			else
 				return null;
 

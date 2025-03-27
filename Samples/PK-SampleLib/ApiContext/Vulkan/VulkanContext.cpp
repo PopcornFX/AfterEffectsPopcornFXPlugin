@@ -986,6 +986,7 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateSwapChain(RHI::SVulkanB
 											&basicCtx.m_SwapChains[swapChainIdx].m_SwapChainImageAvailable)))
 			return SwapChainOp_CriticalError;
 	}
+	imageCount = PKMin(imageCount, static_cast<u32>(RHI::kMaxSwapChainImages));
 
 	// We raise a fatal error when we cannot create the swap-chain and the device is lost
 	VkResult	createSwapChainResult = vkCreateSwapchainKHR(basicCtx.m_LogicalDevice, &createInfo, basicCtx.m_Allocator, &newSwapChain);

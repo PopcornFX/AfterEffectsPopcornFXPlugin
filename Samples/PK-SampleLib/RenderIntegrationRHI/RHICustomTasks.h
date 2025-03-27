@@ -105,7 +105,7 @@ struct	SMediumParticleSelection_GPU : public CRefCountedObject
 #if	(PK_PARTICLES_UPDATER_USE_D3D12 != 0)
 	SBuffer_D3D12					m_BufferD3D12;
 #endif
-	bool							m_Processed = false;
+	u32								m_RevIdxProcessed = 0; // touched by render-thread
 
 	~SMediumParticleSelection_GPU()
 	{
@@ -139,7 +139,7 @@ struct	SMediumParticleSelection_GPU_Context
 		CFloat4		m_RayOrigin;
 		CFloat4		m_RayDirection;
 		CFloat4x4	m_Planes;
-		CUint4		m_Mode; // only 'x()' is used.
+		CUint4		m_Mode; // only 'x()' is used by the shaders. '.w()' is reserved for sync CPU-GPU (rev-id).
 	};
 
 	enum	EMode
