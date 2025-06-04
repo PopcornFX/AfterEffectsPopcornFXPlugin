@@ -85,7 +85,11 @@ bool	CNXController::Init()
 	nn::settings::SetDebugPadKeyboardMap(map);
 	nn::hid::InitializeDebugPad();
 	nn::hid::InitializeNpad();
+#ifndef PKUNKNOWN3
 	nn::hid::SetSupportedNpadStyleSet(nn::hid::NpadStyleFullKey::Mask | nn::hid::NpadStyleJoyDual::Mask | nn::hid::NpadStyleHandheld::Mask);
+#else
+	nn::hid::SetSupportedNpadStyleSet(nn::hid::NpadStyleFullKey::Mask | nn::hid::NpadStyleHandheld::Mask);
+#endif
 	nn::hid::SetSupportedNpadIdType(m_PadIDs, PAD_COUNT);
 	return true;
 }
@@ -104,8 +108,10 @@ void	CNXController::Process()
 
 		if (style.Test<nn::hid::NpadStyleHandheld>())
 			nn::hid::GetNpadState(&g_NpadHandheldState[g_CurPadIndex], m_PadIDs[i]);
+#ifndef PKUNKNOWN3
 		else if (style.Test<nn::hid::NpadStyleJoyDual>())
 			nn::hid::GetNpadState(&g_NpadJoyDualState[g_CurPadIndex], m_PadIDs[i]);
+#endif
 		else if (style.Test<nn::hid::NpadStyleFullKey>())
 			nn::hid::GetNpadState(&g_NpadFullKeyState[g_CurPadIndex], m_PadIDs[i]);
 	}
@@ -119,7 +125,7 @@ void	CNXController::Process()
 	if (debugPadState.analogStickL.x != 0 || debugPadState.analogStickL.y != 0 ||
 		debugPadState.analogStickR.x != 0 || debugPadState.analogStickR.y != 0)
 	{
-		
+
 		m_AxisData[0] = float(debugPadState.analogStickL.x) / float(TNumericTraits<s16>::Max());
 		m_AxisData[1] = float(debugPadState.analogStickL.y) / float(TNumericTraits<s16>::Max());
 		m_AxisData[2] = float(debugPadState.analogStickR.x) / float(TNumericTraits<s16>::Max());
@@ -138,11 +144,13 @@ void	CNXController::Process()
 			stickL = g_NpadHandheldState[g_CurPadIndex].analogStickL;
 			stickR = g_NpadHandheldState[g_CurPadIndex].analogStickR;
 		}
+#ifndef PKUNKNOWN3
 		else if (style.Test<nn::hid::NpadStyleJoyDual>())
 		{
 			stickL = g_NpadJoyDualState[g_CurPadIndex].analogStickL;
 			stickR = g_NpadJoyDualState[g_CurPadIndex].analogStickR;
 		}
+#endif
 		else if (style.Test<nn::hid::NpadStyleFullKey>())
 		{
 			stickL = g_NpadFullKeyState[g_CurPadIndex].analogStickL;
@@ -177,7 +185,7 @@ bool	CNXController::IsButtonPressed(EControllerButton button, bool onEventOnly)
 		return true;
 
 	// npad
-  	buttonIndex = s_NPadButtonValues[button];
+	buttonIndex = s_NPadButtonValues[button];
 
 	for (int i = 0; i < PAD_COUNT; ++i)
 	{
@@ -185,8 +193,10 @@ bool	CNXController::IsButtonPressed(EControllerButton button, bool onEventOnly)
 
 		if (style.Test<nn::hid::NpadStyleHandheld>() && !g_NpadHandheldState[prev].buttons[buttonIndex] && g_NpadHandheldState[cur].buttons[buttonIndex])
 			return true;
+#ifndef PKUNKNOWN3
 		else if (style.Test<nn::hid::NpadStyleJoyDual>() && !g_NpadJoyDualState[prev].buttons[buttonIndex] && g_NpadJoyDualState[cur].buttons[buttonIndex])
 			return true;
+#endif
 		else if (style.Test<nn::hid::NpadStyleFullKey>() && !g_NpadFullKeyState[prev].buttons[buttonIndex] && g_NpadFullKeyState[cur].buttons[buttonIndex])
 			return true;
 	}
@@ -198,7 +208,7 @@ bool	CNXController::IsButtonPressed(EControllerButton button, bool onEventOnly)
 
 bool	CNXController::IsButtonReleased(EControllerButton button, bool onEventOnly)
 {
-	int	cur	= g_CurPadIndex;
+	int	cur = g_CurPadIndex;
 	int	prev = g_LastPadIndex;
 
 	// debug pad
@@ -216,8 +226,11 @@ bool	CNXController::IsButtonReleased(EControllerButton button, bool onEventOnly)
 
 		if (style.Test<nn::hid::NpadStyleHandheld>() && g_NpadHandheldState[prev].buttons[buttonIndex] && !g_NpadHandheldState[cur].buttons[buttonIndex])
 			return true;
+#if !defined(PKUNKNOWN3)
 		else if (style.Test<nn::hid::NpadStyleJoyDual>() && g_NpadJoyDualState[prev].buttons[buttonIndex] && !g_NpadJoyDualState[cur].buttons[buttonIndex])
 			return true;
+#endif
+
 		else if (style.Test<nn::hid::NpadStyleFullKey>() && g_NpadFullKeyState[prev].buttons[buttonIndex] && !g_NpadFullKeyState[cur].buttons[buttonIndex])
 			return true;
 	}
@@ -240,7 +253,7 @@ float	CNXController::GetNormalizedAxis(EControllerAxis axis)
 //----------------------------------------------------------------------------
 
 CNXApplicationContext::CNXApplicationContext()
-:	CAbstractWindowContext(Context_NX)
+	: CAbstractWindowContext(Context_NX)
 {
 	CAbstractWindowContext::m_Controller = &m_NXController;
 }

@@ -39,7 +39,9 @@ private:
 	u32							g_LastPadIndex;
 	nn::hid::DebugPadState		g_DebugPadState[2];
 	nn::hid::NpadHandheldState	g_NpadHandheldState[2];
+#ifndef PKUNKNOWN3
 	nn::hid::NpadJoyDualState	g_NpadJoyDualState[2];
+#endif
 	nn::hid::NpadFullKeyState	g_NpadFullKeyState[2];
 	float						m_AxisData[__MaxAxis];
 
