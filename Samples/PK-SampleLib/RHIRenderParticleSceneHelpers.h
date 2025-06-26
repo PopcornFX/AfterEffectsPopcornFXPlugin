@@ -309,6 +309,7 @@ struct	SBackdropsData
 	bool								m_FollowInstances = false;
 	bool								m_CastShadows = false;
 	CString								m_MeshPath;
+	PResourceMesh						m_MeshResource;
 	CGuid								m_MeshLOD = 0;
 	CString								m_MeshDiffusePath;
 	PCImage								m_MeshDiffuseData;	// can be null, in which case will be loaded using 'm_MeshDiffusePath'
@@ -318,7 +319,7 @@ struct	SBackdropsData
 	PCImage								m_MeshRoughMetalData;
 	float								m_MeshRoughness = 1.0f;
 	float								m_MeshMetalness = 0.0f;
-	u32									m_MeshVertexColorsMode = 0;	// 0: no vertex color, 1: color, 2: alpha
+	u32									m_MeshVertexColorsMode = 0;	// 0: no vertex color, 1: color, 2: alpha, 3: UVs
 	u32									m_MeshVertexColorsSet = 0;
 	CFloat4x4							m_MeshBackdropTransforms = CFloat4x4::IDENTITY;
 	TSemiDynamicArray<u32, 4>			m_MeshFilteredSubmeshes;
@@ -341,7 +342,7 @@ struct	SBackdropsData
 	// Temp scaffolding: Shadow config, this should ideally be per-light, for now only have a single one
 	SShadowOptions						m_ShadowOptions;
 
-	SBackdropsData() { }
+	SBackdropsData() {}
 
 	bool	IsGridSameGeometry(const SBackdropsData &oth) const
 	{

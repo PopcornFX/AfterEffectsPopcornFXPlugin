@@ -172,6 +172,7 @@ CString CVulkanShaderGenerator::GenDefines(const RHI::SShaderDescription &descri
 			"#define	SAMPLER_ARG(_sampler)						_sampler\n"
 			"#define	SAMPLERMS_ARG(_sampler)						_sampler\n"
 			"\n"
+			"#define	SELECT(_x, _y, _a)							mix(_x, _y, _a)\n"
 			"#define	SATURATE(_value)							clamp(_value, 0.0, 1.0)\n"
 			"#define	CAST(_type, _value)							_type(_value)\n"
 			"\n"

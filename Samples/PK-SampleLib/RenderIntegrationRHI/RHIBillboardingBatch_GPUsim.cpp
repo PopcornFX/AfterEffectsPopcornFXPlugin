@@ -482,6 +482,8 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 		const Drawers::SBillboard_DrawRequest			*dr = static_cast<const Drawers::SBillboard_DrawRequest*>(toEmit.m_DrawRequests[dri]);
 		const Drawers::SBillboard_BillboardingRequest	*bbRequest = static_cast<const Drawers::SBillboard_BillboardingRequest*>(&dr->BaseBillboardingRequest());
 		const CParticleStreamToRender					*streamToRender = &dr->StreamToRender();
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		if (!PK_VERIFY(renderContext.m_DrawOutputs.m_DrawCalls.PushBack().Valid()))
 		{
@@ -976,6 +978,8 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::EmitDrawCall(SRenderContext &ctx, 
 		const Drawers::SBillboard_DrawRequest			*dr = static_cast<const Drawers::SBillboard_DrawRequest*>(toEmit.m_DrawRequests[dri]);
 		const Drawers::SBillboard_BillboardingRequest	&bbRequest = dr->m_BB;
 		const CParticleStreamToRender					*streamToRender = &dr->StreamToRender();
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		u32		dummyOffset = 0;
 		RHI::PGpuBuffer		drStreamBuffer = _RetrieveStorageBuffer(m_ApiManager, streamToRender, bbRequest.m_PositionStreamId, dummyOffset);
@@ -1646,6 +1650,8 @@ bool	CRHIRendererBatch_Ribbon_GPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 		const Drawers::SRibbon_DrawRequest			*dr = static_cast<const Drawers::SRibbon_DrawRequest*>(toEmit.m_DrawRequests[dri]);
 		const Drawers::SRibbon_BillboardingRequest	&bbRequest = dr->m_BB;
 		const CParticleStreamToRender				*streamToRender = &dr->StreamToRender();
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		PK_ASSERT(bbRequest.m_ParticleQuadCount == m_ParticleQuadCount);
 
@@ -2256,10 +2262,11 @@ bool	CRHIRendererBatch_Triangle_GPU::LaunchCustomTasks(SRenderContext &ctx)
 	for (u32 iDr = 0; iDr < drCount; ++iDr)
 	{
 		// Fill in stream offsets for each draw request
-		const CParticleStreamToRender_GPU				*streamToRender = m_DrawPass->m_DrawRequests[iDr]->StreamToRender_GPU();
-		PK_ASSERT(streamToRender != null);
 		const Drawers::SBase_DrawRequest			*dr = m_DrawPass->m_DrawRequests[iDr];
 		const Drawers::SBase_BillboardingRequest	baseBr = dr->BaseBillboardingRequest();
+		const CParticleStreamToRender_GPU			*streamToRender = m_DrawPass->m_DrawRequests[iDr]->StreamToRender_GPU();
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		u32		offset = 0;
 
@@ -2352,6 +2359,8 @@ bool	CRHIRendererBatch_Triangle_GPU::EmitDrawCall(SRenderContext &ctx, const SDr
 		const Drawers::STriangle_DrawRequest			*dr = static_cast<const Drawers::STriangle_DrawRequest*>(toEmit.m_DrawRequests[dri]);
 		const Drawers::STriangle_BillboardingRequest	&bbRequest = dr->m_BB;
 		const CParticleStreamToRender					*streamToRender = &dr->StreamToRender();
+		if (!PK_VERIFY(streamToRender != null))
+			continue;
 
 		u32		dummyOffset = 0;
 		RHI::PGpuBuffer		drStreamBuffer = _RetrieveStorageBuffer(m_ApiManager, streamToRender, bbRequest.m_PositionStreamId, dummyOffset);

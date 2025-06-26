@@ -27,6 +27,8 @@
 #include <PK-SampleLib/RenderIntegrationRHI/RHIRenderIntegrationConfig.h>
 #include <pk_maths/include/pk_maths_transforms.h>
 #include <pk_kernel/include/kr_units.h>
+#include <pk_imaging/include/im_codecs.h>
+#include <../Plugins/CodecImage_PKIM/include/pkim_codec.h>	// needed for CImagePKIMCodec::EExportFlags
 
 #define	COMPUTE_CUBEMAP_SHADER_PATH	"./Shaders/ComputeCubemap.comp"
 #define	COMPUTE_MIPMAP_SHADER_PATH	"./Shaders/ComputeMipMap.comp"
@@ -43,6 +45,8 @@
 #define IBLSAMPLECOUNT 1024 // For montecarlo sampling of radiance
 #define PI 3.14159f
 
+PK_PLUGIN_DECLARE(CImagePKIMCodec);
+
 __PK_SAMPLE_API_BEGIN
 
 
@@ -51,6 +55,7 @@ __PK_SAMPLE_API_BEGIN
 CEnvironmentMap::CEnvironmentMap()
 :	m_ProgressiveProcessing(false)
 ,	m_InputPath(null)
+,	m_CachePath(null)
 ,	m_InputTexture(null)
 ,	m_InputSampler(null)
 ,	m_InputIsLatLong(false)
@@ -168,6 +173,54 @@ float	CEnvironmentMap::MipLevelToBlurAngle(u32 srcMipLevel)
 	// Heuristic: make small cones for first blurs since very visible.
 	// Do not start with blur of 0., which would mean no blur.
 	return	(PI / 2.0f) * PKLerp(0.01f, 1.0f, pow(t, 1.8f));
+}
+
+//----------------------------------------------------------------------------
+
+bool CEnvironmentMap::TryLoadFromCache(const CString &resourcePath, CResourceManager *resourceManager)
+{
+	const CString			cachePath = m_CachePath / m_InputPath + ".cube.pkim";
+	const CString			cachePathIBL = m_CachePath / m_InputPath + ".ibl.pkim";
+	TResourcePtr<CImage>	cachedImage = resourceManager->Load<CImage>(cachePath);
+	TResourcePtr<CImage>	cachedImageIBL = resourceManager->Load<CImage>(cachePathIBL);
+
+	if (cachedImage != null && cachedImageIBL != null)
+	{
+		// Check for invalid/corrupted cache file
+		if (cachedImage->m_Frames.Count() != 1 &&
+			cachedImage->m_Frames.First().m_Mipmaps.Count() != FACECOUNT * m_MipmapCount &&
+			cachedImageIBL->m_Frames.Count() != 1 &&
+			cachedImageIBL->m_Frames.First().m_Mipmaps.Count() != FACECOUNT * m_MipmapCountIBL)
+			return false;
+
+		RHI::PTexture		initialCubemap = m_BackgroundCubemapTexture;
+		RHI::PTexture		initialCubemapIBL = m_IBLCubemapTexture;
+
+		m_BackgroundCubemapTexture = RHI::PixelFormatFallbacks::CreateTextureAndFallbackIFN(m_ApiManager, *cachedImage, false, resourcePath.Data());
+		m_IBLCubemapTexture = RHI::PixelFormatFallbacks::CreateTextureAndFallbackIFN(m_ApiManager, *cachedImageIBL, false, resourcePath.Data());
+
+		bool				success = true;
+
+		success &= m_BackgroundCubemapConstantSet->SetConstants(m_BackgroundCubemapSampler, m_BackgroundCubemapTexture, 0);
+		success &= m_BackgroundCubemapConstantSet->UpdateConstantValues();
+		success &= m_IBLCubemapConstantSet->SetConstants(m_IBLCubemapSampler, m_IBLCubemapTexture, 0);
+		success &= m_IBLCubemapConstantSet->UpdateConstantValues();
+
+		if (!success)
+		{
+			m_BackgroundCubemapTexture = initialCubemap;
+			m_IBLCubemapTexture = initialCubemapIBL;
+
+			m_BackgroundCubemapConstantSet->SetConstants(m_BackgroundCubemapSampler, m_BackgroundCubemapTexture, 0);
+			m_BackgroundCubemapConstantSet->UpdateConstantValues();
+			m_IBLCubemapConstantSet->UpdateConstantValues();
+			m_IBLCubemapConstantSet->SetConstants(m_IBLCubemapSampler, m_IBLCubemapTexture, 0);
+		}
+
+		return success;
+	}
+
+	return false;
 }
 
 //----------------------------------------------------------------------------
@@ -524,9 +577,20 @@ bool	CEnvironmentMap::Load(const CString &resourcePath, CResourceManager *resour
 	m_ProgressiveCounter = 0u;
 	m_InputPath = resourcePath;
 
+	if (TryLoadFromCache(resourcePath, resourceManager))
+	{
+		m_MustRegisterCompute = false;
+		m_LoadIsValid = true;
+		m_IsUsable = true;
+
+		return true;
+	}
+
 	// Create input texture ressources
 	TResourcePtr<CImage>	inputImage = resourceManager->Load<CImage>(resourcePath, false, SResourceLoadCtl(false, true));
-	if (inputImage == null || inputImage->Empty()) return false;
+	if (inputImage == null || inputImage->Empty())
+		return false;
+
 	m_InputTexture = RHI::PixelFormatFallbacks::CreateTextureAndFallbackIFN(m_ApiManager, *inputImage, inputImage->GammaCorrected() || !inputImage->FloatingPoint(), resourcePath.Data());
 	m_InputSampler = m_ApiManager->CreateConstantSampler(	RHI::SRHIResourceInfos("Input Sampler"),
 														RHI::SampleLinear,
@@ -550,12 +614,116 @@ bool	CEnvironmentMap::Load(const CString &resourcePath, CResourceManager *resour
 
 //----------------------------------------------------------------------------
 
+#if	(PK_IMAGING_ENABLE_WRITE_CODECS != 0)
+bool CEnvironmentMap::ExportCubemap(CResourceManager *resourceManager)
+{
+	TArray<PImage>	images;
+	if (!PK_VERIFY(images.Resize(m_ReadBackTextures.Count())))
+		return false;
+
+	for (u32 i = 0; i < m_ReadBackTextures.Count(); i++)
+	{
+		PImage		image = m_ApiManager->CreateImageFromReadBackTexture(m_ReadBackTextures[i]);
+		if (!PK_VERIFY(image != null) ||	// 'CreateImageFromReadBackTexture()' failed
+			!PK_VERIFY(!image->m_Frames.Empty()) ||
+			!PK_VERIFY(!image->m_Frames.First().m_Mipmaps.Empty()) ||
+			!PK_VERIFY(image->m_Frames.First().m_Mipmaps.First().m_RawBuffer != null))	// invalid image produced by 'CreateImageFromReadBackTexture()'
+			return false;
+
+		images[i] = image;
+	}
+	PImage			imageCube = PK_NEW(CImage);
+	PImage			imageIBL = PK_NEW(CImage);
+
+	if (!PK_VERIFY(imageCube->m_Frames.Resize(1)) || !PK_VERIFY(imageIBL->m_Frames.Resize(1)))
+		return false;
+
+	imageCube->m_Flags |= CImage::Flag_Cubemap;
+	imageCube->m_Format = images.First()->m_Format;
+	imageIBL->m_Flags |= CImage::Flag_Cubemap;
+	imageIBL->m_Format = images.First()->m_Format;
+
+	for (u32 level = 0; level < m_MipmapCount; level++)
+	{
+		for (u32 face = 0; face < FACECOUNT; face++)
+		{
+			if (!PK_VERIFY(imageCube->m_Frames[0].m_Mipmaps.PushBack(images[FACECOUNT * level + face]->m_Frames[0].m_Mipmaps[0]).Valid()))
+				return false;
+		}
+	}
+	for (u32 level = 0; level < m_MipmapCountIBL; level++)
+	{
+		for (u32 face = 0; face < FACECOUNT; face++)
+		{
+			if (!PK_VERIFY(imageIBL->m_Frames[0].m_Mipmaps.PushBack(images[FACECOUNT * m_MipmapCount + FACECOUNT * level + face]->m_Frames[0].m_Mipmaps[0]).Valid()))
+				return false;
+		}
+	}
+
+	IFileSystem				*fileController = resourceManager->FileController();
+
+	const CString			cachePath = m_CachePath / m_InputPath + ".cube.pkim";
+	const CString			cachePathIBL = m_CachePath / m_InputPath + ".ibl.pkim";
+	IImageCodec				*imageCodec = checked_cast<IImageCodec*>(GetPlugin_CImagePKIMCodec());
+	if (imageCodec == null)
+		return false;
+
+	CMessageStream			exportReport;
+	SImageCodecWriteConfig	writeCfg;
+
+	writeCfg.m_CodecData[0] = CImagePKIMCodec::ExportFlag_WriteTexels;
+
+	if (!imageCodec->FileSave(fileController, *imageCube, cachePath, false, writeCfg, exportReport))
+	{
+		fileController->FileDelete(cachePath, true);
+	}
+
+	if (!imageCodec->FileSave(fileController, *imageIBL, cachePathIBL, false, writeCfg, exportReport))
+	{
+		fileController->FileDelete(cachePathIBL, true);
+	}
+	m_ReadBackTextures.Clear();
+
+	return !exportReport.HasErrors();
+}
+#endif
+
+//----------------------------------------------------------------------------
+
 // Register cubemap generation (compute dispatch + copy) on the given commandbuffer, if needed
+bool	CEnvironmentMap::UpdateCubemap(const RHI::PCommandBuffer &cmdBuff, CResourceManager *resourceManager)
+{
+#if	(PK_IMAGING_ENABLE_WRITE_CODECS != 0)
+	if (!m_MustRegisterCompute)
+	{
+		if (m_ReadBackTextures.Count() == 0)
+			return true;
+
+		// Wait for all readback textures to be ready
+		for (u32 i = 0; i < m_ReadBackTextures.Count(); i++)
+		{
+			if (!m_ReadBackTextures[i]->IsReadable())
+				return true;
+		}
+
+		if (ExportCubemap(resourceManager))
+			return true;
+	}
+
+	return GenerateCubemap(cmdBuff);
+#else
+	(void)resourceManager;
+
+	if (m_MustRegisterCompute)
+		return GenerateCubemap(cmdBuff);
+	return true;
+#endif
+}
+
+//----------------------------------------------------------------------------
+
 bool	CEnvironmentMap::GenerateCubemap(const RHI::PCommandBuffer &cmdBuff)
 {
-	if (!m_MustRegisterCompute)
-		return true;
-
 	bool	success = true;
 
 	// Start registering commands
@@ -584,10 +752,10 @@ bool	CEnvironmentMap::GenerateCubemap(const RHI::PCommandBuffer &cmdBuff)
 			if (!PK_VERIFY(constantSet != null))
 				return false;
 
-			RHI::PGpuBuffer	faceInfo = m_ApiManager->CreateGpuBuffer(RHI::SRHIResourceInfos("FaceInfo Constant Buffer"), RHI::ConstantBuffer, sizeof(u32) * 2);
+			RHI::PGpuBuffer			faceInfo = m_ApiManager->CreateGpuBuffer(RHI::SRHIResourceInfos("FaceInfo Constant Buffer"), RHI::ConstantBuffer, sizeof(u32) * 2);
 			if (!PK_VERIFY(faceInfo != null))
 				return false;
-			u32				*data = static_cast<u32*>(m_ApiManager->MapCpuView(faceInfo));
+			u32						*data = static_cast<u32*>(m_ApiManager->MapCpuView(faceInfo));
 			data[0] = face;
 			data[1] = MAXFACESIZE;
 			m_ApiManager->UnmapCpuView(faceInfo);
@@ -665,7 +833,7 @@ bool	CEnvironmentMap::GenerateCubemap(const RHI::PCommandBuffer &cmdBuff)
 			const u32	mipCountDelta = IntegerTools::Log2(MAXFACESIZE) - IntegerTools::Log2(MAXFACESIZEIBL);
 			success &= cmdBuff->CopyTexture(m_CubemapRenderTargets[mipCountDelta + face * m_MipmapCount]->GetTexture(), m_IBLCubemapTexture, 0, 0, 0, face, CUint3::ZERO, CUint3::ZERO, CUint3(MAXFACESIZEIBL, MAXFACESIZEIBL, 1));
 		}
-
+		
 		// Background texture processing: blur
 		faceSize = MAXFACESIZE / 2;
 		for (u32 level = 1; level < m_MipmapCount; level++)
@@ -793,6 +961,36 @@ bool	CEnvironmentMap::GenerateCubemap(const RHI::PCommandBuffer &cmdBuff)
 		faceSize /= 2;
 	}
 
+#if	(PK_IMAGING_ENABLE_WRITE_CODECS != 0)
+	if (!PK_VERIFY(m_ReadBackTextures.Resize(FACECOUNT * m_MipmapCount + FACECOUNT * m_MipmapCountIBL)))
+		return false;
+
+	for (u32 level = 0; level < m_MipmapCount; level++)
+	{
+		for (u32 face = 0; face < FACECOUNT; face++)
+		{
+			const RHI::PRenderTarget &target = level == 0 ? m_CubemapRenderTargets[0 + face * m_MipmapCount] : m_BackgroundCubeRenderTargets[level + face * m_MipmapCount];
+
+			m_ReadBackTextures[level + face * m_MipmapCount] =
+				m_ApiManager->CreateReadBackTexture(RHI::SRHIResourceInfos(CString::Format("Cubemap_LOD_Face%d_Level%d", face, level)), target);
+			success &= cmdBuff->ReadBackRenderTarget(target, m_ReadBackTextures[level + face * m_MipmapCount]);
+		}
+	}
+
+	for (u32 level = 0; level < m_MipmapCountIBL; level++)
+	{
+		for (u32 face = 0; face < FACECOUNT; face++)
+		{
+			const u32					mipCountDelta = IntegerTools::Log2(MAXFACESIZE) - IntegerTools::Log2(MAXFACESIZEIBL);
+			const RHI::PRenderTarget	&target = level == 0 ? m_CubemapRenderTargets[mipCountDelta + face * m_MipmapCount] : m_IBLCubeRenderTargets[level + face * m_MipmapCountIBL];
+
+			m_ReadBackTextures[FACECOUNT * m_MipmapCount + level + face * m_MipmapCountIBL] =
+				m_ApiManager->CreateReadBackTexture(RHI::SRHIResourceInfos(CString::Format("CubemapIBL_LOD_Face%d_Level%d", face, level)), target);
+			success &= cmdBuff->ReadBackRenderTarget(target, m_ReadBackTextures[FACECOUNT * m_MipmapCount + level + face * m_MipmapCountIBL]);
+		}
+	}
+#endif
+
 	m_ProgressiveCounter += 1u;
 
 	// We have dispatched filtering for each mip level,
@@ -854,6 +1052,13 @@ void	CEnvironmentMap::SetProgressiveProcessing(bool progressiveProcessing)
 	m_ProgressiveCounter = 0u;
 	m_MustRegisterCompute = true;
 	m_IsUsable = false;
+}
+
+//----------------------------------------------------------------------------
+
+void CEnvironmentMap::SetCachePath(const CString &path)
+{
+	m_CachePath = path;
 }
 
 //----------------------------------------------------------------------------

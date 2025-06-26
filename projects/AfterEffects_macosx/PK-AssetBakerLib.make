@@ -31,7 +31,7 @@ RESCOMP = windres
 PCH = ../../ExternalLibs/PK-AssetBakerLib/precompiled.h
 PCH_PLACEHOLDER = $(OBJDIR)/$(notdir $(PCH))
 GCH = $(PCH_PLACEHOLDER).gch
-INCLUDES += -I../../ExternalLibs/Runtime -I../../ExternalLibs/Runtime/include -I../../ExternalLibs/Runtime/include/license/AfterEffects -I../../ExternalLibs/PK-AssetBakerLib -I../../ExternalLibs/Runtime/libs/freetype-2.5.5/include
+INCLUDES += -I../../ExternalLibs/Runtime -I../../ExternalLibs/Runtime/include -I../../ExternalLibs/Runtime/include/license/AfterEffects -I../../ExternalLibs/PK-AssetBakerLib -I../../ExternalLibs/Runtime/libs/freetype-2.13.3/include
 FORCE_INCLUDE += -include pk_compiler_warnings.h
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
@@ -54,24 +54,16 @@ TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
 TARGET = $(TARGETDIR)/libPK-AssetBakerLib_d.a
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Debug/PK-AssetBakerLib
 DEFINES += -D_DEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
 
 else ifeq ($(config),release_x64)
 TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
 TARGET = $(TARGETDIR)/libPK-AssetBakerLib_r.a
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Release/PK-AssetBakerLib
 DEFINES += -DNDEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-
-else ifeq ($(config),retail_x64)
-TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
-TARGET = $(TARGETDIR)/libPK-AssetBakerLib_s.a
-OBJDIR = ../intermediate/AfterEffects/GM/x64/Retail/PK-AssetBakerLib
-DEFINES += -DNDEBUG -DPK_RETAIL -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-math-errno -fno-trapping-math -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
 
 #else
 #  $(error "invalid configuration $(config)")
@@ -97,6 +89,19 @@ GENERATED += $(OBJDIR)/AssetBaker_Oven_Mesh.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven_StraightCopy.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven_Texture.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven_VectorField.o
+GENERATED += $(OBJDIR)/AssetBaker_PKGO.o
+GENERATED += $(OBJDIR)/AssetBaker_PKGO_Graph.o
+GENERATED += $(OBJDIR)/AssetBaker_PKGO_SimInterfaces.o
+GENERATED += $(OBJDIR)/AssetBaker_PKTX.o
+GENERATED += $(OBJDIR)/AssetBaker_PKTX_Constant.o
+GENERATED += $(OBJDIR)/AssetBaker_PKTX_Graph.o
+GENERATED += $(OBJDIR)/AssetBaker_PKTX_SimInterfaces.o
+GENERATED += $(OBJDIR)/AssetBaker_PKTX_Substance.o
+GENERATED += $(OBJDIR)/AssetBaker_PKVX.o
+GENERATED += $(OBJDIR)/AssetBaker_PKVX_Constant.o
+GENERATED += $(OBJDIR)/AssetBaker_PKVX_Graph.o
+GENERATED += $(OBJDIR)/AssetBaker_PKVX_SimInterfaces.o
+GENERATED += $(OBJDIR)/AssetBaker_SimInterfaces.o
 GENERATED += $(OBJDIR)/AssetBaker_Startup.o
 GENERATED += $(OBJDIR)/ConvexHull.o
 GENERATED += $(OBJDIR)/TextureTrimmer.o
@@ -110,6 +115,19 @@ OBJECTS += $(OBJDIR)/AssetBaker_Oven_Mesh.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven_StraightCopy.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven_Texture.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven_VectorField.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKGO.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKGO_Graph.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKGO_SimInterfaces.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKTX.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKTX_Constant.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKTX_Graph.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKTX_SimInterfaces.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKTX_Substance.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKVX.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKVX_Constant.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKVX_Graph.o
+OBJECTS += $(OBJDIR)/AssetBaker_PKVX_SimInterfaces.o
+OBJECTS += $(OBJDIR)/AssetBaker_SimInterfaces.o
 OBJECTS += $(OBJDIR)/AssetBaker_Startup.o
 OBJECTS += $(OBJDIR)/ConvexHull.o
 OBJECTS += $(OBJDIR)/TextureTrimmer.o
@@ -202,6 +220,45 @@ $(OBJDIR)/AssetBaker_Oven_Texture.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBa
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/AssetBaker_Oven_VectorField.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_Oven_VectorField.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKGO.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKGO.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKGO_Graph.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKGO_Graph.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKGO_SimInterfaces.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKGO_SimInterfaces.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKTX.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKTX.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKTX_Constant.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKTX_Constant.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKTX_Graph.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKTX_Graph.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKTX_SimInterfaces.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKTX_SimInterfaces.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKTX_Substance.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKTX_Substance.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKVX.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKVX.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKVX_Constant.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKVX_Constant.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKVX_Graph.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKVX_Graph.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_PKVX_SimInterfaces.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_PKVX_SimInterfaces.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_SimInterfaces.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_SimInterfaces.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/AssetBaker_Startup.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_Startup.cpp

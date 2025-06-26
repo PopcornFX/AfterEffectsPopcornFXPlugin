@@ -56,7 +56,7 @@ SMesh::~SMesh()
 
 //----------------------------------------------------------------------------
 
-bool	SMesh::_AddMeshBatch(const RHI::PApiManager &apiManager, CMeshNew *mesh, u32 colorSet, bool loadAlphaAsColor)
+bool	SMesh::_AddMeshBatch(const RHI::PApiManager &apiManager, CMeshNew *mesh, u32 colorSet, EVertexColorMode vertexColorMode)
 {
 	if (!m_MeshBatches.PushBack().Valid())
 		return false;
@@ -164,10 +164,23 @@ bool	SMesh::_AddMeshBatch(const RHI::PApiManager &apiManager, CMeshNew *mesh, u3
 	if (m_HasVertexColors)
 	{
 		CFloat4		*buffData = static_cast<CFloat4*>(Mem::AdvanceRawPointer(mappedVertexBuffer, offset));
-		if (loadAlphaAsColor)
+		if (vertexColorMode == VCMode_Alpha)
 		{
 			for (u32 i = 0; i < vertexCount; ++i)
 				buffData[i] = colors[i].www1();
+		}
+		else if (vertexColorMode == VCMode_UV)
+		{
+			if (!texCoords.Empty())
+			{
+				for (u32 i = 0; i < vertexCount; ++i)
+					buffData[i] = CFloat4(texCoords[i], 0, 1);
+			}
+			else
+			{
+				for (u32 i = 0; i < vertexCount; ++i)
+					buffData[i] = CFloat4(0,0,0,1);
+			}
 		}
 		else
 		{
@@ -222,7 +235,7 @@ bool	SMesh::Load(	const RHI::PApiManager &apiManager,
 						TMemoryView<const RHI::SConstantSetLayout> constLayouts,
 						CResourceManager *resourceManager,
 						u32 colorSet /* = 0 */,
-						bool loadAlphaAsColor /* = false */,
+						EVertexColorMode vertexColorMode /* = VCMode_Color*/,
 						const RHI::PTexture whiteFallbackTx /* = null */,
 						const RHI::PTexture normalFallbackTx /* = null */,
 						const RHI::PConstantSampler fallbackSampler /* = null */)
@@ -235,11 +248,14 @@ bool	SMesh::Load(	const RHI::PApiManager &apiManager,
 
 	const u32	prevDirtyKey = m_ResourceDirtyKey.Load();
 
-	m_MeshResource = resourceManager->Load<CResourceMesh>(m_MeshPath, false, SResourceLoadCtl(false, true));
+	if (!m_MeshPath.Empty())	// If empty, user might have set m_MeshResource directly !
+		m_MeshResource = resourceManager->Load<CResourceMesh>(m_MeshPath, false, SResourceLoadCtl(false, true));
+
 	if (m_MeshResource == null ||
 		m_MeshResource->Empty())
 	{
-		CLog::Log(PK_ERROR, "Failed loading mesh resource \"%s\"", m_MeshPath.Data());
+		if (!m_MeshPath.Empty())
+			CLog::Log(PK_ERROR, "Failed loading mesh resource \"%s\"", m_MeshPath.Data());
 		return false;
 	}
 
@@ -341,7 +357,7 @@ bool	SMesh::Load(	const RHI::PApiManager &apiManager,
 	for (const auto &batch : batchList)
 	{
 		if (PK_VERIFY(batch != null) &&
-			!_AddMeshBatch(apiManager, batch->RawMesh(), colorSet, loadAlphaAsColor))
+			!_AddMeshBatch(apiManager, batch->RawMesh(), colorSet, vertexColorMode))
 		{
 			return false;
 		}

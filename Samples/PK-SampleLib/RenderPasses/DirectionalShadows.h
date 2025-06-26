@@ -121,11 +121,12 @@ private:
 		}
 	};
 
-	bool		_CreateRenderPass();
-	bool		_CreateMeshBackdropRenderStates(CShaderLoader &loader, ECoordinateFrame drawFrame, ECoordinateFrame meshFrame);
-	bool		_CreateSliceData(SCascadedShadowSlice &slice);
-	CAABB		_GetFrustumBBox(CFloat4x4 invViewProj, float nearPlane, float farPlane, const CFloat4x4 &postProjTransform = CFloat4x4::IDENTITY);
-	void		_ExtendCasterBBox(CAABB &caster, const CAABB &receiver, const CFloat3 &lightDirection) const;
+	bool	_CreateRenderPass();
+	bool	_CreateMeshBackdropRenderStates(CShaderLoader &loader, ECoordinateFrame drawFrame, ECoordinateFrame meshFrame);
+	bool	_CreateSliceData(SCascadedShadowSlice &slice);
+	CAABB	_GetFrustumBBox(CFloat4x4 invViewProj, float nearPlane, float farPlane, const CFloat4x4 &postProjTransform = CFloat4x4::IDENTITY);
+	CSphere	_GetFrustumBSphere(CFloat4x4 invViewProj, float farPlane, const CFloat4x4 &postProjTransform = CFloat4x4::IDENTITY);
+	void	_ExtendCasterBBox(CAABB &caster, const CAABB &receiver, const CFloat3 &lightDirection) const;
 
 	RHI::PApiManager					m_ApiManager;
 
