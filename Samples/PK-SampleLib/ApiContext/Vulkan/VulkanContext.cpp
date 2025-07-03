@@ -886,6 +886,8 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateSwapChain(RHI::SVulkanB
 	{
 		imageCount = capabilities.maxImageCount;
 	}
+	PK_ASSERT(capabilities.minImageCount <= static_cast<u32>(RHI::kMaxSwapChainImages));
+	imageCount = PKMin(imageCount, static_cast<u32>(RHI::kMaxSwapChainImages));
 
 	VkSwapchainKHR				newSwapChain;
 	PK_ASSERT(basicCtx.m_GraphicalQueueFamily >= 0 && basicCtx.m_PresentQueueFamily >= 0);
@@ -928,7 +930,6 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateSwapChain(RHI::SVulkanB
 											&basicCtx.m_SwapChains[swapChainIdx].m_SwapChainImageAvailable)))
 			return SwapChainOp_CriticalError;
 	}
-	imageCount = PKMin(imageCount, static_cast<u32>(RHI::kMaxSwapChainImages));
 
 	// We raise a fatal error when we cannot create the swap-chain and the device is lost
 	VkResult	createSwapChainResult = vkCreateSwapchainKHR(basicCtx.m_LogicalDevice, &createInfo, basicCtx.m_Allocator, &newSwapChain);
