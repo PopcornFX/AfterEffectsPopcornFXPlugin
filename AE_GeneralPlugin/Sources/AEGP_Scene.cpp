@@ -816,10 +816,10 @@ bool	CAAEScene::Render(SAAEIOData &AAEData)
 
 		// Fill the command buffer
 		preRenderCmdBuff->Start();
-
+		
 		if (!m_BackdropData.m_EnvironmentMapPath.Empty())
 		{
-			renderHelper->GetEnvironmentMap().UpdateCubemap(preRenderCmdBuff, m_ResourceManager);
+			renderHelper->GetEnvironmentMap().GenerateCubemap(preRenderCmdBuff);
 		
 			PKSample::SBackdropsData	&data = renderHelper->GetBackDropsData();
 			data.m_BackgroundUsesEnvironmentMap = m_BackdropData.m_BackgroundUsesEnvironmentMap;

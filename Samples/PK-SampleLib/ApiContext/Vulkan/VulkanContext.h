@@ -17,12 +17,15 @@
 #if	defined(PK_WINDOWS)
 #	define PLATFORM_SURFACE_EXTENSION_NAME		VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_WIN32_KHR
-#elif	defined(PK_LINUX)
+#elif	defined(PK_LINUX) && !defined(PK_GGP)
 #	define PLATFORM_SURFACE_EXTENSION_NAME		VK_KHR_XLIB_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_XLIB_KHR
 #elif	defined(PK_MACOSX)
 #	define PLATFORM_SURFACE_EXTENSION_NAME		VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_MACOS_MVK
+#elif	defined(PK_GGP)
+#	define PLATFORM_SURFACE_EXTENSION_NAME		VK_GGP_STREAM_DESCRIPTOR_SURFACE_EXTENSION_NAME
+#	define VK_USE_PLATFORM_GGP
 #elif	defined(PK_NX)
 #	define PLATFORM_SURFACE_EXTENSION_NAME		VK_NN_VI_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_VI_NN
@@ -112,12 +115,14 @@ public:
 	// Creates the window surface
 #if		defined(PK_WINDOWS)
 	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, HINSTANCE moduleHandle, HWND windowHandle);
-#elif	defined(PK_LINUX)
+#elif	defined(PK_LINUX) && !defined(PK_GGP)
 	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg window);
 #elif	defined(PK_MACOSX)
 	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *view);
+#elif	defined(PK_GGP)
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void* view);
 #elif	defined(PK_NX)
-	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *window);
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void* window);
 #else
 #	error not implemented
 #endif

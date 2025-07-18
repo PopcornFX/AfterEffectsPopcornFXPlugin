@@ -337,13 +337,13 @@ bool	CreateLightingSceneInfoConstantLayout(	RHI::SConstantSetLayout &lightLayout
 	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4x4, "Cascade1_WorldToShadow"));
 	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4x4, "Cascade2_WorldToShadow"));
 	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4x4, "Cascade3_WorldToShadow"));
-	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "ShadowRanges"));
-	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "Cascade0_ShadowAspectRatio"));
-	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "Cascade1_ShadowAspectRatio"));
-	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "Cascade2_ShadowAspectRatio"));
-	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "Cascade3_ShadowAspectRatio"));
-	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "ShadowConstants"));
-	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeInt, "ShadowFlags"));
+	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "ShadowsRanges"));
+	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "m_ShadowsAspectRatio0"));
+	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "m_ShadowsAspectRatio1"));
+	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "m_ShadowsAspectRatio2"));
+	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat2, "m_ShadowsAspectRatio3"));
+	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "ShadowsConstants"));
+	success &= shadowConstant.AddConstant(RHI::SConstantVarDesc(RHI::TypeInt, "ShadowsFlags"));
 	success &= shadowLayout.AddConstantsLayout(shadowConstant);
 
 	RHI::SConstantSamplerDesc	shadowMapSampler0("Cascade0_ShadowMap", RHI::SamplerTypeSingle);

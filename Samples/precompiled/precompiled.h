@@ -62,6 +62,8 @@ PK_LOG_MODULE_DEFINE();
 #	else
 #		define	DEFAULT_API				GApi_Null
 #	endif
+#elif defined(PK_GGP)
+#	define		DEFAULT_API				GApi_Vulkan
 #else
 #	if	(PK_BUILD_WITH_OGL_SUPPORT != 0)
 #		define	DEFAULT_API				GApi_OpenGL

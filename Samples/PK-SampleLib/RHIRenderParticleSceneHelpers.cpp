@@ -150,7 +150,7 @@ bool	CRHIParticleSceneRenderHelper::Init(const RHI::PApiManager	&apiManager,
 
 	// Init the environmentMap
 	if (!PK_VERIFY(m_EnvironmentMap.Init(m_ApiManager, shaderLoader)))
-		return false;
+	return false;
 
 	// Init the atlas dummy constant-set
 	PK_ASSERT(SConstantAtlasKey::GetAtlasConstantSetLayout().m_Constants.Count() == 1);
@@ -1139,29 +1139,19 @@ bool	CRHIParticleSceneRenderHelper::SetBackdropInfo(const SBackdropsData &backdr
 										(m_MeshBackdrop.m_NormalMap.m_Path.Empty() && (m_MeshBackdrop.m_NormalMap.m_ImageData != backdropData.m_MeshNormalData));
 		const bool	roughMetalChanged =	(m_MeshBackdrop.m_RoughMetalMap.m_Path != backdropData.m_MeshRoughMetalPath) ||
 										(m_MeshBackdrop.m_RoughMetalMap.m_Path.Empty() && (m_MeshBackdrop.m_RoughMetalMap.m_ImageData != backdropData.m_MeshRoughMetalData));
-		const bool	meshChanged =		(m_MeshBackdrop.m_MeshPath != backdropData.m_MeshPath) ||
-										(backdropData.m_MeshPath.Empty() && (m_MeshBackdrop.m_MeshResource != backdropData.m_MeshResource.Get()));
 
-		if (meshChanged ||
+		if (m_MeshBackdrop.m_MeshPath != backdropData.m_MeshPath ||
+			m_MeshBackdrop.m_MeshLOD != backdropData.m_MeshLOD ||
 			diffuseChanged ||
 			normalChanged ||
 			roughMetalChanged ||
-			m_MeshBackdrop.m_MeshLOD != backdropData.m_MeshLOD ||
 			backdropData.m_MeshVertexColorsSet != m_BackdropsData.m_MeshVertexColorsSet ||
 			backdropData.m_MeshVertexColorsMode != m_BackdropsData.m_MeshVertexColorsMode ||
 			m_MeshBackdrop.IsDirty())
 		{
 			Mem::Reinit(m_MeshBackdrop);
 
-			if (!backdropData.m_MeshPath.Empty())
-				m_MeshBackdrop.m_MeshPath = backdropData.m_MeshPath;
-			else
-			{
-				TResourceRawPtr<CResourceMesh>	rawResource(backdropData.m_MeshResource.Get(), m_CurrentPackResourceManager);
-				m_MeshBackdrop.m_MeshPath.Clear();
-				m_MeshBackdrop.m_MeshResource = TResourcePtr<CResourceMesh>(rawResource);
-			}
-
+			m_MeshBackdrop.m_MeshPath = backdropData.m_MeshPath;
 			m_MeshBackdrop.m_MeshLOD = backdropData.m_MeshLOD;
 			m_MeshBackdrop.m_DiffuseMap.m_Path = backdropData.m_MeshDiffusePath;
 			m_MeshBackdrop.m_NormalMap.m_Path = backdropData.m_MeshNormalPath;
@@ -1178,15 +1168,12 @@ bool	CRHIParticleSceneRenderHelper::SetBackdropInfo(const SBackdropsData &backdr
 				m_MeshConstSetLayout
 			};
 
-			if (!m_MeshBackdrop.m_MeshPath.Empty() ||
-				m_MeshBackdrop.m_MeshResource != null)
+			if (!m_MeshBackdrop.m_MeshPath.Empty())
 				success &= m_MeshBackdrop.Load(	m_ApiManager,
 												constLayouts,
 												m_CurrentPackResourceManager,
 												backdropData.m_MeshVertexColorsSet,
-												backdropData.m_MeshVertexColorsMode == 2 ?	PKSample::SMesh::VCMode_Alpha :
-												backdropData.m_MeshVertexColorsMode == 3 ?	PKSample::SMesh::VCMode_UV :
-																							PKSample::SMesh::VCMode_Color,
+												backdropData.m_MeshVertexColorsMode == 2,
 												m_DummyWhite,
 												m_DummyNormal,
 												m_DefaultSampler);
@@ -1270,7 +1257,7 @@ bool	CRHIParticleSceneRenderHelper::RenderScene(	ERenderTargetDebug		renderTarge
 
 	preOpaqueCmdBuff->Start();
 
-	if (!PK_VERIFY(m_EnvironmentMap.UpdateCubemap(preOpaqueCmdBuff, m_CurrentPackResourceManager)))
+	if (!PK_VERIFY(m_EnvironmentMap.GenerateCubemap(preOpaqueCmdBuff)))
 		return false;
 
 	if ((m_InitializedRP & InitRP_Debug) != 0)

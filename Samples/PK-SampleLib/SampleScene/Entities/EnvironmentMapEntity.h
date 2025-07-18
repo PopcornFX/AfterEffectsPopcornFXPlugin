@@ -17,7 +17,6 @@
 
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
-
 class	CEnvironmentMap
 {
 public:
@@ -26,7 +25,7 @@ public:
 
 	bool							Init(const RHI::PApiManager &apiManager, CShaderLoader *shaderLoader);
 	bool							Load(const CString &resourcePath, CResourceManager *resourceManager);
-	bool							UpdateCubemap(const RHI::PCommandBuffer &cmdBuff, CResourceManager *resourceManager);
+	bool							GenerateCubemap(const RHI::PCommandBuffer &cmdBuff);
 	bool							IsValid(); // Input texture is loaded and cubemap generation compute shader has been dispatched.
 	void							Reset();
 	void							SetRotation(float angle);
@@ -37,20 +36,13 @@ public:
 	u32								GetBackgroundMipmapCount() { return m_MipmapCount; }
 
 	void							SetProgressiveProcessing(bool progressiveProcessing);
-	void							SetCachePath(const CString &path);
 
 private:
 	float							MipLevelToBlurAngle(u32 srcMip);
-	bool							TryLoadFromCache(const CString &resourcePath, CResourceManager *resourceManager);
-	bool							GenerateCubemap(const RHI::PCommandBuffer &cmdBuff);
-#if	(PK_IMAGING_ENABLE_WRITE_CODECS != 0)
-	bool							ExportCubemap(CResourceManager *resourceManager);
-#endif
 
 private:
 	bool							m_ProgressiveProcessing;
 	CString							m_InputPath;
-	CString							m_CachePath;
 	RHI::PTexture					m_InputTexture;
 	RHI::PConstantSampler			m_InputSampler;
 	bool							m_InputIsLatLong;
@@ -70,9 +62,6 @@ private:
 	TArray<RHI::PRenderTarget>		m_IBLCubeRenderTargets;
 	TArray<RHI::PRenderTarget>		m_BackgroundCubeRenderTargets;
 	TArray<RHI::PRenderTarget>		m_FacesForBlurRenderTargets;
-#if	(PK_IMAGING_ENABLE_WRITE_CODECS != 0)
-	TArray<RHI::PReadBackTexture>	m_ReadBackTextures;
-#endif
 
 	RHI::PConstantSet				m_CubemapConstantSet;
 	RHI::PConstantSet				m_IBLCubemapConstantSet;
