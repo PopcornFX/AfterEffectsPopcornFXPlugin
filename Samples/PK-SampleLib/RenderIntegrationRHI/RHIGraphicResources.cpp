@@ -1902,7 +1902,8 @@ PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareA
 
 		RHI::EWrapMode	wrapMode = RHI::SampleClampToEdge;
 
-		const SRendererFeaturePropertyValue	*textureRepeat = args.m_Renderer->m_Declaration.FindProperty(BasicRendererProperties::SID_TextureRepeat());
+		const SRendererFeaturePropertyValue	*textureClamp = args.m_Renderer->m_Declaration.FindProperty(BasicRendererProperties::SID_TextureClamp());
+		const SRendererFeaturePropertyValue* textureRepeat = args.m_Renderer->m_Declaration.FindProperty(BasicRendererProperties::SID_TextureRepeat());
 		const bool	isLUT = textureProperties[i].m_Property != null &&
 							(textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_AlphaRemap_AlphaMap() ||
 							textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_DiffuseRamp_RampMap());
@@ -1914,7 +1915,7 @@ PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareA
 										 textureProperties[i].m_Property->m_Name == BasicRendererProperties::SID_AlphaMasks_Mask2Map());
 										
 
-		if (textureRepeat != null && textureRepeat->ValueB() && !isLUT)
+		if (((textureClamp != null && !textureClamp->ValueB()) || (textureRepeat != null && textureRepeat->ValueB())) && !isLUT)
 			wrapMode = RHI::SampleRepeat;
 
 		if (isScrollingTexture)

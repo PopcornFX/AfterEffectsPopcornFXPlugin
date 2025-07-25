@@ -290,10 +290,45 @@ CAABB	CDirectionalShadows::_GetFrustumBBox(CFloat4x4 invViewProj, float nearPlan
 	return camBBoxFrustum;
 }
 
+CSphere CDirectionalShadows::_GetFrustumBSphere(CFloat4x4 invViewProj, float farPlane, const CFloat4x4 &postProjTransform)
+{
+	// The bounding sphere is centered around the far plane corners.
+	// It is assumed the FOV isn't too small so the near plane corners are enclosed by the sphere.
+
+	const CFloat4	frustumCenter		= CFloat4(0, 0, farPlane, 1);
+	const CFloat4	unprojectedCenter	= invViewProj.TransformVector(frustumCenter);
+	const CFloat3	centerHomogenized	= unprojectedCenter.xyz() / unprojectedCenter.w();
+	const CFloat3	centerTransformed	= postProjTransform.TransformVector(centerHomogenized);
+
+	const CFloat4	kFrustumCorners[4] =
+	{
+		CFloat4(-1,	-1,	farPlane,	1),
+		CFloat4( 1,	-1,	farPlane,	1),
+		CFloat4(-1,	 1,	farPlane,	1),
+		CFloat4( 1,	 1,	farPlane,	1),
+	};
+
+	float	maxDistance = 0;
+	for (u32 i = 0; i < 4; ++i)
+	{
+		const CFloat4	unprojectedCorner = invViewProj.TransformVector(kFrustumCorners[i]);
+		const CFloat3	cornerHomogenized = unprojectedCorner.xyz() / unprojectedCorner.w();
+		const CFloat3	cornerTransformed = postProjTransform.TransformVector(cornerHomogenized);
+
+		const float distance = (centerTransformed - cornerTransformed).Length();
+		if (distance > maxDistance)
+			maxDistance = distance;
+	}
+
+	return CSphere(centerTransformed, maxDistance);
+}
+
 //----------------------------------------------------------------------------
 
 void	CDirectionalShadows::_ExtendCasterBBox(CAABB &caster, const CAABB &receiver, const CFloat3 &lightDirection) const
 {
+	const float distSqFromOrigin = caster.Center().LengthSquared();
+
 	// Projects the shadow caster BBox on the shadow receiver BBox to get the shadow BBox:
 	for (u32 i = 0; i < 8; ++i)
 	{
@@ -317,6 +352,17 @@ void	CDirectionalShadows::_ExtendCasterBBox(CAABB &caster, const CAABB &receiver
 			}
 		}
 	}
+
+	// If the center of the caster is close to the origin, center the shadow box around the origin.
+	// This makes CSMs 100% stable when the camera orbits the origin.
+	if (distSqFromOrigin <= 5.f)
+	{
+		const CFloat3	center = caster.Center();
+		const CFloat3	centerAbs = PKAbs(center);
+		caster -= center;
+		caster.Min() -= centerAbs;
+		caster.Max() += centerAbs;
+	 }
 }
 
 //----------------------------------------------------------------------------
@@ -444,37 +490,29 @@ bool	CDirectionalShadows::FinalizeFrameUpdateSceneInfo()
 		}
 		return true;
 	}
-	// We start by computing the caster min/max scene depth.
-	// To do that we start by projecting the caster BBox corners on the receiver BBox depending on the light direction
-	// We do this twice, once in view space and once in world space:
-	const CFloat3	viewSpaceLightDirection = m_SceneInfoData.m_View.RotateVector(m_LightDir);
-	_ExtendCasterBBox(m_CasterViewAlignedBBox, m_ReceiverViewAlignedBBox, viewSpaceLightDirection);
-	// Now we just have to project the caster BBox min/max with the projection matrix:
-	// (min and max are inverted because the BBox is in view-space and not inv-view-space)
-	CFloat4		projCasterMin = m_SceneInfoData.m_Proj.TransformVector(CFloat4(m_CasterViewAlignedBBox.Max(), 1.0f));
-	CFloat4		projCasterMax = m_SceneInfoData.m_Proj.TransformVector(CFloat4(m_CasterViewAlignedBBox.Min(), 1.0f));
+
+	// Start by computing the caster min/max scene depth:
+	// First, project the caster BBox corners on the receiver BBox, taking light direction into account.
+	// Then create a BSphere that encapsulates the caster BBox.
+	_ExtendCasterBBox(m_CasterWorldAlignedBBox, m_ReceiverWorldAlignedBBox, m_LightDir);
+	CSphere	casterWorldAlignedBSphere = CSphere(m_CasterWorldAlignedBBox.Center(), m_CasterWorldAlignedBBox.Extent().Length() * 0.5f);
+
+	// Get the camera's forward vector in world space and find the min/max points of the caster BSphere on that axis:
+	CFloat3	camWorldForward = CFloat3(	m_SceneInfoData.m_View.Axis(0).z(),
+										m_SceneInfoData.m_View.Axis(1).z(),
+										m_SceneInfoData.m_View.Axis(2).z()).Normalized();
+	CFloat3 worldCasterMin =  camWorldForward * casterWorldAlignedBSphere.Radius() + casterWorldAlignedBSphere.Center();
+	CFloat3 worldCasterMax = -camWorldForward * casterWorldAlignedBSphere.Radius() + casterWorldAlignedBSphere.Center();
+
+	// Transform the min/max points into clip space and extract the depth in NDC space for both points:
+	CFloat4	projCasterMin = m_SceneInfoData.m_ViewProj.TransformVector(CFloat4(worldCasterMin, 1.0f));
+	CFloat4	projCasterMax = m_SceneInfoData.m_ViewProj.TransformVector(CFloat4(worldCasterMax, 1.0f));
 	projCasterMin.z() = PKMax(projCasterMin.z(), 0.0f);
 	projCasterMax.z() = PKMax(projCasterMax.z(), 0.0f);
-	const float	viewSpacecastSceneMinDepth = projCasterMin.z() / projCasterMin.w();
-	const float	viewSpacecastSceneMaxDepth = projCasterMax.z() / projCasterMax.w();
-	// We do the same thing in world-space to get the smallest possible BBox:
-	_ExtendCasterBBox(m_CasterWorldAlignedBBox, m_ReceiverWorldAlignedBBox, m_LightDir);
-	// Now we project the 8 corners of the caster world-space BBox with the view/projection matrix:
-	float	worldSpacecastSceneMinDepth = 1.0f;
-	float	worldSpacecastSceneMaxDepth = 0.0f;
-	for (u32 i = 0; i < 8; ++i)
-	{
-		const CFloat3	worldSpaceCorner = m_CasterWorldAlignedBBox.ExtractCorner(i);
-		CFloat4			projCaster = m_SceneInfoData.m_ViewProj.TransformVector(CFloat4(worldSpaceCorner, 1.0f));
-		projCaster.z() = PKMax(projCaster.z(), 0);
-		float			cornerDepth = projCaster.z() / projCaster.w();
-		worldSpacecastSceneMinDepth = PKMin(cornerDepth, worldSpacecastSceneMinDepth);
-		worldSpacecastSceneMaxDepth = PKMax(cornerDepth, worldSpacecastSceneMaxDepth);
-	}
-	// Get the smallest range of the 2 ranges computed:
-	const float	castSceneMinDepth = PKMax(viewSpacecastSceneMinDepth, worldSpacecastSceneMinDepth);
-	const float	castSceneMaxDepth = PKMin(viewSpacecastSceneMaxDepth, worldSpacecastSceneMaxDepth);
-	// Now we can compute the distance for each slice depending on the depths computed above:
+	const float	castSceneMinDepth = projCasterMin.z() / projCasterMin.w();
+	const float	castSceneMaxDepth = projCasterMax.z() / projCasterMax.w();
+
+	// Compute the distance for each slice depending on the depths computed above:
 	const CFloat2	&nearFar = m_SceneInfoData.m_ZBufferLimits;
 	const float		linearSceneDepthMin = LinearizeDepth(castSceneMinDepth, nearFar.x(), nearFar.y());
 	const float		linearSceneDepthMax = LinearizeDepth(castSceneMaxDepth, nearFar.x(), nearFar.y());
@@ -485,8 +523,8 @@ bool	CDirectionalShadows::FinalizeFrameUpdateSceneInfo()
 	{
 		SCascadedShadowSlice	&slice = m_CascadedShadows[i];
 
-		const float linearSliceDepthRangeMin = previousMaxDepth;
-		float linearSliceDepthRangeMax = previousMaxDepth + PKMax(slice.m_MinDistance, linearSceneDepthRange * slice.m_SceneRangeRatio);
+		const float	linearSliceDepthRangeMin = previousMaxDepth;
+		float		linearSliceDepthRangeMax = previousMaxDepth + PKMax(slice.m_MinDistance, linearSceneDepthRange * slice.m_SceneRangeRatio);
 		linearSliceDepthRangeMax = PKMin(linearSliceDepthRangeMax, linearSceneDepthMax);
 
 		previousMaxDepth = linearSliceDepthRangeMax;
@@ -507,45 +545,45 @@ bool	CDirectionalShadows::FinalizeFrameUpdateSceneInfo()
 		slice.m_DepthRangeMin = PKMax(castSceneMinDepth, slice.m_DepthRangeMin);
 		slice.m_DepthRangeMax = PKMin(castSceneMaxDepth, slice.m_DepthRangeMax);
 		
-		// We recompute the matrix with the new depth range:
-		const CAABB	sceneCameraFrustumBBoxLight = _GetFrustumBBox(m_SceneInfoData.m_InvViewProj, slice.m_DepthRangeMin, slice.m_DepthRangeMax, m_LightTransform);
+		// Compute the bounding sphere of the frustum slice in light view space:
+		const CSphere	&frustumSliceBSphere		= _GetFrustumBSphere(m_SceneInfoData.m_InvViewProj, slice.m_DepthRangeMax, m_LightTransform);
+		const float		frustumSliceBSphereRadius	= PKCeil(frustumSliceBSphere.Radius());
 
-		slice.m_ShadowSliceViewAABB = m_CasterLightAlignedBBox;
+		// Compute the ratio of world units to texels for the current slice:
+		const float	worldUnitsPerTexel = (frustumSliceBSphereRadius * 2) / m_ShadowMapResolution.HighestComponent();
 
-		// Clamp left, right, bottom, up and far to the camera frustum:
-		slice.m_ShadowSliceViewAABB.Min().xy() = PKMax(slice.m_ShadowSliceViewAABB.Min().xy(), sceneCameraFrustumBBoxLight.Min().xy());
-		slice.m_ShadowSliceViewAABB.Max().xy() = PKMin(slice.m_ShadowSliceViewAABB.Max().xy(), sceneCameraFrustumBBoxLight.Max().xy());
-		slice.m_ShadowSliceViewAABB.Max().z() = PKMin(slice.m_ShadowSliceViewAABB.Max().z(), sceneCameraFrustumBBoxLight.Max().z());
+		// Round the center of the bounding sphere to texel sized increments and create a bounding box that encloses it:
+		const CFloat3	centerFloor	= PKFloor(frustumSliceBSphere.Center() / worldUnitsPerTexel) * worldUnitsPerTexel;
+		slice.m_ShadowSliceViewAABB.Min() = centerFloor - frustumSliceBSphereRadius;
+		slice.m_ShadowSliceViewAABB.Max() = centerFloor + frustumSliceBSphereRadius;
 
+		// Compute the light camera position as the center of the BBox in X/Y and the min value of Z:
+		CFloat3	lightCamPos = slice.m_ShadowSliceViewAABB.Center();
+		lightCamPos.z() = slice.m_ShadowSliceViewAABB.Min().z();
+		slice.m_ShadowSliceViewAABB -= lightCamPos;
+
+		// Compute the aspect ratio and the orthogonal view for the shadow map:
 		slice.m_AspectRatio = CFloat2(	PKMin(slice.m_ShadowSliceViewAABB.Extent().x() / slice.m_ShadowSliceViewAABB.Extent().y(), 1.0f),
 										PKMin(slice.m_ShadowSliceViewAABB.Extent().y() / slice.m_ShadowSliceViewAABB.Extent().x(), 1.0f));
-
-		// Cam position is the center of the BBox in X and Y and the min value of Z:
-		CFloat3		camPosition = slice.m_ShadowSliceViewAABB.Center();
-		camPosition.z() = slice.m_ShadowSliceViewAABB.Min().z();
-		slice.m_ShadowSliceViewAABB -= camPosition;
-
-		// Update scene info with orthogonal view for shadow map:
 		slice.m_Proj = CreateOrtho(	slice.m_ShadowSliceViewAABB.Min().y(), slice.m_ShadowSliceViewAABB.Max().y(),
 									slice.m_ShadowSliceViewAABB.Min().x(), slice.m_ShadowSliceViewAABB.Max().x(),
 									slice.m_ShadowSliceViewAABB.Min().z(), slice.m_ShadowSliceViewAABB.Max().z());
 		slice.m_InvProj = slice.m_Proj.Inverse();
-		// Transform the inv light space cam position into world space:
-		slice.m_InvView.WAxis() = CFloat4(slice.m_InvView.TransformVector(camPosition), 1);
+
+		// Transform the light camera position from light space to world space:
+		slice.m_InvView.Translations() = CFloat4(slice.m_InvView.TransformVector(lightCamPos), 1);
 		slice.m_View = slice.m_InvView.Inverse();
 		slice.m_WorldToShadow = slice.m_View * slice.m_Proj;
 
-		Utils::SBasicCameraData		basicCam;
-
+		// Create a camera and feed it the frustum slice data:
+		Utils::SBasicCameraData	basicCam;
 		basicCam.m_BillboardingView = slice.m_View;
 		basicCam.m_CameraProj = slice.m_Proj;
 		basicCam.m_CameraView = slice.m_View;
 		basicCam.m_CameraZLimit = CFloat2(slice.m_ShadowSliceViewAABB.Min().z(), slice.m_ShadowSliceViewAABB.Max().z());
 
 		PKSample::SSceneInfoData	cascadeSceneInfo = m_SceneInfoData;
-
 		Utils::SetupSceneInfoData(cascadeSceneInfo, basicCam, m_DrawCoordFrame);
-
 		if (!PK_VERIFY(slice.m_SceneInfoBuffer != null))
 			return false;
 

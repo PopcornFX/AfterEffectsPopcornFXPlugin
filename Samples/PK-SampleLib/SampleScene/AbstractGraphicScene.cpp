@@ -72,10 +72,6 @@
 #	include "ApiContext/Durango/D3D12DurangoGraphicContext.h"
 #endif
 
-#if defined(PK_GGP)
-#	include "WindowContext/GgpContext/GgpContext.h"
-#endif
-
 #if defined(PK_GDK)
 #	include "WindowContext/GdkContext/GdkContext.h"
 #endif
@@ -124,8 +120,6 @@ bool	CAbstractGraphicScene::Init(RHI::EGraphicalApi api, bool forceDirectDraw/* 
 		m_WindowContext = PK_NEW(COffscreenContext);
 	else
 		m_WindowContext = PK_NEW(CGdkWindowContext);
-#elif defined(PK_GGP)
-	m_WindowContext = PK_NEW(CGgpContext);
 #elif defined(PK_NX)
 	if (renderOffscreen)
 		m_WindowContext = PK_NEW(COffscreenContext);

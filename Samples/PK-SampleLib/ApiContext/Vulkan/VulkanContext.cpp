@@ -39,25 +39,7 @@
 #	include "pk_kernel/layer_0/kr_mem/include/pv_mem.h"
 #endif
 
-#define		USE_CUSTOM_ALLOCATOR
-
-//----------------------------------------------------------------------------
-
-#if defined(PK_GGP)
-
-#define VK_GET_INSTANCE_PROC_ADDR(functionPointer, instance, functionName)						\
-	static PFN_##functionName functionPointer;													\
-																								\
-	if (functionPointer == null)																\
-	{																							\
-		functionPointer = (PFN_##functionName)vkGetInstanceProcAddr(instance, #functionName);	\
-		if (functionPointer == null)															\
-			CLog::Log(PK_ERROR, "Error getting VkInstance function: %s", #functionName);		\
-	}
-
-#endif
-
-//----------------------------------------------------------------------------
+#define	USE_CUSTOM_ALLOCATOR
 
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
@@ -358,12 +340,6 @@ bool	CVulkanContext::InitRenderApiContext(bool debug, PAbstractWindowContext win
 
 #endif // (PK_BUILD_WITH_SDL != 0)
 	}
-#if defined(PK_GGP)
-	else if (windowApi->GetContextApi() == PKSample::Context_Glfw)
-	{
-		err = CreateWindowSurface(m_ApiData);
-	}
-#endif
 #if defined(PK_NX)
 	else if (windowApi->GetContextApi() == PKSample::Context_NX)
 	{
@@ -423,9 +399,6 @@ bool	CVulkanContext::WaitAllRenderFinished()
 
 CGuid	CVulkanContext::BeginFrame()
 {
-#if defined(PK_GGP)
-	m_ApiData.m_PlatformSpecificData.m_FrameToken = GgpIssueFrameToken();
-#endif
 	if (m_IsOffscreen)
 	{
 		m_CurrentSwapChainImage = (m_CurrentSwapChainImage + 1) % 2;
@@ -470,16 +443,6 @@ bool	CVulkanContext::EndFrame(void *renderToWait)
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &m_CurrentSwapChainImage;
 	presentInfo.pResults = null;
-
-#if defined(PK_GGP)
-	VkPresentFrameTokenGGP	frameTokenMetadata = {};
-
-	frameTokenMetadata.sType = VK_STRUCTURE_TYPE_PRESENT_FRAME_TOKEN_GGP;
-	frameTokenMetadata.pNext = null;
-	frameTokenMetadata.frameToken = m_ApiData.m_PlatformSpecificData.m_FrameToken;
-
-	presentInfo.pNext = &frameTokenMetadata;
-#endif
 
 	if (PK_VK_FAILED(vkQueuePresentKHR(m_ApiData.m_PresentQueue, &presentInfo)))
 		return false;
@@ -726,7 +689,7 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, HIN
 	return _AfterSurfaceCreation(basicCtx);
 }
 
-#elif	defined(PK_LINUX) && !defined(PK_GGP)
+#elif	defined(PK_LINUX)
 
 bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg window)
 {
@@ -764,29 +727,8 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, voi
 	return _AfterSurfaceCreation(basicCtx);
 }
 
-#elif	defined(PK_GGP)
-
-bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx)
-{
-	if (!_BeforeSurfaceCreation(basicCtx))
-		return false;
-
-	VkStreamDescriptorSurfaceCreateInfoGGP createInfo;
-
-	createInfo.sType = VK_STRUCTURE_TYPE_STREAM_DESCRIPTOR_SURFACE_CREATE_INFO_GGP;
-	createInfo.pNext = null;
-	createInfo.flags = 0;
-	createInfo.streamDescriptor = 1;
-
-	VK_GET_INSTANCE_PROC_ADDR(fpCreateStreamDescriptorSurfaceGGP, basicCtx.m_Instance, vkCreateStreamDescriptorSurfaceGGP);
-
-	if (PK_VK_FAILED(fpCreateStreamDescriptorSurfaceGGP(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains.Last().m_Surface)))
-		return false;
-
-	return _AfterSurfaceCreation(basicCtx);
-}
-
 #elif	defined(PK_NX)
+
 bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *window)
 {
 	if (!_BeforeSurfaceCreation(basicCtx))
@@ -804,6 +746,7 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, voi
 
 	return _AfterSurfaceCreation(basicCtx);
 }
+
 #else
 #	error not implemented
 #endif
@@ -943,6 +886,7 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateSwapChain(RHI::SVulkanB
 	{
 		imageCount = capabilities.maxImageCount;
 	}
+	PK_ASSERT(capabilities.minImageCount <= static_cast<u32>(RHI::kMaxSwapChainImages));
 	imageCount = PKMin(imageCount, static_cast<u32>(RHI::kMaxSwapChainImages));
 
 	VkSwapchainKHR				newSwapChain;
@@ -986,7 +930,6 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateSwapChain(RHI::SVulkanB
 											&basicCtx.m_SwapChains[swapChainIdx].m_SwapChainImageAvailable)))
 			return SwapChainOp_CriticalError;
 	}
-	imageCount = PKMin(imageCount, static_cast<u32>(RHI::kMaxSwapChainImages));
 
 	// We raise a fatal error when we cannot create the swap-chain and the device is lost
 	VkResult	createSwapChainResult = vkCreateSwapchainKHR(basicCtx.m_LogicalDevice, &createInfo, basicCtx.m_Allocator, &newSwapChain);

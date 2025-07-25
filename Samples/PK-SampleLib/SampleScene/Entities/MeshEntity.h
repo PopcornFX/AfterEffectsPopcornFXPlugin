@@ -55,11 +55,18 @@ struct	SMesh
 	SMesh();
 	~SMesh();
 
+	enum	EVertexColorMode
+	{
+		VCMode_Color,
+		VCMode_Alpha,
+		VCMode_UV,
+	};
+
 	bool					Load(	const RHI::PApiManager &apiManager,
 									TMemoryView<const RHI::SConstantSetLayout> constLayout,
 									CResourceManager *resourceManager,
 									u32 colorSet = 0,
-									bool loadAlphaAsColor = false,
+									EVertexColorMode vertexColorMode = VCMode_Color,
 									const RHI::PTexture whiteFallbackTex = null,
 									const RHI::PTexture normalFallbackTx = null,
 									const RHI::PConstantSampler samplerFallback = null);
@@ -125,7 +132,7 @@ struct	SMesh
 
 private:
 	static bool				_LoadMap(const RHI::PApiManager &apiManager, STextureMap &map, CResourceManager *resourceManager, bool interpretAsSrgb = true);
-	bool					_AddMeshBatch(const RHI::PApiManager &apiManager, CMeshNew *mesh, u32 colorSet, bool loadAlphaAsColor);
+	bool					_AddMeshBatch(const RHI::PApiManager &apiManager, CMeshNew *mesh, u32 colorSet, EVertexColorMode vertexColorMode);
 	void					_OnResourceReloaded(CResourceMesh *resource);
 };
 
