@@ -2628,6 +2628,15 @@ bool	CRHIRendererBatch_Triangle_CPUBB::AllocBuffers(PopcornFX::SRenderContext &c
 
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Indices Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_Indices) != 0, m_ApiManager, m_Indices, RHI::IndexBuffer, totalIndexCountAligned * m_IndexSize, totalIndexCount * m_IndexSize))
 		return false;
+	const u32	generatedViewCount = toGenerate.m_PerViewGeneratedInputs.Count();
+	if (!m_PerViewIndicesBuffers.Resize(generatedViewCount))
+		return false;
+	for (u32 i = 0; i < generatedViewCount; ++i)
+	{
+		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("View Sorted Indices Buffer"), (toGenerate.m_PerViewGeneratedInputs[i].m_GeneratedInputs & Drawers::GenInput_Indices) != 0, m_ApiManager, m_PerViewIndicesBuffers[i], RHI::IndexBuffer, totalIndexCountAligned * m_IndexSize, totalIndexCount * m_IndexSize))
+			return false;
+	}
+
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Positions Vertex Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_Position) != 0, m_ApiManager, m_Positions, RHI::VertexBuffer, totalVertexCountAligned * sizeof(CFloat4), totalVertexCount * sizeof(CFloat4)))
 		return false;
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("UV0s Vertex Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_UV0) != 0, m_ApiManager, m_TexCoords0, RHI::VertexBuffer, totalVertexCountAligned * sizeof(CFloat2), totalVertexCount * sizeof(CFloat2)))
@@ -2670,6 +2679,19 @@ bool	CRHIRendererBatch_Triangle_CPUBB::MapBuffers(SRenderContext &ctx)
 			return false;
 		m_BBJobs_Triangle.m_Exec_Indices.m_IndexStream.Setup(mappedValue, totalIndexCount, m_IndexSize == sizeof(u32));
 	}
+	PK_ASSERT(m_PerViewIndicesBuffers.Count() == m_BBJobs_Triangle.m_PerView.Count());
+	for (u32 i = 0; i < m_PerViewIndicesBuffers.Count(); ++i)
+	{
+		const u32	viewGeneratedInputs = toGenerate.m_PerViewGeneratedInputs[i].m_GeneratedInputs;
+		if (viewGeneratedInputs & Drawers::GenInput_Indices)
+		{
+			void	*mappedValue = m_ApiManager->MapCpuView(m_PerViewIndicesBuffers[i].m_Buffer, 0, totalIndexCount * m_IndexSize);
+			if (!PK_VERIFY(mappedValue != null))
+				return false;
+			m_BBJobs_Triangle.m_PerView[i].m_Exec_Indices.m_IndexStream.Setup(mappedValue, totalIndexCount, m_IndexSize == sizeof(u32));
+		}
+	}
+
 	if (toGenerate.m_GeneratedInputs & Drawers::GenInput_Position)
 	{
 		PK_ASSERT(m_Positions.Used());
@@ -2745,6 +2767,8 @@ bool	CRHIRendererBatch_Triangle_CPUBB::UnmapBuffers(SRenderContext &ctx)
 {
 	(void)ctx;
 	m_Indices.UnmapIFN(m_ApiManager);
+	for (auto &buffer : m_PerViewIndicesBuffers)
+		buffer.UnmapIFN(m_ApiManager);
 	m_Positions.UnmapIFN(m_ApiManager);
 	m_Normals.UnmapIFN(m_ApiManager);
 	m_Tangents.UnmapIFN(m_ApiManager);
@@ -2799,7 +2823,9 @@ bool	CRHIRendererBatch_Triangle_CPUBB::EmitDrawCall(SRenderContext &ctx, const S
 		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
 	}
 
-	outDrawCall.m_IndexBuffer = m_Indices.m_Buffer;
+	// TODO: We only support a single view right now
+	SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
+	outDrawCall.m_IndexBuffer = indices.m_Buffer;
 	PK_ASSERT(outDrawCall.m_IndexBuffer != null);
 
 	if (m_Positions.Used() && !PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_Positions.m_Buffer).Valid()))

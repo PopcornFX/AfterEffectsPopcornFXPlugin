@@ -136,8 +136,8 @@ void	CNXController::Process()
 	for (int i = 0; i < PAD_COUNT; ++i)
 	{
 		nn::hid::NpadStyleSet		style = nn::hid::GetNpadStyleSet(m_PadIDs[i]);
-		nn::hid::AnalogStickState	stickL;
-		nn::hid::AnalogStickState	stickR;
+		nn::hid::AnalogStickState	stickL{ 0, 0 };
+		nn::hid::AnalogStickState	stickR{ 0, 0 };
 
 		if (style.Test<nn::hid::NpadStyleHandheld>())
 		{

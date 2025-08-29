@@ -327,6 +327,8 @@ private:
 	RHI::PApiManager		m_ApiManager;
 
 	SGpuBuffer				m_Indices;
+	TArray<SGpuBuffer>		m_PerViewIndicesBuffers;
+
 	u32						m_IndexSize;
 
 	SGpuBuffer				m_Positions;
