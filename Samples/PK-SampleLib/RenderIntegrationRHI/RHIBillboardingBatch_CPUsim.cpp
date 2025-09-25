@@ -607,6 +607,9 @@ bool	CRHIRendererBatch_Billboard_CPUBB::EmitDrawCall(SRenderContext &ctx, const 
 		outDrawCall.m_BBox = toEmit.m_BBox;
 		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
 
 	if (!m_CommonBuffers.m_PerViewBuffers.Empty() && m_CommonBuffers.m_PerViewBuffers[0].m_Indices.Used())
@@ -996,6 +999,9 @@ bool	CRHIRendererBatch_Billboard_GeomBB::EmitDrawCall(SRenderContext &ctx, const
 		outDrawCall.m_BBox = toEmit.m_BBox;
 		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
 
 	// Indices are mandatory, here we check if we have view independent indices or not:
@@ -1379,6 +1385,9 @@ bool	CRHIRendererBatch_Billboard_VertexBB::EmitDrawCall(SRenderContext &ctx, con
 		outDrawCall.m_BBox = toEmit.m_BBox;
 		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
 
 	// A single vertex buffer is used for the instanced draw: the texcoords buffer, contains the direction in which vertices should be expanded
@@ -1873,6 +1882,9 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 		outDrawCall.m_BBox = toEmit.m_BBox;
 		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
 
 	if (!m_CommonBuffers.m_PerViewBuffers.Empty() && m_CommonBuffers.m_PerViewBuffers[0].m_Indices.Used())
@@ -2182,11 +2194,10 @@ bool	CRHIRendererBatch_Mesh_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 			outDrawCall.m_BBox = toEmit.m_BBox;
 			outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 			outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+			outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+									rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 		}
-		outDrawCall.m_Valid =	refCacheInstance != null &&
-								rCacheInstance != null &&
-								rCacheInstance->m_Cache != null &&
-								rCacheInstance->m_Cache->GetRenderState(static_cast<EShaderOptions>(shaderOptions)) != null;
 
 		// Try gathering mesh from renderer cache instance
 		bool	success = true;
@@ -2821,6 +2832,9 @@ bool	CRHIRendererBatch_Triangle_CPUBB::EmitDrawCall(SRenderContext &ctx, const S
 		outDrawCall.m_BBox = toEmit.m_BBox;
 		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
 
 	// TODO: We only support a single view right now
@@ -3111,6 +3125,9 @@ bool	CRHIRendererBatch_Triangle_VertexBB::EmitDrawCall(SRenderContext &ctx, cons
 		outDrawCall.m_BBox = toEmit.m_BBox;
 		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
 
 	// GPUBillboardPushConstants

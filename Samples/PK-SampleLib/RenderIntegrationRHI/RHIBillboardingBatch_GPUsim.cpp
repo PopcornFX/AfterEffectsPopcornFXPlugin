@@ -503,6 +503,9 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 			outDrawCall.m_BBox = toEmit.m_BBox;
 			outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 			outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+			outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+									rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 		}
 
 		// Retrieve the particle streams in GPU storage:
@@ -1095,6 +1098,9 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::EmitDrawCall(SRenderContext &ctx, 
 				outDrawCall.m_BBox = toEmit.m_BBox;
 				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
 
 			outDrawCall.m_GPUStorageOffsetsConstantSet = m_VertexBBOffsetsConstantSet;
@@ -1828,6 +1834,9 @@ bool	CRHIRendererBatch_Ribbon_GPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 				outDrawCall.m_BBox = toEmit.m_BBox;
 				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
 
 			outDrawCall.m_GPUStorageOffsetsConstantSet = m_VertexBBOffsetsConstantSet;
@@ -2475,6 +2484,9 @@ bool	CRHIRendererBatch_Triangle_GPU::EmitDrawCall(SRenderContext &ctx, const SDr
 				outDrawCall.m_BBox = toEmit.m_BBox;
 				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
 
 			outDrawCall.m_GPUStorageOffsetsConstantSet = m_VertexBBOffsetsConstantSet;
@@ -3086,6 +3098,9 @@ bool	CRHIRendererBatch_Mesh_GPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 				outDrawCall.m_BBox = toEmit.m_BBox;
 				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
 				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
 
 			// Try gathering mesh from renderer cache instance

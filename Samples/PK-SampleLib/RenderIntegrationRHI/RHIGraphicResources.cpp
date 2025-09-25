@@ -1761,7 +1761,7 @@ PRendererCache	SRendererCacheKey::RenderThread_CreateResource(const SCreateArg &
 			const RHI::SShaderBindings	&shaderBindings = CRenderStateManager::RenderThread_GetKey(m_RenderStates[i].m_RenderState).GetGeneratedShaderBindings();
 			renderState.m_GPUStorageSimDataConstantSetLayout = shaderBindings.m_ConstantSets.Last(); // copy
 
-																								   // And stream offsets (if any) were added right before
+			// And stream offsets (if any) were added right before
 			if (gpuStorage || GPUMesh)
 				renderState.m_GPUStorageOffsetsConstantSetLayout = shaderBindings.m_ConstantSets[shaderBindings.m_ConstantSets.Count() - 2]; // copy
 		}

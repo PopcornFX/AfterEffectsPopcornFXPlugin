@@ -512,15 +512,14 @@ bool	CShaderCompilation::CompileShaderFile(	const CString	&cmdLine,
 		compileProcess.WaitForExit();
 
 	const CProcess::EExitStatus	exitStatus = compileProcess.GetExitStatus();
-	if (!PK_VERIFY_MESSAGE(exitStatus == CProcess::StatusSuccess, "Failed compiling shader"))
+	if (exitStatus != CProcess::StatusSuccess)
 	{
-		PK_ASSERT_MESSAGE(exitStatus != CProcess::StatusStillActive, "Internal error: process.GetExitStatus()");
-		PK_ASSERT_MESSAGE(exitStatus != CProcess::StatusNotStarted, "Process failed to start");
-		PK_ASSERT_MESSAGE(exitStatus != CProcess::StatusFailed, "Process failed to finish");
-
+		PK_STATIC_ASSERT(CProcess::StatusFailed == 1);
+		PK_STATIC_ASSERT(CProcess::StatusStillActive == 2);
+		PK_STATIC_ASSERT(CProcess::StatusNotStarted == 3);
+		static const char *exitStatusTxt[4] = { "ok", "process returned error", "process still active", "process not started" };
 		const CString	command = CProcess::CreateCommandLine(program, processArgs);
-
-		CLog::Log(PK_ERROR, "Shader compile command failed: \"%s\"", command.Data());
+		CLog::Log(PK_ERROR, "Shader compile command failed (%s): \"%s\"", exitStatusTxt[exitStatus], command.Data());
 		return false;
 	}
 	return true;
