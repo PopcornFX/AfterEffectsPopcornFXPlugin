@@ -88,8 +88,6 @@ public:
 
 private:
 	virtual bool					CreateRenderTargets(bool recreateSwapChain) override;
-	virtual bool					CreateRenderPasses() override;
-	virtual bool					CreateRenderStates() override;
 	virtual bool					CreateFrameBuffers(bool recreateSwapChain) override;
 
 	virtual void					FillCommandBuffer(const RHI::PCommandBuffer &cmdBuff, u32 swapImgIdx) override;

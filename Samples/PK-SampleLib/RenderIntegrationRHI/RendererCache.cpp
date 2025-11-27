@@ -153,14 +153,14 @@ bool	CRendererCacheInstance_UpdateThread::UpdateThread_Build(const PCRendererDat
 	}
 
 	const SRendererFeaturePropertyValue	*transparentFeature = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Transparent());
-	const SRendererFeaturePropertyValue	*transparentType = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Transparent_Type());
+	const BasicRendererProperties::ETransparentType	transparentType = rendererData->m_Declaration.GetPropertyValue_Enum(BasicRendererProperties::SID_Transparent_Type(), BasicRendererProperties::__MaxTransparentType);
 	const SRendererFeaturePropertyValue	*disto = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Distortion());
 	const SRendererFeaturePropertyValue	*diffuse = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Diffuse());
 
 	PK_TODO("Find a way to propagate enum info into RendererDeclaration");
-	m_Flags.m_NeedSort |= (transparentType != null && transparentType->ValueI().x() >= 2);
+	m_Flags.m_NeedSort |= (transparentType != BasicRendererProperties::__MaxTransparentType && transparentType >= BasicRendererProperties::AlphaBlend);
 	m_Flags.m_NeedSort |= (disto != null && disto->ValueB() && diffuse != null && diffuse->ValueB()); // If we have a diffuse and a distortion, this means alpha-blend
-	m_Flags.m_NeedSort |= (transparentType == null && transparentFeature != null && diffuse != null && diffuse->ValueB()); // If there is diffuse transparency
+	m_Flags.m_NeedSort |= (transparentType != BasicRendererProperties::__MaxTransparentType && transparentFeature != null && diffuse != null && diffuse->ValueB()); // If there is diffuse transparency
 	m_Flags.m_Slicable = transparentFeature != null; // Right now, only supports non-opaque billboards/ribbons as slicable
 
 	// FIXME: to remove. Load the mesh here to get their bbox. The mesh won't be loaded twice as we keep a refptr from the resource manager.

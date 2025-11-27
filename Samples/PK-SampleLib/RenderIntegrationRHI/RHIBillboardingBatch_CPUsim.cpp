@@ -155,7 +155,8 @@ CGuid	_GetDrawDebugColorIndex(const SRHIAdditionalFieldBatch &bufferBatch, const
 		else if (!ret.Valid() &&
 				toGenerate.m_AdditionalGeneratedInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
 				(toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Emissive_EmissiveColor() ||
-				toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color()))
+				toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color()  ||
+				toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_DistortionColor()))
 			ret = j;
 	}
 	return ret;

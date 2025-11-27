@@ -105,6 +105,7 @@ void	CCameraBase::SetProj(float fovyDegrees, const CFloat2 &winDimPixel, float z
 
 void	CCameraBase::SetProj(const CFloat2 &winDimPixel, float zNear, float zFar, RHI::EGraphicalApi api /* = GApi_Vulkan */, float openGLYFlipSign/* = -1*/)
 {
+	m_Cam.m_ProjFovy = 0.f;
 	m_Cam.m_ProjNear = zNear;
 	m_Cam.m_ProjFar = zFar;
 	m_Cam.m_WinSize = winDimPixel;

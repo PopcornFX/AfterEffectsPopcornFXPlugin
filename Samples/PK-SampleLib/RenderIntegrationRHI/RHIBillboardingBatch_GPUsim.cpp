@@ -322,7 +322,8 @@ CGuid	_GetDrawDebugColorIndex(const SRHIAdditionalFieldBatchGPU &bufferBatch, co
 		else if (!ret.Valid() &&
 				toGenerate.m_AdditionalGeneratedInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
 				(toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Emissive_EmissiveColor() ||
-					toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color()))
+					toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color() ||
+					toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_DistortionColor()))
 			ret = j;
 	}
 	return ret;
@@ -623,7 +624,8 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 			else if (outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] == null &&
 					bbRequest->m_AdditionalInputs[iInput].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
 					(bbRequest->m_AdditionalInputs[iInput].m_Name == BasicRendererProperties::SID_Emissive_EmissiveColor() ||
-					bbRequest->m_AdditionalInputs[iInput].m_Name == BasicRendererProperties::SID_Distortion_Color()))
+					bbRequest->m_AdditionalInputs[iInput].m_Name == BasicRendererProperties::SID_Distortion_Color() ||
+					bbRequest->m_AdditionalInputs[iInput].m_Name == BasicRendererProperties::SID_Distortion_DistortionColor()))
 			{
 				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = buffer;
 				outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Color] = offset;

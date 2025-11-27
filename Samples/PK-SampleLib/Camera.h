@@ -91,6 +91,7 @@ public:
 	CFloat2				ZLimits() const { return m_Cam.ZLimits(); }
 	float				BoundingZOffset(float radius, bool useLargestFov) const;
 	const CAABB			ClipSpaceLimits() const { return m_Cam.ClipSpaceLimits(); }
+	bool				IsOrthographic() const { return m_Cam.m_ProjFovy == 0.f; }
 
 	CFloat2				WindowSize() const { return m_Cam.WindowSize(); }
 
