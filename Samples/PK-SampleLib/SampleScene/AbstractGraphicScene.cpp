@@ -369,7 +369,7 @@ bool	CAbstractGraphicScene::Run()
 		{
 			PK_NAMEDSCOPEDPROFILE("DrawHUD");
 			if (!m_RenderOffscreen)
-			DrawHUD();
+				DrawHUD();
 		}
 		{
 			PK_NAMEDSCOPEDPROFILE_C("Update", CFloat3(1, 0, 1));
@@ -463,6 +463,7 @@ bool	CAbstractGraphicScene::Quit()
 	if (m_ApiContext != null)
 		success &= m_ApiContext->WaitAllRenderFinished();
 
+	m_GpuBuffers.Clear();
 	m_CommandBuffers.Clear();
 	if (m_ApiManager != null)
 		success &= m_ApiManager->DestroyApi();
@@ -474,6 +475,7 @@ bool	CAbstractGraphicScene::Quit()
 		m_UserInitCalled = false;
 	}
 
+	m_GpuBuffers.Clear();
 	m_CommandBuffers.Clear();
 	if (m_WindowContext != null)
 		m_WindowContext->Destroy();

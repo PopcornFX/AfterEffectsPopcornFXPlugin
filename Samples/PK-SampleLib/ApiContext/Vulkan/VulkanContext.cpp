@@ -344,8 +344,8 @@ bool	CVulkanContext::InitRenderApiContext(bool debug, PAbstractWindowContext win
 	else if (windowApi->GetContextApi() == PKSample::Context_NX)
 	{
 		void	*window;
-		if (!GetNativeWindow(&window, layer).IsSuccess() ||
-			!CreateWindowSurface(m_ApiData, window))
+		GetNativeWindow(&window, layer);
+		if (!CreateWindowSurface(m_ApiData, window))
 			return false;
 	}
 #endif

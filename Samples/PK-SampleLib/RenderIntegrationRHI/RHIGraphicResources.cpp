@@ -357,7 +357,7 @@ PK_NOINLINE bool	SRenderStateKey::UpdateThread_Prepare(const SPrepareArg &args)
 		m_PipelineState.m_DepthTest = RHI::Less;
 
 		ESampleLibGraphicResources_BlendMode	blendmode = ParticleBlend_AlphaBlendAdditive;
-		const BasicRendererProperties::ETransparentType	transparentType = args.m_Renderer->m_Declaration.GetPropertyValue_Enum(BasicRendererProperties::SID_Transparent_Type(), BasicRendererProperties::__MaxTransparentType);
+		const SRendererFeaturePropertyValue		*transparentType = args.m_Renderer->m_Declaration.FindProperty(BasicRendererProperties::SID_Transparent_Type());
 
 		if (m_RenderPassIdx == ParticlePass_Distortion)
 		{
@@ -376,18 +376,18 @@ PK_NOINLINE bool	SRenderStateKey::UpdateThread_Prepare(const SPrepareArg &args)
 		{
 			blendmode = ParticleBlend_Opaque;
 		}
-		else if (transparentType != BasicRendererProperties::__MaxTransparentType)
+		else if (transparentType != null)
 		{
-			switch (transparentType)
+			switch (transparentType->ValueI().x())
 			{
 			default:
-			case BasicRendererProperties::Additive:
+			case 0:
 				blendmode = ParticleBlend_Additive; break;
-			case BasicRendererProperties::AdditiveNoAlpha:
+			case 1:
 				blendmode = ParticleBlend_AdditiveNoAlpha; break;
-			case BasicRendererProperties::AlphaBlend:
+			case 2:
 				blendmode = ParticleBlend_AlphaBlend; break;
-			case BasicRendererProperties::PremultipliedAlpha:
+			case 3:
 				blendmode = ParticleBlend_AlphaBlendAdditive; break;
 			}
 		}

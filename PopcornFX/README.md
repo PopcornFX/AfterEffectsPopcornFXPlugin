@@ -1,7 +1,7 @@
 # After Effects PopcornFX Plugin
 
 Integrates the **PopcornFX Runtime SDK** into **After Effects** as a Plugin.
-* **Version:** `v2.23.0`
+* **Version:** `v2.22.6`
 * **Platforms:** `Windows` (http://www.popcornfx.com/contact-us/) for more information.
 
 ## Setup
