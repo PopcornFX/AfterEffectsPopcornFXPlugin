@@ -357,7 +357,7 @@ PK_NOINLINE bool	SRenderStateKey::UpdateThread_Prepare(const SPrepareArg &args)
 		m_PipelineState.m_DepthTest = RHI::Less;
 
 		ESampleLibGraphicResources_BlendMode	blendmode = ParticleBlend_AlphaBlendAdditive;
-		const SRendererFeaturePropertyValue		*transparentType = args.m_Renderer->m_Declaration.FindProperty(BasicRendererProperties::SID_Transparent_Type());
+		const BasicRendererProperties::ETransparentType	transparentType = args.m_Renderer->m_Declaration.GetPropertyValue_Enum(BasicRendererProperties::SID_Transparent_Type(), BasicRendererProperties::__MaxTransparentType);
 
 		if (m_RenderPassIdx == ParticlePass_Distortion)
 		{
@@ -376,18 +376,18 @@ PK_NOINLINE bool	SRenderStateKey::UpdateThread_Prepare(const SPrepareArg &args)
 		{
 			blendmode = ParticleBlend_Opaque;
 		}
-		else if (transparentType != null)
+		else if (transparentType != BasicRendererProperties::__MaxTransparentType)
 		{
-			switch (transparentType->ValueI().x())
+			switch (transparentType)
 			{
 			default:
-			case 0:
+			case BasicRendererProperties::Additive:
 				blendmode = ParticleBlend_Additive; break;
-			case 1:
+			case BasicRendererProperties::AdditiveNoAlpha:
 				blendmode = ParticleBlend_AdditiveNoAlpha; break;
-			case 2:
+			case BasicRendererProperties::AlphaBlend:
 				blendmode = ParticleBlend_AlphaBlend; break;
-			case 3:
+			case BasicRendererProperties::PremultipliedAlpha:
 				blendmode = ParticleBlend_AlphaBlendAdditive; break;
 			}
 		}
@@ -1986,12 +1986,9 @@ PK_NOINLINE bool	SRendererCacheInstanceKey::UpdateThread_Prepare(const SPrepareA
 	{
 		SGeometryKey				geometryKey;
 		const CString				&meshPath = decl.GetPropertyValue_Path(BasicRendererProperties::SID_Mesh(), CString::EmptyString);
-		TResourcePtr<CResourceMesh>	meshResource = args.m_ResourceManager->Load<CResourceMesh>(meshPath, false, SResourceLoadCtl(false, true));
-		if (meshResource != null && !meshResource->Empty())
-		{
-			geometryKey.m_GeomType = SGeometryKey::Geom_Mesh;
-			geometryKey.m_Path = meshPath;
-		}
+
+		geometryKey.m_GeomType = SGeometryKey::Geom_Mesh;
+		geometryKey.m_Path = meshPath;
 
 		m_Geometry = CGeometryManager::UpdateThread_GetResource(geometryKey, args);
 	}
@@ -2169,10 +2166,12 @@ PRendererCacheInstance	SRendererCacheInstanceKey::RenderThread_CreateResource(co
 		}
 	}
 
-	// Specific geometry
+	// Geometry
+	rendererCacheInstance->m_AdditionalGeometry = null;
 	if (m_Geometry.Valid())
 	{
 		rendererCacheInstance->m_AdditionalGeometry = CGeometryManager::RenderThread_ResolveResource(m_Geometry, args);
+
 		if (rendererCacheInstance->m_AdditionalGeometry == null ||
 			rendererCacheInstance->m_AdditionalGeometry->m_PerGeometryViews.Count() == 0)
 		{

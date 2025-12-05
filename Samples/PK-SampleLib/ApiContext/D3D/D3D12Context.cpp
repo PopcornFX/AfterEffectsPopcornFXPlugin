@@ -20,7 +20,7 @@
 #pragma warning(pop)
 
 #if (PK_PARTICLES_UPDATER_USE_D3D12U != 0 || PK_COMPILER_BUILD_COMPILER_D3D12U != 0)
-extern "C" { __declspec(dllexport) extern const unsigned int D3D12SDKVersion = 614;}
+extern "C" { __declspec(dllexport) extern const unsigned int D3D12SDKVersion = 615;}
 
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
 #endif
@@ -542,7 +542,7 @@ bool	CD3D12Context::EnableDebugLayer()
 	m_Context->m_Debug->EnableLeakTrackingForThread();
 #endif
 #if (USE_GPU_BASED_DEBUG != 0)
-	ID3D12Debug1		*debugController1 = null;
+	ID3D12Debug3		*debugController1 = null;
 	if (PK_D3D_FAILED(m_Context->m_GetDebugInterfaceFunc(IID_PPV_ARGS(&debugController1))))
 		return false;
 	debugController1->SetEnableGPUBasedValidation(TRUE);
@@ -636,8 +636,13 @@ void	CD3D12Context::AdditionalFilterForDebugLayer()
 	ID3D12DebugDevice2	*debugDevice = null;
 	m_ApiData.m_Device->QueryInterface(&debugDevice);
 	D3D12_DEBUG_FEATURE features = D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS | D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING;
+	D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS	settings;
+	settings.MaxMessagesPerCommandList = 1024;
+	settings.DefaultShaderPatchMode = D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODE_GUARDED_VALIDATION;
+	settings.PipelineStateCreateFlags = D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAG_FRONT_LOAD_CREATE_GUARDED_VALIDATION_SHADERS;
 
 	debugDevice->SetFeatureMask(features);
+	debugDevice->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_GPU_BASED_VALIDATION_SETTINGS, &settings, sizeof(settings));
 	debugDevice->Release();
 
 #endif

@@ -2790,14 +2790,16 @@ bool	CRHIParticleSceneRenderHelper::_CreateGridGeometry(float size, u32 subdiv, 
 {
 	bool	success = true;
 
+	subdiv = PKMin(subdiv, (65536u - 4u) / 4u); // indices are u16, so gridVtxCount <= 65536u
+	if (subdiv != 0)
+		secondSubdiv = PKMin(secondSubdiv, (65536u - 4u - 4 * subdiv) / subdiv / 4); // gridVtxCount + gridSubdivVtxCount <= 65536u
+
 	const u32	gridVtxCount = 4 + 4 * subdiv;
 	const u32	gridSubdivVtxCount = 4 * subdiv * secondSubdiv;
 	m_GridVertices = m_ApiManager->CreateGpuBuffer(RHI::SRHIResourceInfos("Grid Vertex Buffer"), RHI::VertexBuffer, (gridVtxCount + gridSubdivVtxCount) * sizeof(CFloat3));
 
 	m_GridIdxCount = 8 + 4 * subdiv;
 	m_GridSubdivIdxCount = 4 * subdiv * secondSubdiv;
-
-	// FIXME(Julien): Will break down as soon as 'subdiv + subdiv * secondSubdiv' >= 16383
 	m_GridIndices = m_ApiManager->CreateGpuBuffer(RHI::SRHIResourceInfos("Grid Index Buffer"), RHI::IndexBuffer, (m_GridIdxCount + m_GridSubdivIdxCount) * sizeof(u16));
 
 	if (m_GridVertices == null || m_GridIndices == null)

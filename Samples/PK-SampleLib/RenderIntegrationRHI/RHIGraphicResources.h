@@ -417,7 +417,6 @@ struct	SGeometryKey
 		Geom_Cube,
 	};
 
-	PCResourceMesh			m_SourceMesh;
 	EGeometryType			m_GeomType;
 	CString					m_Path;
 

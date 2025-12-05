@@ -254,20 +254,6 @@ bool	CDeferredScene::CreateRenderTargets(bool recreateSwapChain)
 
 //----------------------------------------------------------------------------
 
-bool	CDeferredScene::CreateRenderPasses()
-{
-	return true;
-}
-
-//----------------------------------------------------------------------------
-
-bool	CDeferredScene::CreateRenderStates()
-{
-	return true;
-}
-
-//----------------------------------------------------------------------------
-
 bool	CDeferredScene::CreateFrameBuffers(bool recreateSwapChain)
 {
 	if (!recreateSwapChain && !InitIFN())

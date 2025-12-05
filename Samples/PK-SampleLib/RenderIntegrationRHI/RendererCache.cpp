@@ -30,7 +30,7 @@ CRendererCacheInstance_UpdateThread::~CRendererCacheInstance_UpdateThread()
 		CRendererCacheInstanceManager::UpdateThread_ReleaseResource(m_RendererCacheInstanceId);
 	}
 
-	if (m_MeshResource != null && !m_MeshResource->Empty())
+	if (m_MeshResource != null)
 		m_MeshResource->m_OnReloaded -= FastDelegate<void(CResourceMesh*)>(this, &CRendererCacheInstance_UpdateThread::_OnMeshReloaded);
 }
 
@@ -153,14 +153,14 @@ bool	CRendererCacheInstance_UpdateThread::UpdateThread_Build(const PCRendererDat
 	}
 
 	const SRendererFeaturePropertyValue	*transparentFeature = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Transparent());
-	const SRendererFeaturePropertyValue	*transparentType = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Transparent_Type());
+	const BasicRendererProperties::ETransparentType	transparentType = rendererData->m_Declaration.GetPropertyValue_Enum(BasicRendererProperties::SID_Transparent_Type(), BasicRendererProperties::__MaxTransparentType);
 	const SRendererFeaturePropertyValue	*disto = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Distortion());
 	const SRendererFeaturePropertyValue	*diffuse = rendererData->m_Declaration.FindProperty(BasicRendererProperties::SID_Diffuse());
 
 	PK_TODO("Find a way to propagate enum info into RendererDeclaration");
-	m_Flags.m_NeedSort |= (transparentType != null && transparentType->ValueI().x() >= 2);
+	m_Flags.m_NeedSort |= (transparentType != BasicRendererProperties::__MaxTransparentType && transparentType >= BasicRendererProperties::AlphaBlend);
 	m_Flags.m_NeedSort |= (disto != null && disto->ValueB() && diffuse != null && diffuse->ValueB()); // If we have a diffuse and a distortion, this means alpha-blend
-	m_Flags.m_NeedSort |= (transparentType == null && transparentFeature != null && diffuse != null && diffuse->ValueB()); // If there is diffuse transparency
+	m_Flags.m_NeedSort |= (transparentType == BasicRendererProperties::__MaxTransparentType && transparentFeature != null && diffuse != null && diffuse->ValueB()); // If there is diffuse transparency
 	m_Flags.m_Slicable = transparentFeature != null; // Right now, only supports non-opaque billboards/ribbons as slicable
 
 	// FIXME: to remove. Load the mesh here to get their bbox. The mesh won't be loaded twice as we keep a refptr from the resource manager.
@@ -173,28 +173,13 @@ bool	CRendererCacheInstance_UpdateThread::UpdateThread_Build(const PCRendererDat
 	// reset info
 	m_GlobalMeshBounds.Degenerate();
 	m_SubMeshBounds.Clear();
+	m_PerLODMeshCount.Clear();
 
-	if (m_MeshResource != null && !m_MeshResource->Empty())
+	if (m_MeshResource != null)
 	{
 		m_MeshResource->m_OnReloaded += FastDelegate<void(CResourceMesh*)>(this, &CRendererCacheInstance_UpdateThread::_OnMeshReloaded);
 
-		m_SubMeshBounds.Resize(m_MeshResource->BatchList().Count());
-		for (u32 iMesh = 0; iMesh < m_SubMeshBounds.Count(); ++iMesh)
-		{
-			m_SubMeshBounds[iMesh] = m_MeshResource->BatchList()[iMesh]->RawMesh()->BBox();
-			m_GlobalMeshBounds.Add(m_SubMeshBounds[iMesh]);
-		}
-		if (!PK_VERIFY(m_PerLODMeshCount.Resize(m_MeshResource->LODCount())))
-			return false;
-		for (u32 lodIdx = 0; lodIdx < m_PerLODMeshCount.Count(); ++lodIdx)
-			m_PerLODMeshCount[lodIdx] = m_MeshResource->BatchList(lodIdx).Count();
-	}
-	else
-	{
-		// Editor only debugging, allows to draw default mesh:
-		if (!PK_VERIFY(m_PerLODMeshCount.Resize(1)))
-			return false;
-		m_PerLODMeshCount.First() = 1;
+		_OnMeshReloaded(const_cast<CResourceMesh*>(& (*m_MeshResource)) /* this arg is ignored anyway */);
 	}
 
 	SRendererCacheInstanceKey	rendererCacheKey;
@@ -257,17 +242,29 @@ void	CRendererCacheInstance_UpdateThread::_OnMeshReloaded(CResourceMesh *mesh)
 	(void)mesh;
 	m_GlobalMeshBounds.Degenerate();
 	m_SubMeshBounds.Clear();
+	m_PerLODMeshCount.Clear();
 
-	m_SubMeshBounds.Resize(m_MeshResource->BatchList().Count());
-	for (u32 iMesh = 0; iMesh < m_SubMeshBounds.Count(); ++iMesh)
+	if (!m_MeshResource->Empty())
 	{
-		m_SubMeshBounds[iMesh] = m_MeshResource->BatchList()[iMesh]->RawMesh()->BBox();
-		m_GlobalMeshBounds.Add(m_SubMeshBounds[iMesh]);
+		if (!PK_VERIFY(m_SubMeshBounds.Resize(m_MeshResource->BatchList().Count())))
+			return;
+		for (u32 iMesh = 0; iMesh < m_SubMeshBounds.Count(); ++iMesh)
+		{
+			m_SubMeshBounds[iMesh] = m_MeshResource->BatchList()[iMesh]->RawMesh()->BBox();
+			m_GlobalMeshBounds.Add(m_SubMeshBounds[iMesh]);
+		}
+		if (!PK_VERIFY(m_PerLODMeshCount.Resize(m_MeshResource->LODCount())))
+			return;
+		for (u32 lodIdx = 0; lodIdx < m_PerLODMeshCount.Count(); ++lodIdx)
+			m_PerLODMeshCount[lodIdx] = m_MeshResource->BatchList(lodIdx).Count();
 	}
-	if (!PK_VERIFY(m_PerLODMeshCount.Resize(m_MeshResource->LODCount())))
-		return;
-	for (u32 lodIdx = 0; lodIdx < m_PerLODMeshCount.Count(); ++lodIdx)
-		m_PerLODMeshCount[lodIdx] = m_MeshResource->BatchList(lodIdx).Count();
+	else
+	{
+		// Editor only debugging, allows to draw default mesh:
+		if (!PK_VERIFY(m_PerLODMeshCount.Resize(1)))
+			return;
+		m_PerLODMeshCount.First() = 1;
+	}
 }
 
 //----------------------------------------------------------------------------

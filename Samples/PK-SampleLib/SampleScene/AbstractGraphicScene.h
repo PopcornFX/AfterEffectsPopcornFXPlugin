@@ -42,8 +42,8 @@ protected:
 	virtual bool		UserQuit();
 
 	virtual bool		CreateRenderTargets(bool recreateSwapChain) = 0;
-	virtual bool		CreateRenderPasses() = 0;
-	virtual bool		CreateRenderStates() = 0;
+	virtual bool		CreateRenderPasses() { return true; }
+	virtual bool		CreateRenderStates() { return true; }
 	virtual bool		CreateFrameBuffers(bool recreateSwapChain) = 0;
 
 	// Create a single buffer, can be override
@@ -72,7 +72,6 @@ protected:
 	TArray<RHI::PCommandBuffer>				m_CommandBuffers;
 
 	TMemoryView<const RHI::PRenderTarget>	m_SwapChainRenderTargets;
-	TArray<RHI::PGpuBuffer>					m_GpuBuffers;
 
 	CShaderLoader							m_ShaderLoader;
 
