@@ -351,7 +351,6 @@ namespace	SimInterfaces
 	//
 	//----------------------------------------------------------------------------
 
-#if (PK_PARTICLES_UPDATER_USE_D3D != 0)
 	static bool	_BuildSimInterfaceDef_ProjectToPosition(SSimulationInterfaceDefinition &def)
 	{
 		// Build the graphics API / backend independent definition of the sim interface
@@ -431,7 +430,6 @@ namespace	SimInterfaces
 
 		return true;
 	}
-#endif // (PK_PARTICLES_UPDATER_USE_D3D != 0)
 
 	//----------------------------------------------------------------------------
 	//
@@ -469,7 +467,6 @@ namespace	SimInterfaces
 	bool	BindGBufferSamplingSimInterfaces(const CString &coreLibPath, HBO::CContext *context)
 	{
 		(void)context; (void)coreLibPath;
-#if (PK_PARTICLES_UPDATER_USE_D3D != 0)
 		// Build the sim interface definition (backend independent)
 		SSimulationInterfaceDefinition	defProjectToPosition;
 		SSimulationInterfaceDefinition	defProjectToNormal;
@@ -534,11 +531,8 @@ namespace	SimInterfaces
 			CLog::Log(PK_ERROR, "Failed linking GPU sim interface bindings");
 			return false;
 		}
+
 		return true;
-#else
-		CLog::Log(PK_ERROR, "GPU GBufferSampling simulation interfaces can only be bound with D3D GPU simulation");
-		return false;
-#endif // (PK_PARTICLES_UPDATER_USE_D3D != 0)
 	}
 
 	//----------------------------------------------------------------------------
@@ -546,7 +540,6 @@ namespace	SimInterfaces
 	void	UnbindGBufferSamplingSimInterfaces(const CString &coreLibPath)
 	{
 		(void)coreLibPath;
-#if (PK_PARTICLES_UPDATER_USE_D3D != 0)
 		const CString				simInterfacePath = coreLibPath / "PopcornFXCore/Templates/Utils.pkfx";
 		const CStringUnicode		simInterfaceNameProjectToPosition = L"GBuffer_ProjectToPosition";
 		const CStringUnicode		simInterfaceNameProjectToNormal = L"GBuffer_ProjectToNormal";
@@ -583,7 +576,6 @@ namespace	SimInterfaces
 		// Unbind from CPU linker
 		CLinkerCPU::Unbind(defProjectToPosition.GetCallNameMangledCPU(0));
 		CLinkerCPU::Unbind(defProjectToNormal.GetCallNameMangledCPU(0));
-#endif // (PK_PARTICLES_UPDATER_USE_D3D != 0)
 	}
 
 } // namespace SimInterfaces
