@@ -124,12 +124,12 @@ class	CSoundPoolCache
 {
 public:
 	CSoundPoolCache() : m_FmodSystem(null), m_FmodChannelGroup(null), m_PoolSize(0) {}
-	~CSoundPoolCache() {}
+	~CSoundPoolCache() { CleanPool(); }
 
 	void					SetSoundSystem(FMOD::System *soundSystem, FMOD::ChannelGroup *FmodChannelGroup);
 
 	void					PreparePool();
-	void					CleanPool() { m_SoundPool.Clean(); }
+	void					CleanPool();
 	void					PlayPool(const u32 maxSoundsPlayed, const float simulationSpeed);
 
 	s32						FindBestMatchingSoundSlot(CSoundResource *resource, float maxDt, const float curtime);

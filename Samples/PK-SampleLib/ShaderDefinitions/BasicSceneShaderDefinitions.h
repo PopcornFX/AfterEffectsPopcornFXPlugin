@@ -33,6 +33,7 @@ void	FillGBufferShaderBindings(	RHI::SShaderBindings &bindings,
 									const RHI::SConstantSetLayout &meshInfo,
 									bool hasVertexColor = false,
 									bool hasTangents = false);
+void	FillDebugShaderBindings(RHI::SShaderBindings &bindings, bool vertexColor); // If vertexColor is set to false, then the shader mode will be white
 void	AddGBufferDefinition(TArray<SShaderCombination> &shaders);
 void	FillGBufferShadowShaderBindings(RHI::SShaderBindings &bindings,
 										const RHI::SConstantSetLayout &sceneInfo);

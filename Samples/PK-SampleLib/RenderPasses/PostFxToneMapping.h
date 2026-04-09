@@ -25,10 +25,12 @@ struct	SToneMappingInfo
 {
 	CFloat4	m_Common;		// packed parameters: (width, height, aspectRatio, precomputeLuma)
 	CFloat4	m_ToneMapping;	// packed parameters: (exposure, gamma, saturation, dithering)
+	CFloat4	m_ACES;			// packed parameters: (slope, toe, shoulder, black clip)
+	CFloat4	m_ACES2;		// packed parameters: (white clip, exposure, enabled, empty)
 	CFloat4	m_Vignetting;	// packed parameters: (color-intensity, desaturation-intensity, roundness, smoothness)
 	CFloat4	m_VignetteColor; // alpha is ignored
 
-	SToneMappingInfo() : m_Common(CFloat4::ZERO), m_ToneMapping(CFloat4(1, 1, 1, 0)), m_Vignetting(CFloat4::ZERO), m_VignetteColor(CFloat4::ZERO) {}
+	SToneMappingInfo() : m_Common(CFloat4::ZERO), m_ToneMapping(CFloat4(1, 1, 1, 0)), m_ACES(CFloat4(1, 1, 1, 0)), m_ACES2(CFloat4(0, 0, 0, 0)), m_Vignetting(CFloat4::ZERO), m_VignetteColor(CFloat4::ZERO) {}
 };
 
 //----------------------------------------------------------------------------
@@ -61,10 +63,16 @@ public:
 									CShaderLoader &shaderLoader,
 									const RHI::PRenderPass &renderPass);
 
-	void		SetExposure(float exposure) { m_Parameters.m_ToneMapping.x() = expf(exposure)*1.4f; }
+	void		SetExposure(float exposure) { m_Parameters.m_ToneMapping.x() = expf(exposure) * 1.4f; m_Parameters.m_ACES2.y() = powf(2.f, exposure); }
 	void		SetGamma(float gamma) { m_Parameters.m_ToneMapping.y() = gamma; }
 	void		SetSaturation(float saturation) { m_Parameters.m_ToneMapping.z() = saturation; }
 	void		SetDithering(bool dithering) { m_Parameters.m_ToneMapping.w() = dithering ? 1.f : 0.f; }
+	void		SetUseACES(bool enabled) { m_Parameters.m_ACES2.z() = enabled ? 1.f : 0.f; }
+	void		SetSlope(float slope) { m_Parameters.m_ACES.x() = slope; }
+	void		SetToe(float toe) { m_Parameters.m_ACES.y() = toe; }
+	void		SetShoulder(float shoulder) { m_Parameters.m_ACES.z() = shoulder; }
+	void		SetBlackClip(float blackClip) { m_Parameters.m_ACES.w() = blackClip; }
+	void		SetWhiteClip(float whiteClip) { m_Parameters.m_ACES2.x() = whiteClip; }
 	void		SetPrecomputeLuma(bool precomputeLuma) { m_Parameters.m_Common.w() = precomputeLuma ? 1.f : 0.f; m_PrecomputeLuma = precomputeLuma;}
 	void		SetScreenSize(u32 width, u32 height)
 	{

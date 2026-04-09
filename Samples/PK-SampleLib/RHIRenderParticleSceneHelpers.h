@@ -22,6 +22,8 @@
 #include <PK-SampleLib/SampleScene/Entities/EnvironmentMapEntity.h>
 
 // Debug draw shaders:
+#define		PARTICLE_DEBUG_VERTEX_SHADER			"./Shaders/DebugParticle.vert"
+
 #define		DEBUG_DRAW_VERTEX_SHADER_PATH			"./Shaders/DebugDraw.vert"
 #define		DEBUG_DRAW_FRAGMENT_SHADER_PATH			"./Shaders/DebugDrawColor.frag"
 // Debug draw shaders:
@@ -128,14 +130,26 @@ struct	SParticleSceneOptions
 		bool	m_Enable;
 		float	m_Exposure;
 		float	m_Saturation;
+		bool	m_UseACES;
+		float	m_Slope;
+		float	m_Toe;
+		float	m_Shoulder;
+		float	m_BlackClip;
+		float	m_WhiteClip;
 
-		SToneMapping() : m_Enable(true), m_Exposure(-0.336472f), m_Saturation(1.f) {} // ln(x / 1.4f)
+		SToneMapping() : m_Enable(true), m_Exposure(-0.336472f), m_Saturation(1.f), m_UseACES(false) {} // ln(x / 1.4f)
 
 		bool	operator == (const SToneMapping &oth) const
 		{
 			return	m_Enable == oth.m_Enable &&
 					m_Exposure == oth.m_Exposure &&
-					m_Saturation == oth.m_Saturation;
+					m_Saturation == oth.m_Saturation &&
+					m_UseACES == oth.m_UseACES &&
+					m_Slope == oth.m_Slope &&
+					m_Toe == oth.m_Toe &&
+					m_Shoulder == oth.m_Shoulder &&
+					m_BlackClip == oth.m_BlackClip &&
+					m_WhiteClip == oth.m_WhiteClip;
 		}
 	}	m_ToneMapping;
 
@@ -638,6 +652,16 @@ protected:
 	RHI::PRenderState				m_MeshRenderStateStrips;
 	RHI::PRenderState				m_MeshRenderStateVertexColor;
 	RHI::PRenderState				m_MeshRenderStateVertexColorStrips;
+
+	RHI::PRenderState				m_MeshRenderStateWireframe;
+	RHI::PRenderState				m_MeshRenderStateWireframeStrips;
+	RHI::PRenderState				m_MeshRenderStateSolidColor;
+	RHI::PRenderState				m_MeshRenderStateSolidColorStrips;
+	RHI::PRenderState				m_MeshRenderStateSolidWhite;
+	RHI::PRenderState				m_MeshRenderStateSolidWhiteStrips;
+	RHI::PRenderState				m_MeshRenderStateOverdraw;
+	RHI::PRenderState				m_MeshRenderStateOverdrawStrips;
+
 
 	// Misc:
 	struct	SLinePointsColorBuffer

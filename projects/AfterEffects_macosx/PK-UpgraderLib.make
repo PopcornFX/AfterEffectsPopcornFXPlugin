@@ -37,7 +37,7 @@ ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
 LIBS +=
 LDDEPS +=
-ALL_LDFLAGS += $(LDFLAGS) -m64 -target x86_64-apple-macos10.14
+ALL_LDFLAGS += $(LDFLAGS) -m64 -target x86_64-apple-macos10.15
 define LINKCMD
   $(SILENT) $(RM) -f $@
   $(SILENT) $(AR) -rcs $@ $(OBJECTS)
@@ -54,24 +54,24 @@ TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
 TARGET = $(TARGETDIR)/libPK-UpgraderLib_d.a
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Debug/PK-UpgraderLib
 DEFINES += -D_DEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 
 else ifeq ($(config),release_x64)
 TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
 TARGET = $(TARGETDIR)/libPK-UpgraderLib_r.a
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Release/PK-UpgraderLib
 DEFINES += -DNDEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 
 else ifeq ($(config),retail_x64)
 TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
 TARGET = $(TARGETDIR)/libPK-UpgraderLib_s.a
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Retail/PK-UpgraderLib
 DEFINES += -DNDEBUG -DPK_RETAIL -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 
 #else
 #  $(error "invalid configuration $(config)")
@@ -286,6 +286,9 @@ GENERATED += $(OBJDIR)/core_upgrader_2_22_0_23868.o
 GENERATED += $(OBJDIR)/core_upgrader_2_23_0_25019.o
 GENERATED += $(OBJDIR)/core_upgrader_2_23_0_25047.o
 GENERATED += $(OBJDIR)/core_upgrader_2_23_0_25065.o
+GENERATED += $(OBJDIR)/core_upgrader_2_24_0_25771.o
+GENERATED += $(OBJDIR)/core_upgrader_2_24_0_25832.o
+GENERATED += $(OBJDIR)/core_upgrader_2_24_0_26241.o
 GENERATED += $(OBJDIR)/core_upgrader_2_2_0_56591.o
 GENERATED += $(OBJDIR)/core_upgrader_2_3_0_59136.o
 GENERATED += $(OBJDIR)/core_upgrader_2_3_0_59175.o
@@ -423,6 +426,7 @@ GENERATED += $(OBJDIR)/upg_upgrades_v2.20.0.o
 GENERATED += $(OBJDIR)/upg_upgrades_v2.21.0.o
 GENERATED += $(OBJDIR)/upg_upgrades_v2.22.0.o
 GENERATED += $(OBJDIR)/upg_upgrades_v2.23.0.o
+GENERATED += $(OBJDIR)/upg_upgrades_v2.24.0.o
 GENERATED += $(OBJDIR)/upg_upgrades_v2.3.0.o
 GENERATED += $(OBJDIR)/upg_upgrades_v2.4.0.o
 GENERATED += $(OBJDIR)/upg_upgrades_v2.5.0.o
@@ -648,6 +652,9 @@ OBJECTS += $(OBJDIR)/core_upgrader_2_22_0_23868.o
 OBJECTS += $(OBJDIR)/core_upgrader_2_23_0_25019.o
 OBJECTS += $(OBJDIR)/core_upgrader_2_23_0_25047.o
 OBJECTS += $(OBJDIR)/core_upgrader_2_23_0_25065.o
+OBJECTS += $(OBJDIR)/core_upgrader_2_24_0_25771.o
+OBJECTS += $(OBJDIR)/core_upgrader_2_24_0_25832.o
+OBJECTS += $(OBJDIR)/core_upgrader_2_24_0_26241.o
 OBJECTS += $(OBJDIR)/core_upgrader_2_2_0_56591.o
 OBJECTS += $(OBJDIR)/core_upgrader_2_3_0_59136.o
 OBJECTS += $(OBJDIR)/core_upgrader_2_3_0_59175.o
@@ -785,6 +792,7 @@ OBJECTS += $(OBJDIR)/upg_upgrades_v2.20.0.o
 OBJECTS += $(OBJDIR)/upg_upgrades_v2.21.0.o
 OBJECTS += $(OBJDIR)/upg_upgrades_v2.22.0.o
 OBJECTS += $(OBJDIR)/upg_upgrades_v2.23.0.o
+OBJECTS += $(OBJDIR)/upg_upgrades_v2.24.0.o
 OBJECTS += $(OBJDIR)/upg_upgrades_v2.3.0.o
 OBJECTS += $(OBJDIR)/upg_upgrades_v2.4.0.o
 OBJECTS += $(OBJDIR)/upg_upgrades_v2.5.0.o
@@ -1053,6 +1061,15 @@ $(OBJDIR)/core_upgrader_2_23_0_25047.o: ../../ExternalLibs/pk_upgraderlib/src/Up
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/core_upgrader_2_23_0_25065.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/Data/2.23.0.25065/core_upgrader_2_23_0_25065.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/core_upgrader_2_24_0_25771.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/Data/2.24.0.25771/core_upgrader_2_24_0_25771.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/core_upgrader_2_24_0_25832.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/Data/2.24.0.25832/core_upgrader_2_24_0_25832.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/core_upgrader_2_24_0_26241.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/Data/2.24.0.26241/core_upgrader_2_24_0_26241.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/core_upgrader_2_3_0_59136.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/Data/2.3.0.59136/core_upgrader_2_3_0_59136.cpp
@@ -1902,6 +1919,9 @@ $(OBJDIR)/upg_upgrades_v2.22.0.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/upg_upgrades_v2.23.0.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/upg_upgrades_v2.23.0.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/upg_upgrades_v2.24.0.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/upg_upgrades_v2.24.0.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/upg_upgrades_v2.3.0.o: ../../ExternalLibs/pk_upgraderlib/src/Upgrades/upg_upgrades_v2.3.0.cpp

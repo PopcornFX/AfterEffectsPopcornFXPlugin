@@ -1,5 +1,6 @@
 //----------------------------------------------------------------------------
-// Copyright Persistant Studios, SARL. All Rights Reserved. https://www.popcornfx.com/terms-and-conditions/
+// Copyright Persistant Studios, SARL.
+// https://popcornfx.com/popcornfx-community-license/
 //----------------------------------------------------------------------------
 #include "ae_precompiled.h"
 
@@ -317,7 +318,7 @@ CString		CVaultHandler::BakeMesh(const CString resourcePath, const CString targe
 		importSettings.m_ResourcePath = filePackPath.Path();
 		importSettings.m_ResourceManager = Resource::DefaultManager();
 
-		PMeshImportOut	outFbxImport = CResourceMesh::ImportFromFile(notifier, outBakeReport, &importSettings);
+		PMeshImportOut	outFbxImport = CResourceMesh::ImportFromFile(importSettings, notifier, outBakeReport);
 
 		if (outFbxImport != null)
 		{

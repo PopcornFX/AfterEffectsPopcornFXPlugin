@@ -35,7 +35,7 @@ INCLUDES += -I../../ExternalLibs/Runtime -I../../ExternalLibs/Runtime/include -I
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -m64 -target x86_64-apple-macos10.14 -liconv
+ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -m64 -target x86_64-apple-macos10.15 -liconv
 LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
 define PREBUILDCMDS
 endef
@@ -49,8 +49,8 @@ TARGETDIR = ../../../release/application/BinariesGM_macosx_x64_d
 TARGET = $(TARGETDIR)/PK-Upgrader
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Debug/PK-Upgrader
 DEFINES += -D_DEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1 -DMACOSX
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-UpgraderLib_d.a -lPK-ParticlesToolbox_d -lPK-Runtime_d
 LDDEPS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-UpgraderLib_d.a
 
@@ -59,8 +59,8 @@ TARGETDIR = ../../../release/application/BinariesGM_macosx_x64_r
 TARGET = $(TARGETDIR)/PK-Upgrader
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Release/PK-Upgrader
 DEFINES += -DNDEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1 -DMACOSX
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-UpgraderLib_r.a -lPK-ParticlesToolbox_r -lPK-Runtime_r
 LDDEPS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-UpgraderLib_r.a
 
@@ -69,8 +69,8 @@ TARGETDIR = ../../../release/application/BinariesGM_macosx_x64_r
 TARGET = $(TARGETDIR)/PK-Upgrader_s
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Retail/PK-Upgrader
 DEFINES += -DNDEBUG -DPK_RETAIL -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1 -DMACOSX
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.14 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fomit-frame-pointer -O3 -fno-strict-aliasing -msse2 -fvisibility=hidden -Wall -Wextra -std=gnu++0x -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-UpgraderLib_s.a -lPK-ParticlesToolbox_s -lPK-Runtime_s
 LDDEPS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-UpgraderLib_s.a
 

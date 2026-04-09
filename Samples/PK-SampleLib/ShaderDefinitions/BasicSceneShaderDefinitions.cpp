@@ -106,6 +106,41 @@ void	FillGBufferShaderBindings(	RHI::SShaderBindings &bindings,
 
 //----------------------------------------------------------------------------
 
+void	FillDebugShaderBindings(RHI::SShaderBindings &bindings, bool vertexColor)
+{
+	bindings.Reset();
+
+	// Add the scene info constant set:
+	RHI::SConstantSetLayout		layout;
+	CreateSceneInfoConstantLayout(layout);
+	bindings.m_ConstantSets.PushBack(layout);
+
+	u32		shaderLocationBinding = 0;
+	u32		vBufferLocationBinding = 0;
+
+	RHI::SConstantSetLayout		simDataSetLayout(RHI::VertexShaderMask);
+	RHI::SConstantSetLayout		streamOffsetsSetLayout(RHI::VertexShaderMask); // gpu sim
+	RHI::SConstantSetLayout		selectionSetLayout(RHI::VertexShaderMask);
+
+	bindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("Position", shaderLocationBinding, RHI::TypeFloat3, vBufferLocationBinding));
+	++shaderLocationBinding;
+	++vBufferLocationBinding;
+
+	bindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("MeshTransform", shaderLocationBinding, RHI::TypeFloat4x4, vBufferLocationBinding)).Valid();
+	++vBufferLocationBinding;
+	shaderLocationBinding += RHI::VarType::GetRowNumber(RHI::TypeFloat4x4);
+
+	if (vertexColor)
+	{
+		// This would conflict with per instance color if those shaderMode weren't  exclusive
+		bindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("Color", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding));
+		++shaderLocationBinding;
+		++vBufferLocationBinding;
+	}
+}
+
+//----------------------------------------------------------------------------
+
 void	AddGBufferDefinition(TArray<SShaderCombination> &shaders)
 {
 	RHI::SShaderDescription		description;

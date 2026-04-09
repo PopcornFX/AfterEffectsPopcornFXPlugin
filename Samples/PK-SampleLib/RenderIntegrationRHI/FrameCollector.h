@@ -37,8 +37,8 @@ struct	SRHIRenderContextLegacy
 	RHI::PApiManager		ApiManager() const { return m_ApiManager; }
 
 	SRHIRenderContextLegacy(EPass pass, RHI::PApiManager apiManager)
-		:	m_Pass(pass)
-		,	m_ApiManager(apiManager)
+	:	m_Pass(pass)
+	,	m_ApiManager(apiManager)
 	{
 	}
 
@@ -56,9 +56,9 @@ struct	SRHISceneView
 	u32			m_MaxSliceCount;		// If slicing is enabled, maximum slice count per view.
 
 	SRHISceneView()
-		:	m_InvViewMatrix(CFloat4x4::IDENTITY)
-		,	m_NeedsSortedIndices(true)
-		,	m_MaxSliceCount(5)
+	:	m_InvViewMatrix(CFloat4x4::IDENTITY)
+	,	m_NeedsSortedIndices(true)
+	,	m_MaxSliceCount(5)
 	{
 	}
 };

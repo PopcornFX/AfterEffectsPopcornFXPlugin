@@ -1,5 +1,6 @@
 //----------------------------------------------------------------------------
-// Copyright Persistant Studios, SARL. All Rights Reserved. https://www.popcornfx.com/terms-and-conditions/
+// Copyright Persistant Studios, SARL.
+// https://popcornfx.com/popcornfx-community-license/
 //----------------------------------------------------------------------------
 #include <ae_precompiled.h>
 
@@ -101,7 +102,6 @@ QPanel::~QPanel()
 void	QPanel::_CreateWindowContent()
 {
 	QVBoxLayout	*container = new QVBoxLayout();
-	container->setMargin(0);
 	m_Widget->setLayout(container);
 
 	QTabWidget	*tab = new QTabWidget();
@@ -110,7 +110,6 @@ void	QPanel::_CreateWindowContent()
 	QWidget	*rendererTab = new QWidget();
 	{
 		QVBoxLayout						*layout = new QVBoxLayout();
-		layout->setMargin(0);
 
 		QTreeView						*view = new QTreeView();
 
@@ -333,7 +332,7 @@ bool	CPanelApp::Startup()
 	CPopcornFXWorld	&instance = AEGPPk::CPopcornFXWorld::Instance();
 
 #if defined(PK_MACOSX)
-	QApplication::setAttribute(Qt::AA_MacPluginApplication, true);
+	QApplication::setAttribute(Qt::AA_PluginApplication, true);
 	CString	QTPath = instance.GetPluginInstallationPath() / "AE_GeneralPlugin.plugin/Contents/PlugIns";
 #else
 	CString	QTPath = instance.GetPluginInstallationPath() / "popcornfx.qt";

@@ -24,9 +24,9 @@ win_kit_bin_path = "C:\\Program Files (x86)\\Windows Kits\\10\\bin"
 # [1]   addInAssembly: bool
 # [2]   patchWithManifest: bool
 dlls_to_copy = [
-                ("Qt5Core.dll", True, False), #The first one must be Qt5Core
-                ("Qt5Gui.dll", True, True),
-                ("Qt5Widgets.dll", True, True),
+                ("Qt6Core.dll", True, False), #The first one must be Qt6Core
+                ("Qt6Gui.dll", True, True),
+                ("Qt6Widgets.dll", True, True),
                 ("../plugins/platforms/qwindows.dll", False, True),
                ]
 #============

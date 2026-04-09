@@ -25,11 +25,8 @@
 //#	include <pk_rhi/include/D3D12/D3D12RHI.h>
 #	include <pk_rhi/include/D3D12/D3D12ApiManager.h>
 #endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12 != 0)
+#if	(PK_PARTICLES_UPDATER_USE_D3D12_ANY != 0)
 #	include <pk_particles/include/Storage/D3D12/storage_d3d12.h>
-#endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12U != 0)
-#	include <pk_particles/include/Storage/D3D12U/storage_d3d12U.h>
 #endif
 #if	(PK_PARTICLES_UPDATER_USE_UNKNOWN2 != 0)
 //#	include <pk_rhi/include/UNKNOWN2/UNKNOWN2RHI.h>
@@ -96,21 +93,9 @@ static RHI::PGpuBuffer	_RetrieveStorageBuffer(const RHI::PApiManager &manager, c
 		return CastD3D11(manager)->D3D11GetGpuBufferFromExisting(RHI::SRHIResourceInfos("Stream Data Buffer"), stream.m_Buffer, RHI::RawVertexBuffer);
 	}
 #endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12 != 0)
+#if	(PK_PARTICLES_UPDATER_USE_D3D12_ANY != 0)
 	// We retrieve the vertex buffer from the GPU storages:
 	if (streams->StorageClass() == CParticleStorageManager_D3D12::DefaultStorageClass())
-	{
-		const CParticleStreamToRender_D3D12	*streamsToRender = static_cast<const CParticleStreamToRender_D3D12*>(streams);
-		const SBuffer_D3D12					&stream = streamsToRender->StreamBuffer();
-		if (stream.Empty())
-			return null;
-		storageOffset = streamsToRender->StreamOffset(streamIdx);
-		return CastD3D12(manager)->D3D12GetGpuBufferFromExisting(RHI::SRHIResourceInfos("Stream Data Buffer"), stream.m_Resource, RHI::RawVertexBuffer, stream.m_State);
-	}
-#endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12U != 0)
-	// We retrieve the vertex buffer from the GPU storages:
-	if (streams->StorageClass() == CParticleStorageManager_D3D12U::DefaultStorageClass())
 	{
 		const CParticleStreamToRender_D3D12	*streamsToRender = static_cast<const CParticleStreamToRender_D3D12*>(streams);
 		const SBuffer_D3D12					&stream = streamsToRender->StreamBuffer();
@@ -151,18 +136,7 @@ static RHI::PGpuBuffer	_RetrieveParticleInfoBuffer(const RHI::PApiManager &manag
 		return CastD3D11(manager)->D3D11GetGpuBufferFromExisting(RHI::SRHIResourceInfos("Stream Infos Buffer"), stream.m_Buffer, RHI::RawVertexBuffer);
 	}
 #endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12U != 0)
-	// We retrieve the stream size buffer from the GPU storages:
-	if (streams->StorageClass() == CParticleStorageManager_D3D12U::DefaultStorageClass())
-	{
-		const CParticleStreamToRender_D3D12	*streamsToRender = static_cast<const CParticleStreamToRender_D3D12*>(streams);
-		const SBuffer_D3D12					&stream = streamsToRender->StreamSizeBuf();
-		if (stream.Empty())
-			return null;
-		return CastD3D12(manager)->D3D12GetGpuBufferFromExisting(RHI::SRHIResourceInfos("Stream Infos Buffer"), stream.m_Resource, RHI::RawVertexBuffer, stream.m_State);
-	}
-#endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12 != 0)
+#if	(PK_PARTICLES_UPDATER_USE_D3D12_ANY != 0)
 	// We retrieve the stream size buffer from the GPU storages:
 	if (streams->StorageClass() == CParticleStorageManager_D3D12::DefaultStorageClass())
 	{

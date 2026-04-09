@@ -1,5 +1,6 @@
 //----------------------------------------------------------------------------
-// Copyright Persistant Studios, SARL. All Rights Reserved. https://www.popcornfx.com/terms-and-conditions/
+// Copyright Persistant Studios, SARL.
+// https://popcornfx.com/popcornfx-community-license/
 //----------------------------------------------------------------------------
 #include "ae_precompiled.h"
 
@@ -267,7 +268,7 @@ bool	SSamplerShape::UpdateShape(SShapeSamplerDescriptor *aeShapeDesc)
 
 #if	(PK_GEOMETRICS_BUILD_MESH_SAMPLER_SURFACE != 0)
 				// Build sampling info IFN
-				if ((aeShapeDesc->m_UsageFlags & SParticleDeclaration::SSampler::UsageFlags_Mesh_Sample) != 0)
+				if ((aeShapeDesc->m_UsageFlags & SParticleDeclaration::SSampler::UsageFlags_Mesh_Sample) != 0)	// TODO: Should be 'UsageFlags_Mesh_SampleSurface', but it's just an optimization to not build surface accel structs when just doing vertex or volume sampling. Should do it later, I don't want to break things
 				{
 					if (!CreateSurfaceSamplingStructs(m_MeshBatch))
 						CLog::Log(PK_WARN, "Failed building mesh surface-sampling acceleration structure");
@@ -285,7 +286,7 @@ bool	SSamplerShape::UpdateShape(SShapeSamplerDescriptor *aeShapeDesc)
 				}
 #endif
 #if (PK_GEOMETRICS_BUILD_MESH_SAMPLER_VOLUME)
-				if ((aeShapeDesc->m_UsageFlags & SParticleDeclaration::SSampler::UsageFlags_Mesh_Sample) != 0)
+				if ((aeShapeDesc->m_UsageFlags & SParticleDeclaration::SSampler::UsageFlags_Mesh_Sample) != 0)	// TODO: Should be 'UsageFlags_Mesh_SampleVolume', but it's just an optimization to not build volume accel structs when just doing surface or vertex sampling. Should do it later, I don't want to break things
 				{
 					if (!CreateVolumeSamplingStructs(m_MeshBatch))
 						CLog::Log(PK_WARN, "Failed building mesh surface-sampling acceleration structure");

@@ -859,6 +859,12 @@ bool	CRHIParticleSceneRenderHelper::SetupPostFX_ToneMapping(	const SParticleScen
 		m_EnableToneMapping = config.m_Enable;
 		m_ToneMapping.SetExposure(config.m_Exposure);
 		m_ToneMapping.SetSaturation(config.m_Saturation);
+		m_ToneMapping.SetUseACES(config.m_UseACES);
+		m_ToneMapping.SetSlope(config.m_Slope);
+		m_ToneMapping.SetToe(config.m_Toe);
+		m_ToneMapping.SetShoulder(config.m_Shoulder);
+		m_ToneMapping.SetBlackClip(config.m_BlackClip);
+		m_ToneMapping.SetWhiteClip(config.m_WhiteClip);
 
 		m_ToneMapping.SetVignettingColor(configVignetting.m_Color);
 		m_ToneMapping.SetVignettingColorIntensity(configVignetting.m_ColorIntensity);
@@ -2634,8 +2640,12 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 	// ----------------------------------------------------------
 	// We need the constant set layout to create the render state:
 	CShaderLoader::SShadersPaths	shadersPaths;
+	CShaderLoader::SShadersPaths	debugShadersPaths;
 	shadersPaths.m_Vertex = GBUFFER_VERTEX_SHADER_PATH;
 	shadersPaths.m_Fragment = GBUFFER_FRAGMENT_SHADER_PATH;
+
+	debugShadersPaths.m_Vertex = PARTICLE_DEBUG_VERTEX_SHADER;
+	debugShadersPaths.m_Fragment = DEBUG_DRAW_FRAGMENT_SHADER_PATH;
 
 	// This constant set doesn't change wether vertex colors are used or not
 	CreateGBufferConstSetLayouts(GBufferCombination_Diffuse_RoughMetal_Normal, m_MeshConstSetLayout);
@@ -2645,7 +2655,20 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 	m_MeshRenderStateVertexColor = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Vertex Color Render State"));
 	m_MeshRenderStateVertexColorStrips = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Vertex Color Render State (tristrips)"));
 
-	if (m_MeshRenderState == null || m_MeshRenderStateVertexColor == null || m_MeshRenderStateStrips == null || m_MeshRenderStateVertexColorStrips == null)
+	m_MeshRenderStateWireframe = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Wireframe Render State"));
+	m_MeshRenderStateWireframeStrips = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Wireframe Render State (tristrips)"));
+	m_MeshRenderStateSolidColor = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Solid Color Render State"));
+	m_MeshRenderStateSolidColorStrips = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Solid Color Render State (tristrips)"));
+	m_MeshRenderStateSolidWhite = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Solid White Render State"));
+	m_MeshRenderStateSolidWhiteStrips = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Solid White Render State (tristrips)"));
+	m_MeshRenderStateOverdraw = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Overdraw Render State"));
+	m_MeshRenderStateOverdrawStrips = m_ApiManager->CreateRenderState(RHI::SRHIResourceInfos("Mesh Backdrop Overdraw Render State (tristrips)"));
+
+	const bool	isNull = (m_MeshRenderState == null || m_MeshRenderStateVertexColor == null || m_MeshRenderStateStrips == null || m_MeshRenderStateVertexColorStrips == null ||
+						m_MeshRenderStateWireframe == null || m_MeshRenderStateWireframeStrips == null || m_MeshRenderStateSolidColor == null || m_MeshRenderStateSolidColorStrips == null ||
+						m_MeshRenderStateSolidWhite == null || m_MeshRenderStateSolidWhiteStrips == null || m_MeshRenderStateOverdraw == null || m_MeshRenderStateOverdrawStrips == null);
+
+	if (isNull)
 		return false;
 
 	// Pipeline state
@@ -2746,6 +2769,165 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateVertexColorStrips->m_RenderState, shadersPaths, m_ApiManager))
 			return false;
 		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateVertexColorStrips, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_DynamicScissor = true;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_DynamicViewport = true;
+
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_DepthWrite = false;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_Blending = true;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_ColorBlendingEquation = RHI::BlendAdd;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_ColorBlendingSrc = RHI::BlendFactor;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_ColorBlendingDst = RHI::BlendOne;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_AlphaBlendingEquation = RHI::BlendAdd;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_AlphaBlendingSrc = RHI::BlendOne;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_AlphaBlendingDst = RHI::BlendOne;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_DepthTest = RHI::LessOrEqual;
+		const float		v = 1.0f;
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_BlendFactor = CFloat4(v, 0.f, 0.f, 0.f);
+
+		FillDebugShaderBindings(m_MeshRenderStateOverdraw->m_RenderState.m_ShaderBindings, false);
+
+		// Position:
+		m_MeshRenderStateOverdraw->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		// Mesh transforms:
+		m_MeshRenderStateOverdraw->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+
+		m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangle;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateOverdraw->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateOverdraw, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateOverdrawStrips->m_RenderState.m_PipelineState = m_MeshRenderStateOverdraw->m_RenderState.m_PipelineState;
+		m_MeshRenderStateOverdrawStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderStateOverdraw->m_RenderState.m_InputVertexBuffers;
+
+		FillDebugShaderBindings(m_MeshRenderStateOverdrawStrips->m_RenderState.m_ShaderBindings, false);
+
+		m_MeshRenderStateOverdrawStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		m_MeshRenderStateOverdrawStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+
+		m_MeshRenderStateOverdrawStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateOverdrawStrips->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateOverdrawStrips, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_DynamicScissor = true;
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_DynamicViewport = true;
+
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_DepthWrite = true;
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_Blending = false;
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_DepthTest = RHI::LessOrEqual;
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_RasterizerMode = RHI::RasterizeWireFrame;
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_SlopeScaledDepthBias = -1.f;
+
+		FillDebugShaderBindings(m_MeshRenderStateWireframe->m_RenderState.m_ShaderBindings, false);
+
+		m_MeshRenderStateWireframe->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		m_MeshRenderStateWireframe->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+
+		m_MeshRenderStateWireframe->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangle;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateWireframe->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateWireframe, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateWireframeStrips->m_RenderState.m_PipelineState = m_MeshRenderStateWireframe->m_RenderState.m_PipelineState;
+		m_MeshRenderStateWireframeStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderStateWireframe->m_RenderState.m_InputVertexBuffers;
+
+		FillDebugShaderBindings(m_MeshRenderStateWireframeStrips->m_RenderState.m_ShaderBindings, false);
+
+		m_MeshRenderStateWireframeStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		m_MeshRenderStateWireframeStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+
+		m_MeshRenderStateWireframeStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateWireframeStrips->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateWireframeStrips, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateSolidWhite->m_RenderState.m_PipelineState.m_DynamicScissor = true;
+		m_MeshRenderStateSolidWhite->m_RenderState.m_PipelineState.m_DynamicViewport = true;
+
+		m_MeshRenderStateSolidWhite->m_RenderState.m_PipelineState.m_DepthWrite = true;
+		m_MeshRenderStateSolidWhite->m_RenderState.m_PipelineState.m_Blending = false;
+		m_MeshRenderStateSolidWhite->m_RenderState.m_PipelineState.m_DepthTest = RHI::LessOrEqual;
+
+		FillDebugShaderBindings(m_MeshRenderStateSolidWhite->m_RenderState.m_ShaderBindings, false);
+
+		m_MeshRenderStateSolidWhite->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		m_MeshRenderStateSolidWhite->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+
+		m_MeshRenderStateSolidWhite->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangle;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateSolidWhite->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateSolidWhite, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_PipelineState = m_MeshRenderStateSolidWhite->m_RenderState.m_PipelineState;
+		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderStateSolidWhite->m_RenderState.m_InputVertexBuffers;
+
+		FillDebugShaderBindings(m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_ShaderBindings, false);
+
+		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+
+		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateSolidWhiteStrips->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateSolidWhiteStrips, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateSolidColor->m_RenderState.m_PipelineState.m_DynamicScissor = true;
+		m_MeshRenderStateSolidColor->m_RenderState.m_PipelineState.m_DynamicViewport = true;
+
+		m_MeshRenderStateSolidColor->m_RenderState.m_PipelineState.m_DepthWrite = true;
+		m_MeshRenderStateSolidColor->m_RenderState.m_PipelineState.m_Blending = false;
+		m_MeshRenderStateSolidColor->m_RenderState.m_PipelineState.m_DepthTest = RHI::LessOrEqual;
+
+		FillDebugShaderBindings(m_MeshRenderStateSolidColor->m_RenderState.m_ShaderBindings, true);
+
+		m_MeshRenderStateSolidColor->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		m_MeshRenderStateSolidColor->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+		// Vertex colors
+		m_MeshRenderStateSolidColor->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat4)));
+
+		m_MeshRenderStateSolidColor->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangle;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateSolidColor->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateSolidColor, frameBufferLayout, renderPass, subPassIdx))
+			return false;
+	}
+
+	{
+		m_MeshRenderStateSolidColorStrips->m_RenderState.m_PipelineState = m_MeshRenderStateSolidColor->m_RenderState.m_PipelineState;
+		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderStateSolidColor->m_RenderState.m_InputVertexBuffers;
+
+		FillDebugShaderBindings(m_MeshRenderStateSolidColorStrips->m_RenderState.m_ShaderBindings, true);
+
+		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
+		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
+		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat4)));
+
+		m_MeshRenderStateSolidColorStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
+		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateSolidColorStrips->m_RenderState, debugShadersPaths, m_ApiManager))
+			return false;
+		if (!m_ApiManager->BakeRenderState(m_MeshRenderStateSolidColorStrips, frameBufferLayout, renderPass, subPassIdx))
 			return false;
 	}
 

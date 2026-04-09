@@ -121,6 +121,8 @@ PSoundResource	CSoundResourceManager::CreateOrFindSoundResource(FMOD::System *so
 	sndres->m_Path = pathFull.ToString();
 	sndres->Load(soundSystem);
 
+	m_SoundResources.PushBack(sndres); // ok to fail
+
 	return sndres;
 }
 
@@ -210,6 +212,23 @@ void	CSoundPoolCache::PreparePool()
 			soundElement.m_Resource->m_NeedReload = false;
 		}
 	}
+}
+
+//----------------------------------------------------------------------------
+
+void	CSoundPoolCache::CleanPool()
+{
+#if (PK_BUILD_WITH_FMODEX_SUPPORT != 0)
+	for (SSoundElement &soundElement : m_SoundPool)
+	{
+		if (soundElement.m_Handle != null)
+		{
+			soundElement.m_Handle->stop();
+			soundElement.m_Handle = null;
+		}
+	}
+	m_SoundPool.Clean();
+#endif
 }
 
 //----------------------------------------------------------------------------

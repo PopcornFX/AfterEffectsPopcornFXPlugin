@@ -33,11 +33,8 @@
 #if	(PK_PARTICLES_UPDATER_USE_D3D11 != 0)
 #include <pk_particles/include/Storage/D3D11/storage_d3d11.h>
 #endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12 != 0)
+#if	(PK_PARTICLES_UPDATER_USE_D3D12_ANY != 0)
 #include <pk_particles/include/Storage/D3D12/storage_d3d12.h>
-#endif
-#if	(PK_PARTICLES_UPDATER_USE_D3D12U != 0)
-#include <pk_particles/include/Storage/D3D12U/storage_d3d12U.h>
 #endif
 
 __PK_SAMPLE_API_BEGIN

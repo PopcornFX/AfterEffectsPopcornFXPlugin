@@ -634,6 +634,8 @@ void	FillCopyShaderBindings(ECopyCombination combination, RHI::SShaderBindings &
 
 		highPassInfo.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "Common"));
 		highPassInfo.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "ExpGammaSat"));
+		highPassInfo.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "ACES"));
+		highPassInfo.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "ACES2"));
 		highPassInfo.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "Vignetting"));
 		highPassInfo.AddConstant(RHI::SConstantVarDesc(RHI::TypeFloat4, "VignetteColor"));
 
