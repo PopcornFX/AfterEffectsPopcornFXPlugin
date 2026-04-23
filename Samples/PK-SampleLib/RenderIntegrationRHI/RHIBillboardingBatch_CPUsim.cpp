@@ -122,6 +122,36 @@ static u32	_GetVertexBillboardShaderOptions(const Drawers::SBillboard_Billboardi
 
 //----------------------------------------------------------------------------
 
+static u32	_GetVertexRibbonShaderOptions(const Drawers::SRibbon_BillboardingRequest &bbRequest)
+{
+	u32	shaderOptions = Option_VertexPassThrough | Option_RibbonVertexBillboarding;
+
+	// Here, we set some flags to know which shader we should use to billboard those particles.
+	// We need that so PK-SampleLib's render loop avoids re-creating the shaders each time the billboarding mode changes:
+	// The renderer cache contains the geometry shaders for ALL billboarding mode and we choose between those depending on "m_ShaderOptions"
+
+	switch (bbRequest.m_Mode)
+	{
+	case	RibbonMode_ViewposAligned:
+		break;
+	case	RibbonMode_NormalAxisAligned:
+	case	RibbonMode_SideAxisAligned:
+	case	RibbonMode_SideAxisAlignedTube: // TODO: implem shader options for tube & multi-planes like capsules.
+	case	RibbonMode_SideAxisAlignedMultiPlane:
+		shaderOptions |= Option_Axis_C1;
+		break;
+	default:
+		PK_ASSERT_NOT_REACHED();
+		return 0;
+		break;
+	}
+	//if (needGPUSort)
+	//	shaderOptions |= Option_GPUSort;
+	return shaderOptions;
+}
+
+//----------------------------------------------------------------------------
+
 static bool	_CreateOrResizeGpuBufferIf(const RHI::SRHIResourceInfos &infos, bool condition, const RHI::PApiManager &manager, SGpuBuffer &buffer, RHI::EBufferType type, u32 sizeToAlloc, u32 requiredSize)
 {
 	PK_ASSERT(sizeToAlloc >= requiredSize);
@@ -1977,6 +2007,547 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
 	}
 #endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+//
+// CRHIRendererBatch_Ribbon_VertexBB
+//
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::Setup(const CRendererDataBase *renderer, const CParticleRenderMedium *owner, const CFrameCollector *fc, const CStringId &storageClass)
+{
+	if (!CRendererBatchJobs_Ribbon_GPUBB::Setup(renderer, owner, fc, storageClass))
+		return false;
+
+	const CRendererDataRibbon				*ribbonRenderer = static_cast<const CRendererDataRibbon*>(renderer);
+	const SRibbonRendererDeclaration		&decl = ribbonRenderer->m_RendererDeclaration;
+
+	// Right now, tubes & multi-plane ribbons are not batched with other billboarding modes
+	const ERibbonMode		bbMode = decl.GetPropertyValue_Enum<ERibbonMode>(BasicRendererProperties::SID_BillboardingMode(), RibbonMode_ViewposAligned);
+	m_MultiPlanesDC = bbMode == PopcornFX::RibbonMode_SideAxisAlignedMultiPlane;
+	m_TubesDC = bbMode == PopcornFX::RibbonMode_SideAxisAlignedTube;
+	if (bbMode == RibbonMode_SideAxisAlignedTube)
+	{
+		m_ParticleQuadCount = decl.GetPropertyValue_I1(BasicRendererProperties::SID_GeometryRibbon_SegmentCount(), 8);
+	}
+	else if (bbMode == RibbonMode_SideAxisAlignedMultiPlane)
+	{
+		m_ParticleQuadCount = decl.GetPropertyValue_I1(BasicRendererProperties::SID_GeometryRibbon_PlaneCount(), 2);
+	}
+	else // 2D ribbons, only one quad.
+	{
+		m_ParticleQuadCount = 1;
+	}
+
+	// Setup additional fields:
+	// The additional fields are supposed to be the same for all renderers in a batch.
+	// If not, then you can recompute then on the "Bind()" method.
+
+	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
+	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+
+	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
+		return false;
+
+	for (u32 i = 0; i < additionalFieldsCount; ++i)
+	{
+		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
+	}
+
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::AreRenderersCompatible(const CRendererDataBase *rendererA, const CRendererDataBase *rendererB) const
+{
+	return	CRendererBatchJobs_Ribbon_GPUBB::AreRenderersCompatible(rendererA, rendererB) &&
+			AreBillboardingBatchable(rendererA->m_RendererCache, rendererB->m_RendererCache);
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::AllocBuffers(SRenderContext &ctx)
+{
+	(void)ctx;
+
+	const u32		totalParticleCount = m_BB_Ribbon.TotalParticleCount();
+	const u32		totalParticleCountAligned = Mem::Align<0x100>(totalParticleCount);
+	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
+
+	if (!m_Initialized)
+		m_Initialized = _InitStaticBuffers();
+	if (!m_Initialized)
+		return false;
+
+	// Indices (for sorting)
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Indices Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_Indices) != 0, m_ApiManager, m_Indices, RHI::RawBuffer, totalParticleCountAligned * sizeof(u32), totalParticleCount * sizeof(u32)))
+		return false;
+	const u32	generatedViewCount = toGenerate.m_PerViewGeneratedInputs.Count();
+	if (!m_PerViewIndicesBuffers.Resize(generatedViewCount))
+		return false;
+	for (u32 i = 0; i < generatedViewCount; ++i)
+	{
+		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("View Sorted Indices Buffer"), (toGenerate.m_PerViewGeneratedInputs[i].m_GeneratedInputs & Drawers::GenInput_Indices) != 0, m_ApiManager, m_PerViewIndicesBuffers[i], RHI::RawBuffer, totalParticleCountAligned * sizeof(u32), totalParticleCount * sizeof(u32)))
+			return false;
+	}
+
+	// Geometry particle stream
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Positions Buffer"), true, m_ApiManager, m_Positions, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat4), totalParticleCount * sizeof(CFloat4)))
+		return false;
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Sizes Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticleSize) != 0, m_ApiManager, m_Sizes, RHI::RawBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
+		return false;
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Axis0s Buffer"), (toGenerate.m_GeneratedInputs & Drawers::GenInput_ParticleAxis0) != 0, m_ApiManager, m_Axis0s, RHI::RawBuffer, totalParticleCountAligned * sizeof(CFloat3), totalParticleCount * sizeof(CFloat3)))
+		return false;
+
+	// Ribbon connectivity
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Ribbon Connectivity Buffer"), true, m_ApiManager, m_RibbonConnectivity, RHI::RawBuffer, totalParticleCountAligned * sizeof(CInt3), totalParticleCount * sizeof(CInt3)))
+		return false;
+
+	// Constant buffer filled by CPU task, will contain simple contants per draw request (normals bending factor, ...)
+	// Each vertex position 0 will contain its associated draw request ID in position's W component (See sample vertex shader for more detail)
+	PK_STATIC_ASSERT(sizeof(Drawers::SBillboardDrawRequest) == sizeof(CFloat4));
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Billboard DrawRequests Buffer"), true, m_ApiManager, m_DrawRequests, RHI::ConstantBuffer, kMaxGeomDrawRequestCount * sizeof(Drawers::SBillboardDrawRequest), kMaxGeomDrawRequestCount * sizeof(Drawers::SBillboardDrawRequest)))
+		return false;
+
+	if (!m_AdditionalFieldsBatch.AllocBuffers(totalParticleCount, m_ApiManager, RHI::RawBuffer))
+		return false;
+
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+	if (ctxEditor.Selection().HasParticlesSelected())
+	{
+		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Selection Vertex Buffer"), true, m_ApiManager, m_IsParticleSelected, RHI::RawBuffer, totalParticleCountAligned * sizeof(float), totalParticleCount * sizeof(float)))
+			return false;
+	}
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::MapBuffers(SRenderContext &ctx)
+{
+	(void)ctx;
+	const u32		totalParticleCount = m_BB_Ribbon.TotalParticleCount();
+	const auto		&toMap = m_DrawPass->m_ToGenerate;
+
+	if (toMap.m_GeneratedInputs & Drawers::GenInput_ParticlePosition)
+	{
+		PK_ASSERT(m_Positions.Used());
+		void	*mappedValue = m_ApiManager->MapCpuView(m_Positions.m_Buffer, 0, totalParticleCount * sizeof(CFloat4));
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_CopyBillboardingStreams.m_PositionsDrIds = TMemoryView<Drawers::SVertex_PositionDrId>(static_cast<Drawers::SVertex_PositionDrId*>(mappedValue), totalParticleCount);
+	}
+	if (toMap.m_GeneratedInputs & Drawers::GenInput_ParticleSize)
+	{
+		PK_ASSERT(m_Sizes.Used());
+		void	*mappedValue = m_ApiManager->MapCpuView(m_Sizes.m_Buffer, 0, totalParticleCount * sizeof(float));
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_CopyBillboardingStreams.m_Widths = TMemoryView<float>(static_cast<float*>(mappedValue), totalParticleCount);
+	}
+	if (toMap.m_GeneratedInputs & Drawers::GenInput_ParticleAxis0)
+	{
+		PK_ASSERT(m_Axis0s.Used());
+		void	*mappedValue = m_ApiManager->MapCpuView(m_Axis0s.m_Buffer, 0, totalParticleCount * sizeof(CFloat3));
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_CopyBillboardingStreams.m_Axis0 = TMemoryView<CFloat3>(static_cast<CFloat3*>(mappedValue), totalParticleCount);
+	}
+
+	{
+		PK_ASSERT(m_DrawRequests.Used());
+		void	*mappedDrawRequests = m_ApiManager->MapCpuView(m_DrawRequests.m_Buffer, 0, kMaxGeomDrawRequestCount * sizeof(Drawers::SBillboardDrawRequest));
+		if (!PK_VERIFY(mappedDrawRequests != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_DrawRequests.m_GPUDrawRequests = TMemoryView<Drawers::SRibbonDrawRequest>(static_cast<Drawers::SRibbonDrawRequest*>(mappedDrawRequests), kMaxGeomDrawRequestCount);
+	}
+
+	if (toMap.m_GeneratedInputs & Drawers::GenInput_Indices)
+	{
+		PK_ASSERT(m_Indices.Used());
+		void	*mappedValue = m_ApiManager->MapCpuView(m_Indices.m_Buffer, 0, totalParticleCount * sizeof(u32));
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_Indices.m_IndexStream.Setup(mappedValue, totalParticleCount, true);
+	}
+	PK_ASSERT(m_PerViewIndicesBuffers.Count() == m_BBJobs_Ribbon.m_PerView.Count());
+	for (u32 i = 0; i < m_PerViewIndicesBuffers.Count(); ++i)
+	{
+		const u32	viewGeneratedInputs = toMap.m_PerViewGeneratedInputs[i].m_GeneratedInputs;
+		if (viewGeneratedInputs & Drawers::GenInput_Indices)
+		{
+			void	*mappedValue = m_ApiManager->MapCpuView(m_PerViewIndicesBuffers[i].m_Buffer, 0, totalParticleCount * sizeof(u32));
+			if (!PK_VERIFY(mappedValue != null))
+				return false;
+			m_BBJobs_Ribbon.m_PerView[i].m_Exec_Indices.m_IndexStream.Setup(mappedValue, totalParticleCount, true);
+		}
+	}
+
+	{
+		PK_ASSERT(m_RibbonConnectivity.Used());
+		void	*mappedValue = m_ApiManager->MapCpuView(m_RibbonConnectivity.m_Buffer, 0, totalParticleCount * sizeof(CInt3));
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Connectivity = TMemoryView<CInt3>(static_cast<CInt3*>(mappedValue), totalParticleCount);
+		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Positions = TStridedMemoryView<CFloat3, 16>(static_cast<CFloat3*>(null), totalParticleCount, 16); // Hack FIXME.
+	}
+
+	if (!m_AdditionalFieldsBatch.MapBuffers(totalParticleCount, m_ApiManager))
+		return false;
+	m_BBJobs_Ribbon.m_Exec_CopyAdditionalFields.m_FieldsToCopy = m_AdditionalFieldsBatch.m_MappedFields;
+
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+	if (ctxEditor.Selection().HasParticlesSelected())
+	{
+	}
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::LaunchCustomTasks(SRenderContext &ctx)
+{
+	(void)ctx;
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+	if (ctxEditor.Selection().HasParticlesSelected())
+	{
+	}
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::UnmapBuffers(SRenderContext &ctx)
+{
+	(void)ctx;
+
+	m_Positions.UnmapIFN(m_ApiManager);
+	m_Sizes.UnmapIFN(m_ApiManager);
+	m_Axis0s.UnmapIFN(m_ApiManager);
+
+	m_DrawRequests.UnmapIFN(m_ApiManager);
+
+	m_RibbonConnectivity.UnmapIFN(m_ApiManager);
+
+	m_Indices.UnmapIFN(m_ApiManager);
+	for (auto &buffer : m_PerViewIndicesBuffers)
+		buffer.UnmapIFN(m_ApiManager);
+
+	m_AdditionalFieldsBatch.UnmapBuffers(m_ApiManager);
+
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+	m_IsParticleSelected.UnmapIFN(m_ApiManager);
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::EmitDrawCall(SRenderContext &ctx, const SDrawCallDesc &toEmit)
+{
+	SRHIRenderContext	&renderContext = static_cast<SRHIRenderContext&>(ctx);
+
+	// No need to iterate on all draw requests, just take the first as reference as they wouldn't have been batched if not compatible
+	CRendererCacheInstance_UpdateThread	*refCacheInstance = static_cast<CRendererCacheInstance_UpdateThread*>(toEmit.m_RendererCaches.First().Get());
+	if (!PK_VERIFY(refCacheInstance != null))
+		return false;
+
+	PKSample::PCRendererCacheInstance	rCacheInstance = refCacheInstance->RenderThread_GetCacheInstance();
+	if (!PK_VERIFY(rCacheInstance != null))
+		return false;
+
+	const Drawers::SRibbon_DrawRequest	*dr = static_cast<const Drawers::SRibbon_DrawRequest*>(toEmit.m_DrawRequests.First());
+	const u32	shaderOptions = _GetVertexRibbonShaderOptions(dr->m_BB);
+
+	if (!PK_VERIFY(renderContext.m_DrawOutputs.m_DrawCalls.PushBack().Valid()))
+	{
+		CLog::Log(PK_ERROR, "Failed to create a draw-call");
+		return false;
+	}
+	SRHIDrawCall	&outDrawCall = renderContext.m_DrawOutputs.m_DrawCalls.Last();
+
+	outDrawCall.m_Batch = this;
+	outDrawCall.m_RendererCacheInstance = refCacheInstance;
+	outDrawCall.m_Type = SRHIDrawCall::DrawCall_IndexedInstanced;
+	outDrawCall.m_ShaderOptions = shaderOptions;
+	outDrawCall.m_RendererType = Renderer_Ribbon;
+
+	outDrawCall.m_IndexOffset = 0;
+	outDrawCall.m_VertexCount = m_ParticleQuadCount * 4;
+	outDrawCall.m_IndexCount = m_ParticleQuadCount * 6;
+	outDrawCall.m_InstanceCount = toEmit.m_TotalParticleCount;
+	outDrawCall.m_IndexSize = RHI::IndexBuffer16Bit;
+	outDrawCall.m_IndexBuffer = m_DrawIndices.m_Buffer;
+
+	// Some meta-data (the Editor uses them)
+	{
+		outDrawCall.m_BBox = toEmit.m_BBox;
+		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
+		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+
+		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
+								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
+	}
+
+	// A single vertex buffer is used for the instanced draw: the texcoords buffer, contains the direction in which vertices should be expanded
+	PK_ASSERT(m_TexCoords.Used());
+	if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_TexCoords.m_Buffer).Valid()))
+		return false;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
+
+	// GPUBillboardPushConstants
+	if (!PK_VERIFY(outDrawCall.m_PushConstants.PushBack().Valid()))
+		return false;
+	u32		&indexOffset = *reinterpret_cast<u32*>(&outDrawCall.m_PushConstants.Last());
+	indexOffset = toEmit.m_IndexOffset; // == instanceOffset
+
+	// Fill the constant-set with all SRVs
+	// TODO: update the constant-set only when buffers have been resized/changed.
+	{
+		u32 i = 0;
+
+		// TODO: We only support a single view right now
+		SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
+		PK_ASSERT(indices.Used());
+		if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(indices.m_Buffer, i++)))
+			return false;
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indices] = indices.m_Buffer;
+
+		if (m_Positions.Used())
+		{
+			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Positions.m_Buffer, i++)))
+				return false;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_Positions.m_Buffer;
+		}
+
+		if (m_RibbonConnectivity.Used())
+		{
+			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_RibbonConnectivity.m_Buffer, i++)))
+				return false;
+		}
+
+		if (m_Sizes.Used())
+		{
+			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Sizes.m_Buffer, i++)))
+				return false;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_Sizes.m_Buffer;
+		}
+
+		if (m_Axis0s.Used())
+		{
+			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Axis0s.m_Buffer, i++)))
+				return false;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_Axis0s.m_Buffer;
+		}
+
+		outDrawCall.m_UBSemanticsPtr[SRHIDrawCall::UBSemantic_GPUBillboard] = m_DrawRequests.m_Buffer;
+
+		if (m_ColorStreamIdx.Valid())
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
+		for (SAdditionalInputs &addField : m_AdditionalFieldsBatch.m_Fields)
+		{
+			if (!addField.m_Buffer.Used())
+				continue;
+			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(addField.m_Buffer.m_Buffer, i++)))
+				return false;
+		}
+
+		m_VertexBBSimDataConstantSet->UpdateConstantValues();
+	}
+	outDrawCall.m_GPUStorageSimDataConstantSet = m_VertexBBSimDataConstantSet;
+
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+	if (ctxEditor.Selection().HasParticlesSelected())
+	{
+		if (m_SelectionConstantSet != null)
+		{
+			m_SelectionConstantSet->SetConstants(m_IsParticleSelected.m_Buffer, 0);
+			m_SelectionConstantSet->UpdateConstantValues();
+		}
+		outDrawCall.m_SelectionConstantSet = m_SelectionConstantSet;
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = m_IsParticleSelected.m_Buffer;
+	}
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+
+bool	CRHIRendererBatch_Ribbon_VertexBB::_InitStaticBuffers()
+{
+	// Index buffer
+	// RHI currently doesn't support DrawInstanced (without indices)
+	{
+		const u16	indexCount = m_ParticleQuadCount * 6;
+		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("VertexBB Draw Indices Buffer"), true, m_ApiManager, m_DrawIndices, RHI::IndexBuffer, indexCount * sizeof(u16), indexCount * sizeof(u16)))
+			return false;
+		volatile u16	*indices = static_cast<u16*>(m_ApiManager->MapCpuView(m_DrawIndices.m_Buffer, 0, indexCount * sizeof(u16)));
+		if (!PK_VERIFY(indices != null))
+			return false;
+		if (m_TubesDC)
+		{
+			// Filling tube indices.
+			const u16	segmentCount = m_ParticleQuadCount;
+			// This is the index pattern of a tube single quad.
+			const u16	pattern[6] = { 0, 1, (u16)(segmentCount+1), (u16)(segmentCount+1), 1, (u16)(segmentCount+2) };
+
+			for (u16 i = 0; i < segmentCount; ++i)
+			{
+				indices[0] = pattern[0] + i;
+				indices[1] = pattern[1] + i;
+				indices[2] = pattern[2] + i;
+				indices[3] = pattern[3] + i;
+				indices[4] = pattern[4] + i;
+				indices[5] = pattern[5] + i;
+				indices += 6;
+			}
+		}
+		else if (m_MultiPlanesDC)
+		{
+			// Filling multi-plane indices.
+			const u16	planeCount = m_ParticleQuadCount;
+			// This is the index pattern of a plane quad.
+			const u16	pattern[6] = { 1 , (u16)(planeCount*2+1), 0, (u16)(planeCount*2), (u16)(planeCount*2+1), 1 };
+
+			for (u16 i = 0; i < planeCount * 2; i += 2)
+			{
+				indices[0] = pattern[0] + i;
+				indices[1] = pattern[1] + i;
+				indices[2] = pattern[2] + i;
+				indices[3] = pattern[3] + i;
+				indices[4] = pattern[4] + i;
+				indices[5] = pattern[5] + i;
+				indices += 6;
+			}
+		}
+		else
+		{
+			indices[0] = 1;
+			indices[1] = 3;
+			indices[2] = 0;
+			indices[3] = 2;
+			indices[4] = 3;
+			indices[5] = 1;
+		}
+		m_DrawIndices.Unmap(m_ApiManager);
+	}
+
+	// TexCoords buffer
+	{
+		u32	uvCount = 4;
+		if (m_TubesDC) // Tube vertex count
+			uvCount = (m_ParticleQuadCount + 1) * 2;
+		else if (m_MultiPlanesDC) // Multi-Plane vertex count
+			uvCount = m_ParticleQuadCount * 4;
+		if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("VertexBB Texcoords Buffer"), true, m_ApiManager, m_TexCoords, RHI::VertexBuffer, uvCount * sizeof(CFloat2), uvCount * sizeof(CFloat2)))
+			return false;
+		volatile float	*texCoords = static_cast<float*>(m_ApiManager->MapCpuView(m_TexCoords.m_Buffer, 0, uvCount * sizeof(CFloat2)));
+		if (!PK_VERIFY(texCoords != null))
+			return false;
+		if (m_MultiPlanesDC)
+		{
+			for (u32 planeId = 1; planeId <= m_ParticleQuadCount; ++planeId)
+			{
+				texCoords[0] = -1.0f * planeId;	// Lower left corner
+				texCoords[1] = -1.0f;
+				texCoords[2] = -1.0f * planeId;	// Lower right corner
+				texCoords[3] = 1.0f;
+				texCoords += 4;
+			}
+
+			for (u32 planeId = 1; planeId <= m_ParticleQuadCount; ++planeId)
+			{
+				texCoords[0] = 1.0f * planeId;	// Upper right corner
+				texCoords[1] = 1.0f;
+				texCoords[2] = 1.0f * planeId;	// Upper left corner
+				texCoords[3] = -1.0f;
+				texCoords += 4;
+			}
+		}
+		if (m_TubesDC)
+		{
+			float		v = -1.0f;
+			const float	vStep = 2.0f / m_ParticleQuadCount;
+			for (u32 segmentId = 1; segmentId <= m_ParticleQuadCount + 1; ++segmentId)
+			{
+				texCoords[0] = -1.0f * segmentId;	// Lower corner
+				texCoords[1] = v;
+				texCoords += 2;
+				v += vStep;
+			}
+			v = -1.0f;
+			for (u32 segmentId = 1; segmentId <= m_ParticleQuadCount + 1; ++segmentId)
+			{
+				texCoords[0] = 1.0f * segmentId;	// Upper corner
+				texCoords[1] = v;
+				texCoords += 2;
+				v += vStep;
+			}
+		}
+		else
+		{
+			texCoords[0] = -1.0f; // Lower left corner
+			texCoords[1] = -1.0f;
+			texCoords[2] = -1.0f; // Upper left corner
+			texCoords[3] = 1.0f;
+			texCoords[4] = 1.0f; // Upper right corner
+			texCoords[5] = 1.0f;
+			texCoords[6] = 1.0f; // Lower right corner
+			texCoords[7] = -1.0f;
+		}
+		m_TexCoords.Unmap(m_ApiManager);
+	}
+
+	// Constant-Set
+	{
+		CRendererCacheInstance_UpdateThread		*renderCacheInstance = static_cast<CRendererCacheInstance_UpdateThread*>(m_DrawPass->m_RendererCaches.First().Get());
+		PK_ASSERT(renderCacheInstance != null);
+		const PCRendererCacheInstance	cacheInstance = renderCacheInstance->RenderThread_GetCacheInstance();
+		if (cacheInstance == null)
+			return false;
+
+		const Drawers::SRibbon_DrawRequest			*dr = static_cast<const Drawers::SRibbon_DrawRequest*>(m_DrawPass->m_DrawRequests.First());
+		const Drawers::SRibbon_BillboardingRequest	&bbRequest = dr->m_BB;
+		const u32				shaderOptions = _GetVertexRibbonShaderOptions(bbRequest);
+
+		const RHI::SConstantSetLayout	*simDataConstantSetLayout = null;
+		const RHI::SConstantSetLayout	*offsetsConstantSetLayout = null;
+		if (!PK_VERIFY(cacheInstance->m_Cache->GetGPUStorageConstantSets(static_cast<PKSample::EShaderOptions>(shaderOptions), simDataConstantSetLayout, offsetsConstantSetLayout)) ||
+			!PK_VERIFY(simDataConstantSetLayout != null) ||
+			simDataConstantSetLayout->m_Constants.Empty())
+			return false;
+
+		m_VertexBBSimDataConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Sim Data Constant Set"), *simDataConstantSetLayout);
+		if (!PK_VERIFY(m_VertexBBSimDataConstantSet != null))
+			return false;
+	}
+
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+	{
+		RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
+		selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
+		m_SelectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
+	}
+#endif
 
 	return true;
 }
