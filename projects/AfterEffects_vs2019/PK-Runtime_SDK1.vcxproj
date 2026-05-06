@@ -79,7 +79,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
-      <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4701;4709;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Debug\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -106,7 +106,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
-      <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4701;4709;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Release\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -139,7 +139,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
-      <DisableSpecificWarnings>4701;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4701;4709;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4002;4003;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <PreprocessorDefinitions>NDEBUG;PK_RETAIL;_CRT_SECURE_NO_WARNINGS;PK_PARTICLES_UPDATER_USE_D3D11=1;PK_COMPILER_BUILD_COMPILER_D3D11=1;PK_PARTICLES_UPDATER_USE_D3D12=1;PK_COMPILER_BUILD_COMPILER_D3D12=1;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\ExternalLibs\Runtime;..\..\ExternalLibs\Runtime\include;..\..\ExternalLibs\Runtime\include\license\AfterEffects;..\..\ExternalLibs\Runtime\pk_maths\src;..\..\ExternalLibs\Runtime\pk_maths;..\..\ExternalLibs\Runtime\pk_toolkit;..\..\ExternalLibs\Runtime\pk_toolkit\src\include;..\..\ExternalLibs\Runtime\pk_kernel;..\..\ExternalLibs\Runtime\pk_imaging;..\..\ExternalLibs\Runtime\pk_base_object\src;..\..\ExternalLibs\Runtime\pk_base_object\src\precompiled;..\..\ExternalLibs\Runtime\pk_compiler\src;..\..\ExternalLibs\Runtime\pk_compiler\src\precompiled;..\..\ExternalLibs\Runtime\pk_engine_utils\src\precompiled;..\..\ExternalLibs\Runtime\pk_geometrics;..\..\ExternalLibs\Runtime\pk_particles\src;..\intermediate\AfterEffects\VC142\x64\Retail\PK-Runtime_SDK1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
