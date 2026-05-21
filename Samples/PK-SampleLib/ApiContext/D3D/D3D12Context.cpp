@@ -19,13 +19,8 @@
 #	include <d3d12.h>
 #pragma warning(pop)
 
-#if (PK_PARTICLES_UPDATER_USE_D3D12U != 0 || PK_COMPILER_BUILD_COMPILER_D3D12U != 0)
-extern "C" { __declspec(dllexport) extern const unsigned int D3D12SDKVersion = 615;}
-
-extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
-#endif
-
 #include <dxgi1_6.h>
+#include <sdkddkver.h>
 
 #include <WindowContext/SdlContext/SdlContext.h>
 
@@ -139,6 +134,10 @@ struct	SD3D12PlatformContext
 {
 	IDXGIFactory4			*m_Factory;
 	IDXGIAdapter1			*m_HardwareAdapter;
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+	ID3D12SDKConfiguration1	*m_SDKConfiguration1;
+	ID3D12DeviceFactory		*m_DeviceFactory;
+#endif
 
 	TArray<CD3D12SwapChain*>	m_SwapChains;
 
@@ -146,7 +145,12 @@ struct	SD3D12PlatformContext
 	IDXGIDebug1				*m_Debug;
 #endif
 
+
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+	PFN_D3D12_GET_INTERFACE			m_GetInterfaceFunc;
+#else
 	PFN_D3D12_CREATE_DEVICE			m_CreateDeviceFunc;
+#endif
 	PFN_D3D12_GET_DEBUG_INTERFACE	m_GetDebugInterfaceFunc;
 	HMODULE							m_D3DModule;
 	HMODULE							m_DXGIModule;
@@ -154,6 +158,10 @@ struct	SD3D12PlatformContext
 	SD3D12PlatformContext()
 	:	m_Factory(null)
 	,	m_HardwareAdapter(null)
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+	,	m_SDKConfiguration1(null)
+	,	m_DeviceFactory(null)
+#endif
 #if (USE_DEBUG_DXGI != 0)
 	,	m_Debug(null)
 #endif
@@ -168,6 +176,12 @@ struct	SD3D12PlatformContext
 			m_Factory->Release();
 		if (m_HardwareAdapter != null)
 			m_HardwareAdapter->Release();
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+		if (m_SDKConfiguration1 != null)
+			m_SDKConfiguration1->Release();
+		if (m_DeviceFactory != null)
+			m_DeviceFactory->Release();
+#endif
 
 #if (USE_DEBUG_DXGI != 0)
 		if (m_Debug != null)
@@ -287,11 +301,19 @@ bool	CD3D12Context::LoadDynamicLibrary()
 	if (m_Context->m_DXGIModule == null)
 		return false;
 
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+	m_Context->m_GetInterfaceFunc = (PFN_D3D12_GET_INTERFACE)::GetProcAddress(m_Context->m_D3DModule, "D3D12GetInterface");
+#else
 	m_Context->m_CreateDeviceFunc = (PFN_D3D12_CREATE_DEVICE)::GetProcAddress(m_Context->m_D3DModule, "D3D12CreateDevice");
+#endif
 	m_Context->m_GetDebugInterfaceFunc = (PFN_D3D12_GET_DEBUG_INTERFACE)::GetProcAddress(m_Context->m_D3DModule, "D3D12GetDebugInterface");
 	m_ApiData.m_SerializeRootSignatureFunc = (PFN_D3D12_SERIALIZE_ROOT_SIGNATURE)::GetProcAddress(m_Context->m_D3DModule, "D3D12SerializeRootSignature");
 
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+	return	m_Context->m_GetInterfaceFunc != null &&
+#else
 	return	m_Context->m_CreateDeviceFunc != null &&
+#endif
 			m_Context->m_GetDebugInterfaceFunc != null &&
 			m_ApiData.m_SerializeRootSignatureFunc != null;
 }
@@ -454,11 +476,8 @@ bool	CD3D12Context::EndFrame(u32 swapchainIdx)
 		if (S_OK == m_ApiData.m_Device->QueryInterface(IID_PPV_ARGS(&dred)))
 		{
 			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 DredAutoBreadcrumbsOutput;
-			D3D12_DRED_PAGE_FAULT_OUTPUT1 DredPageFaultOutput;
-			dred->GetAutoBreadcrumbsOutput1(&DredAutoBreadcrumbsOutput);
-			dred->GetPageFaultAllocationOutput1(&DredPageFaultOutput);
-
-			const D3D12_AUTO_BREADCRUMB_NODE1 * node = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
+			const HRESULT retBC = dred->GetAutoBreadcrumbsOutput1(&DredAutoBreadcrumbsOutput);
+			const D3D12_AUTO_BREADCRUMB_NODE1 * node = (retBC == S_OK ) ? DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode : null;
 			CLog::Log(PK_DBG, "AUTO BREADCRUMNS:");
 			while (node != null)
 			{
@@ -565,13 +584,29 @@ bool	CD3D12Context::EnableDebugLayer()
 bool	CD3D12Context::CreateDevice(bool debug)
 {
 	(void)debug;
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+	if (!PK_D3D_OK(m_Context->m_GetInterfaceFunc(CLSID_D3D12SDKConfiguration, IID_PPV_ARGS(&m_Context->m_SDKConfiguration1))))
+	{
+		CLog::Log(PK_ERROR, "D3D12: Couldn't get SDK configuration");
+		return false;
+	}
+	if (!PK_D3D_OK(m_Context->m_SDKConfiguration1->CreateDeviceFactory(615, u8".\\D3D12\\", IID_PPV_ARGS(&m_Context->m_DeviceFactory))))
+	{
+		CLog::Log(PK_ERROR, "D3D12: Couldn't create device factory");
+		return false;
+	}
+#endif
 	if (!PickHardwareAdapter())
 	{
 		CLog::Log(PK_ERROR, "D3D12: Couldn't pick hardware adapter");
 		return false;
 	}
 
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+	if (!PK_D3D_OK(m_Context->m_DeviceFactory->CreateDevice(m_Context->m_HardwareAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_ApiData.m_Device))))
+#else
 	if (!PK_D3D_OK(m_Context->m_CreateDeviceFunc(m_Context->m_HardwareAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_ApiData.m_Device))))
+#endif
 	{
 		CLog::Log(PK_ERROR, "D3D12: Couldn't create device");
 		return false;
@@ -596,7 +631,11 @@ bool	CD3D12Context::CreateDevice(bool debug)
 	{
 		m_ApiData.m_Device->Release();
 		m_ApiData.m_Device = null;
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+		if (!PK_D3D_OK(m_Context->m_DeviceFactory->CreateDevice(m_Context->m_HardwareAdapter, levelFeature.MaxSupportedFeatureLevel, IID_PPV_ARGS(&m_ApiData.m_Device))))
+#else
 		if (!PK_D3D_OK(m_Context->m_CreateDeviceFunc(m_Context->m_HardwareAdapter, levelFeature.MaxSupportedFeatureLevel, IID_PPV_ARGS(&m_ApiData.m_Device))))
+#endif
 		{
 			PK_ASSERT_NOT_REACHED_MESSAGE("Internal error when creating d3d12 device.");
 			return false;
@@ -680,7 +719,11 @@ bool	CD3D12Context::PickHardwareAdapter()
 
 		// Check to see if the adapter supports Direct3D 12, but don't create the
 		// actual device yet.
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+		if (SUCCEEDED(m_Context->m_DeviceFactory->CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), null)))
+#else
 		if (SUCCEEDED(m_Context->m_CreateDeviceFunc(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), null)))
+#endif
 		{
 			return true;
 		}
@@ -703,7 +746,11 @@ bool	CD3D12Context::PickHardwareAdapter()
 
 		// Check to see if the adapter supports Direct3D 12, but don't create the
 		// actual device yet.
+#if defined(NTDDI_WIN10_FE) && WDK_NTDDI_VERSION >= NTDDI_WIN10_FE
+		if (SUCCEEDED(m_Context->m_DeviceFactory->CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), null)))
+#else
 		if (SUCCEEDED(m_Context->m_CreateDeviceFunc(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), null)))
+#endif
 		{
 			return true;
 		}

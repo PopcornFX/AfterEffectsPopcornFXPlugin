@@ -17,6 +17,7 @@
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_billboard_cpu.h>
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_billboard_gpu.h>
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_ribbon_cpu.h>
+#include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_ribbon_gpu.h>
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_mesh_cpu.h>
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_decal_cpu.h>
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_triangle_cpu.h>
@@ -240,6 +241,59 @@ private:
 };
 
 //----------------------------------------------------------------------------
+
+class	CRHIRendererBatch_Ribbon_VertexBB : public CRendererBatchJobs_Ribbon_GPUBB
+{
+public:
+	CRHIRendererBatch_Ribbon_VertexBB(RHI::PApiManager apiManager) : m_ApiManager(apiManager) { }
+
+	virtual bool	Setup(const CRendererDataBase *renderer, const CParticleRenderMedium *owner, const CFrameCollector *fc, const CStringId &storageClass) override;
+	virtual bool	AreRenderersCompatible(const CRendererDataBase *rendererA, const CRendererDataBase *rendererB) const override;
+
+	virtual bool	AllocBuffers(SRenderContext &ctx) override;
+	virtual bool	MapBuffers(SRenderContext &ctx) override;
+	virtual bool	LaunchCustomTasks(SRenderContext &ctx) override;
+	virtual bool	UnmapBuffers(SRenderContext &ctx) override;
+
+	virtual bool	EmitDrawCall(SRenderContext &ctx, const SDrawCallDesc &toEmit) override;
+
+private:
+	RHI::PApiManager		m_ApiManager;
+
+	SGpuBuffer				m_Indices; // Generated indices for sorted particles
+	TArray<SGpuBuffer>		m_PerViewIndicesBuffers;
+
+	SGpuBuffer				m_DrawRequests;	// Draw requests buffer, for draw calls batching
+
+	SGpuBuffer				m_Positions;
+	SGpuBuffer				m_Sizes;
+	SGpuBuffer				m_Axis0s;
+
+	SGpuBuffer				m_RibbonConnectivity;
+
+	RHI::PConstantSet		m_VertexBBSimDataConstantSet; // SRVs
+
+	SRHIAdditionalFieldBatch		m_AdditionalFieldsBatch;
+	CGuid							m_ColorStreamIdx;
+
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
+	CRibbon_Exec_WireframeDiscard			m_RibbonCustomParticleSelectTask;
+	SGpuBuffer								m_IsParticleSelected;
+	RHI::PConstantSet						m_SelectionConstantSet;
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
+
+	bool			m_TubesDC = false;
+	bool			m_MultiPlanesDC = false;
+	u32				m_ParticleQuadCount = 0;
+
+	// Static buffers
+	SGpuBuffer		m_DrawIndices;	// DrawIndexed indices
+	SGpuBuffer		m_TexCoords;	// DrawIndexed texcoords
+	bool			m_Initialized = false;
+	bool			_InitStaticBuffers();
+};
+
+// -----------------------------------------------------------------------
 
 class	CRHIRendererBatch_Mesh_CPU : public CRendererBatchJobs_Mesh_CPUBB
 {
