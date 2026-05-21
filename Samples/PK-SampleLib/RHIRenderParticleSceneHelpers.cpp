@@ -2051,9 +2051,9 @@ void	CRHIParticleSceneRenderHelper::_RenderGridBackdrop(const RHI::PCommandBuffe
 	const CFloat4	smallGridColor = ConvertSRGBToLinear(m_BackdropsData.m_GridSubColor);
 
 	cmdBuff->BindRenderState(m_GridRenderState);
-	cmdBuff->BindConstantSets(TMemoryView<RHI::PConstantSet>(m_SceneInfoConstantSet));
+	cmdBuff->BindConstantSets(TMemoryView<const RHI::PConstantSet>(m_SceneInfoConstantSet));
 
-	cmdBuff->BindVertexBuffers(TMemoryView<RHI::PGpuBuffer>(m_GridVertices));
+	cmdBuff->BindVertexBuffers(TMemoryView<const RHI::PGpuBuffer>(m_GridVertices));
 	cmdBuff->BindIndexBuffer(m_GridIndices, 0, RHI::IndexBuffer16Bit);
 
 	cmdBuff->PushConstant(&smallGridColor, 0);
@@ -2323,7 +2323,7 @@ void	CRHIParticleSceneRenderHelper::_RenderBackground(const RHI::PCommandBuffer 
 	{
 		cmdBuff->BindRenderState(m_CopyBackgroundColorRenderState);
 		cmdBuff->BindVertexBuffers(m_GBuffer.m_QuadBuffers.m_VertexBuffers);
-		cmdBuff->BindConstantSets(TMemoryView<RHI::PConstantSet>(m_BackgroundTextureConstantSet));
+		cmdBuff->BindConstantSets(TMemoryView<const RHI::PConstantSet>(m_BackgroundTextureConstantSet));
 		cmdBuff->Draw(0, 6);
 	}
 	else
@@ -3130,8 +3130,8 @@ void	CRHIParticleSceneRenderHelper::_DrawDebugLines(const RHI::PCommandBuffer &c
 		}
 
 		cmdBuff->BindRenderState(renderState);
-		cmdBuff->BindConstantSets(TMemoryView<RHI::PConstantSet>(m_SceneInfoConstantSet));
-		cmdBuff->BindVertexBuffers(TMemoryView<RHI::PGpuBuffer>(&buffer.m_LinesPointsBuffer, 2));
+		cmdBuff->BindConstantSets(TMemoryView<const RHI::PConstantSet>(m_SceneInfoConstantSet));
+		cmdBuff->BindVertexBuffers(TMemoryView<const RHI::PGpuBuffer>(&buffer.m_LinesPointsBuffer, 2));
 
 		cmdBuff->Draw(0, positions.Count());
 	}

@@ -2107,7 +2107,7 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::AllocBuffers(SRenderContext &ctx)
 		return false;
 
 	// Ribbon connectivity
-	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Ribbon Connectivity Buffer"), true, m_ApiManager, m_RibbonConnectivity, RHI::RawBuffer, totalParticleCountAligned * sizeof(CInt3), totalParticleCount * sizeof(CInt3)))
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Ribbon Connectivity Buffer"), true, m_ApiManager, m_RibbonConnectivity, RHI::RawBuffer, totalParticleCountAligned * sizeof(CUint4), totalParticleCount * sizeof(CUint4)))
 		return false;
 
 	// Constant buffer filled by CPU task, will contain simple contants per draw request (normals bending factor, ...)
@@ -2195,10 +2195,10 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::MapBuffers(SRenderContext &ctx)
 
 	{
 		PK_ASSERT(m_RibbonConnectivity.Used());
-		void	*mappedValue = m_ApiManager->MapCpuView(m_RibbonConnectivity.m_Buffer, 0, totalParticleCount * sizeof(CInt3));
+		void	*mappedValue = m_ApiManager->MapCpuView(m_RibbonConnectivity.m_Buffer, 0, totalParticleCount * sizeof(CUint4));
 		if (!PK_VERIFY(mappedValue != null))
 			return false;
-		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Connectivity = TMemoryView<CInt3>(static_cast<CInt3*>(mappedValue), totalParticleCount);
+		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Connectivity = TMemoryView<CUint4>(static_cast<CUint4*>(mappedValue), totalParticleCount);
 		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Positions = TStridedMemoryView<CFloat3, 16>(static_cast<CFloat3*>(null), totalParticleCount, 16); // Hack FIXME.
 	}
 
