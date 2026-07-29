@@ -878,7 +878,7 @@ PK_NOINLINE bool	SShaderProgramKey::UpdateThread_Prepare(const SPrepareArg &args
 			// We build the shader path from compute shader name and hashed binding, as do shadertool.
 			// Ultimately, compilation will be dynamic and this will be handled by MaterialToRHI::RemapShaderPathNoExt.
 			const CDigestMD5	&computeHash = m_ShaderBindings.Hash(RHI::ComputeShaderStage);
-			char				_hashStorage[32 + 1];
+			char				_hashStorage[RHI::kShaderHashBufferLength];
 			const CString		filePath = "./Shaders/" + _GetComputeShaderPath(m_ComputeShaderType) + "." + RHI::ShaderHashToStringView(computeHash, _hashStorage);
 			SShaderModuleKey	computeModuleKey;
 			computeModuleKey.m_Path = filePath;
@@ -1203,12 +1203,10 @@ PConstantAtlas	SConstantAtlasKey::RenderThread_CreateResource(const SCreateArg &
 		return null;
 	}
 
-	const u32	atlasCount = m_SourceAtlas->m_RectsFp32.Count();
-
 	PK_ASSERT(SConstantAtlasKey::GetAtlasConstantSetLayout().m_Constants.Count() == 1);
 
+	const u32			atlasBufferByteSize = m_SourceAtlas->m_RawDataWithHeader.CoveredBytes();
 	RHI::PConstantSet	atlasConstSet = args.m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Atlas Constant Set"), GetAtlasConstantSetLayout());
-	const u32			atlasBufferByteSize = 1 * sizeof(u32) + atlasCount * sizeof(CFloat4);
 	RHI::PGpuBuffer		atlasBuffer = args.m_ApiManager->CreateGpuBuffer(RHI::SRHIResourceInfos("Atlas Buffer"), RHI::RawBuffer, atlasBufferByteSize, RHI::UsageStaticDraw);
 
 	if (atlasBuffer == null || atlasConstSet == null)
@@ -1224,11 +1222,7 @@ PConstantAtlas	SConstantAtlasKey::RenderThread_CreateResource(const SCreateArg &
 
 	{
 		void	*ptr = args.m_ApiManager->MapCpuView(atlasBuffer);
-		u32		*count = reinterpret_cast<u32*>(Mem::AdvanceRawPointer(ptr, 0));
-		*count = m_SourceAtlas->m_RectsFp32.Count();
-		CFloat4	*data = reinterpret_cast<CFloat4*>(Mem::AdvanceRawPointer(ptr, sizeof(u32)));
-		PK_ASSERT(m_SourceAtlas->m_RectsFp32.Stride() == sizeof(CFloat4));
-		Mem::Copy(data, m_SourceAtlas->m_RectsFp32.RawDataPointer(), m_SourceAtlas->m_RectsFp32.CoveredBytes());
+		Mem::Copy_Uncached(ptr, m_SourceAtlas->m_RawDataWithHeader.RawDataPointer(), m_SourceAtlas->m_RawDataWithHeader.CoveredBytes());
 		args.m_ApiManager->UnmapCpuView(atlasBuffer);
 	}
 
@@ -1538,7 +1532,7 @@ PK_NOINLINE bool	SRendererCacheKey::UpdateThread_Prepare(const SPrepareArg &args
 	} while (0)
 
 	// Gen options
-	TStaticCountedArray<EShaderOptions, 128>					options;
+	TStaticCountedArray<EShaderOptions, 256>					options;
 	// Needed compute shaders
 	TStaticCountedArray<EComputeShaderType, ComputeType_Count>	computeShaderTypes;
 
@@ -1549,7 +1543,6 @@ PK_NOINLINE bool	SRendererCacheKey::UpdateThread_Prepare(const SPrepareArg &args
 		{
 			PK_VERIFY(options.PushBack(Option_GeomBillboarding).Valid());
 			PK_VERIFY(options.PushBack(Option_GeomBillboarding | Option_Axis_C1).Valid());
-			PK_VERIFY(options.PushBack(Option_GeomBillboarding | Option_Axis_C1 | Option_Capsule).Valid());
 			PK_VERIFY(options.PushBack(Option_GeomBillboarding | Option_Axis_C2).Valid());
 #if (PK_PARTICLES_UPDATER_USE_GPU != 0)
 			MULT_OPTION(Option_GPUStorage, 0);
@@ -1574,6 +1567,7 @@ PK_NOINLINE bool	SRendererCacheKey::UpdateThread_Prepare(const SPrepareArg &args
 			PK_VERIFY(computeShaderTypes.PushBack(ComputeType_SortDownSweep).Valid());
 #endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
 			MULT_OPTION(Option_BillboardSizeFloat2, optCount);
+			MULT_OPTION(Option_Trimming, optCount);
 		}
 	}
 	else if (args.m_Renderer->m_RendererType == ERendererClass::Renderer_Triangle)
@@ -1618,6 +1612,8 @@ PK_NOINLINE bool	SRendererCacheKey::UpdateThread_Prepare(const SPrepareArg &args
 		{
 #if (PK_PARTICLES_UPDATER_USE_GPU != 0)
 			// RenderStates
+			PK_VERIFY(options.PushBack(Option_RibbonVertexBillboarding).Valid());
+			PK_VERIFY(options.PushBack(Option_RibbonVertexBillboarding | Option_Axis_C1).Valid());
 			const u32	optCount = options.Count();
 			PK_VERIFY(options.PushBack(Option_RibbonVertexBillboarding | Option_GPUStorage).Valid());
 			PK_VERIFY(options.PushBack(Option_RibbonVertexBillboarding | Option_GPUStorage | Option_Axis_C1).Valid());

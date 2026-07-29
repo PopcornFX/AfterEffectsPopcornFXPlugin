@@ -111,6 +111,7 @@ private:
 	TStaticArray<u32*, 6>		m_MappedSimStreamOffsets;
 	SRHIAdditionalFieldBatchGPU	m_AdditionalFieldsSimStreamOffsets;
 	CGuid						m_ColorStreamIdx;
+	CGuid						m_TextureIDStreamIdx;
 
 	// Sorting
 	TArray<CGPUSorter>			m_CameraGPUSorters;

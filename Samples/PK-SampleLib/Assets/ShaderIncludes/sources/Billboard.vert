@@ -20,15 +20,6 @@
 #	error config error
 #endif
 
-#if defined(VOUTPUT_fragUV1)
-#	if !defined(VOUTPUT_fragAtlasID)
-#		error "config error"
-#	endif
-#else
-#	if defined(VOUTPUT_fragAtlasID)
-#		error "config error"
-#	endif
-#endif
 #if BB_Feature_Atlas
 #	if !defined(VRESOURCE_Atlas_TextureIDsOffsets) && defined(BB_GPU_SIM)
 #		error missing TextureIDsOffsets SRV
@@ -75,6 +66,7 @@
 #	define	BB_Flag_FlipV			8U	// 4th bit
 #	define	BB_Flag_SoftAnimBlend	16U // 5th bit
 #	define	BB_Flag_FlipU			32U	// 6th bit
+#	define	BB_Flag_Rotate			64U	// 7th bit
 #endif
 
 //	DrawRequest:
@@ -192,6 +184,7 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 	const uint		billboarderType = flags & BB_Flag_BillboardMask;
 	const bool		flipU = (flags & BB_Flag_FlipU) != 0U;
 	const bool		flipV = (flags & BB_Flag_FlipV) != 0U;
+	const bool		rotateUV = (flags & BB_Flag_Rotate) != 0U;
 
 	const vec2		radius = get_radius(particleID VS_PARAMS);
 	vec3			tangent0 = vec3(0, 0, 0); // billboard side vector
@@ -208,8 +201,36 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 #	error "Missing View depth vector in SceneInfo"
 #endif
 
-	const vec2		cornerCoords = vInput.TexCoords;
-	vec2			texCoords = cornerCoords;
+	vec2		texCoords = vInput.TexCoords;
+#if	BB_Feature_Atlas
+	const uint	atlasCount = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(0));
+	const uint	maxAtlasID = atlasCount - 1;
+#		if defined(BB_GPU_SIM)
+	const float	textureID = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Atlas_TextureIDsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID));
+#		else
+	const float	textureID = LOADF(GET_RAW_BUFFER(Atlas_TextureIDs), RAW_BUFFER_INDEX(particleID));
+#		endif // defined(BB_GPU_SIM)
+
+#if	defined(HAS_Trimming)
+	const uint	trimmedVertexCount = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(1));
+	const uint	maxVertexID = trimmedVertexCount - 1;
+	// Each time we flip UVs, we need to reverse the vertex order to keep the billboard front facing.
+	// This only applies to trimming since we need to flip the vertex positions, hence affecting the triangle winding.
+	const bool	reverseOrder = (flipU != flipV) != rotateUV;
+	if (trimmedVertexCount != 0)
+	{
+		const uint	atlasID = min(uint(textureID), maxAtlasID);
+		const uint	vertexID = min(uint(vInput.VertexIndex), maxVertexID);
+		const uint	realVertexID = reverseOrder ? trimmedVertexCount - 1 - vertexID : vertexID;
+		const vec2	trimmedUV = LOADF2(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(4 + atlasCount * 4 + (atlasID * trimmedVertexCount + realVertexID) * 2));
+		texCoords = trimmedUV;
+	}
+#endif // defined(HAS_Trimming)
+
+#endif // BB_Feature_Atlas
+
+	const vec2	cornerCoords = texCoords;
+
 	switch (billboarderType)
 	{
 #if BB_ScreenAligned
@@ -336,8 +357,23 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 	tangent1 *= -1.0f; // We need to flip the y axis to get the same result as the CPU billboarders
 #endif
 
+#if	!defined(HAS_Trimming)
 	const vec3	bbCorner = tangent0 * texCoords.x + tangent1 * texCoords.y;
 	const vec3	vertexWorldPosition = worldPos + bbCorner;
+
+	if (flipU)
+		texCoords.x *= -1.0f;
+	if (flipV)
+		texCoords.y *= -1.0f;
+#else
+	const float	uFlip = flipU ? -1.0f : 1.0f;
+	const float	vFlip = flipV ? -1.0f : 1.0f;
+	if (rotateUV)
+		texCoords.xy = texCoords.yx;
+
+	const vec3	bbCorner = tangent0 * texCoords.x * uFlip + tangent1 * texCoords.y * vFlip;
+	const vec3	vertexWorldPosition = worldPos + bbCorner;
+#endif // !defined(HAS_Trimming)
 
 #if BB_AxisAlignedCapsule
 	/*	We want to remap the input texcoords that indicates the expand direction, into the texcoords:
@@ -374,10 +410,6 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 	texCoords = texCoords * 0.5f + 0.5f; // Remap corners from -1,1 to 0,1
 #endif
 
-	if (flipU)
-		texCoords.x = 1.0f - texCoords.x;
-	if (flipV)
-		texCoords.y = 1.0f - texCoords.y;
 
 #if defined(VOUTPUT_fragRawUV0)
 	vOutput.fragRawUV0 = texCoords;
@@ -386,28 +418,16 @@ void 	VertexBillboard(IN(SVertexInput) vInput, INOUT(SVertexOutput) vOutput, uin
 #if	defined(VOUTPUT_fragUV0)
 #	if BB_Feature_Atlas
 
-	const uint	maxAtlasID = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(0)) - 1U;
-	
-#		if defined(BB_GPU_SIM)
-	const float	textureID = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Atlas_TextureIDsOffsets), RAW_BUFFER_INDEX(storageId)) + RAW_BUFFER_INDEX(particleID));
-#		else
-	const float	textureID = LOADF(GET_RAW_BUFFER(Atlas_TextureIDs), RAW_BUFFER_INDEX(particleID));
-#		endif // defined(BB_GPU_SIM)
-
 	const uint	atlasID0 = min(uint(textureID), maxAtlasID);
-	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 1));
+	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 4));
 
 	vOutput.fragUV0 = texCoords * rect0.xy + rect0.zw;
 
 #		if defined (VOUTPUT_fragUV1)
 	const uint	atlasID1 = min(atlasID0 + 1U, maxAtlasID);
-	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 1));
+	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 4));
 
 	vOutput.fragUV1 = texCoords * rect1.xy + rect1.zw;
-
-	// To be removed in future PopcornFX versions. We already output vOutput.fragAtlas_TextureID generated
-	// from additional inputs. This line generates a driver bug on nvidia cards if the "+ 0.00001f" isn't added.
-	vOutput.fragAtlasID = textureID + 0.00001f;
 
 #		endif
 #	else

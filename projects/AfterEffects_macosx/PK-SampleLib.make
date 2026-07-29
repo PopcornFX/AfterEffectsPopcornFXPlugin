@@ -106,7 +106,6 @@ GENERATED += $(OBJDIR)/EditorShaderDefinitions.o
 GENERATED += $(OBJDIR)/EnvironmentMapEntity.o
 GENERATED += $(OBJDIR)/FModBillboardingBatchPolicy.o
 GENERATED += $(OBJDIR)/FeatureRenderingSettings.o
-GENERATED += $(OBJDIR)/FrameCollector.o
 GENERATED += $(OBJDIR)/GBuffer.o
 GENERATED += $(OBJDIR)/GLContext.o
 GENERATED += $(OBJDIR)/GLSLShaderGenerator.o
@@ -175,7 +174,6 @@ OBJECTS += $(OBJDIR)/EditorShaderDefinitions.o
 OBJECTS += $(OBJDIR)/EnvironmentMapEntity.o
 OBJECTS += $(OBJDIR)/FModBillboardingBatchPolicy.o
 OBJECTS += $(OBJDIR)/FeatureRenderingSettings.o
-OBJECTS += $(OBJDIR)/FrameCollector.o
 OBJECTS += $(OBJDIR)/GBuffer.o
 OBJECTS += $(OBJDIR)/GLContext.o
 OBJECTS += $(OBJDIR)/GLSLShaderGenerator.o
@@ -360,9 +358,6 @@ $(OBJDIR)/RHIRenderParticleSceneHelpers.o: ../../Samples/PK-SampleLib/RHIRenderP
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_1) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/FeatureRenderingSettings.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/FeatureRenderingSettings.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_1) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/FrameCollector.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/FrameCollector.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_1) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/MaterialToRHI.o: ../../Samples/PK-SampleLib/RenderIntegrationRHI/MaterialToRHI.cpp

@@ -52,13 +52,14 @@ void	FillEditorDebugParticleInputVertexBuffers(	TArray<RHI::SVertexInputBufferDe
 		// Light scales:
 		inputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(float)));
 	}
-	else if (bbType <= ParticleDebugBT_VertexBillboarding_SizeFloat2_C2)
+	else if (bbType < ParticleDebugBT_TriangleVertexBillboarding)
 	{
-		inputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat2))); // Texcoords (expand direction)
+		// Texcoords
+		inputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat2)));
 	}
-	else if (bbType != ParticleDebugBT_TriangleVertexBillboarding)
+	else if (bbType != ParticleDebugBT_TriangleVertexBillboarding) // geom BB
 	{
-		// Geom billboarding vertex inputs:
+		// Geometry vertex inputs:
 		if (gpuStorage)
 			inputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3))); // Position
 		else
@@ -220,7 +221,7 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 	{
 		PK_ASSERT(!geomBB);
 
-		const ERendererClass	rendererType = (bbType != ParticleDebugBT_TriangleVertexBillboarding) ? Renderer_Billboard : Renderer_Triangle;
+		const bool	rendererTriangle = (bbType == ParticleDebugBT_TriangleVertexBillboarding);
 
 		// Vertex billboarding vertex inputs:
 		if (gpuStorage)
@@ -232,7 +233,7 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 
 			streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("EnabledsOffsets"));
 
-			if (rendererType == Renderer_Triangle)
+			if (rendererTriangle)
 			{
 				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Positions0Offsets"));
 				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Positions1Offsets"));
@@ -246,9 +247,9 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 		else
 		{
 			simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Indices")); // Right now, always add the indices raw buffer. Later, shader permutation
-			if (rendererType == Renderer_Billboard)
+			if (!rendererTriangle)
 				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Positions"));
-			else // rendererType == Renderer_Triangle
+			else // rendererTriange
 			{
 				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("VertexPosition0"));
 				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("VertexPosition1"));
@@ -256,7 +257,21 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 			}
 		}
 
-		if (rendererType == Renderer_Billboard)
+		if (bbType >= ParticleDebugBT_VertexBillboarding_Ribbon_C0 && bbType <= ParticleDebugBT_VertexBillboarding_Ribbon_C1)
+		{
+			if (gpuStorage)
+			{
+				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("ParentIDsOffsets"));
+				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("RibbonIndirection"));
+				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("IndirectDraw"));
+			}
+			else
+			{
+				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Connectivities"));
+			}
+		}
+
+		if (!rendererTriangle)
 		{
 			bindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("TexCoords", shaderLocationBinding, RHI::TypeFloat2, vBufferLocationBinding));
 			++shaderLocationBinding;
@@ -273,6 +288,10 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 		else
 			bindings.m_ConstantSets.PushBack(PKSample::SConstantDrawRequests::GetConstantSetLayout(Renderer_Billboard));
 
+
+		if (bbType >= ParticleDebugBT_VertexBillboarding_Trimming_C0 && bbType <= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2)
+			bindings.m_ConstantSets.PushBack(SConstantAtlasKey::GetAtlasConstantSetLayout());
+
 		{
 			RHI::SPushConstantBuffer	desc;
 
@@ -286,13 +305,15 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 
 		RHI::EVarType	sizeType = RHI::TypeFloat;
 
-		if (bbType >= ParticleDebugBT_VertexBillboarding_SizeFloat2_C0 &&
-			bbType <= ParticleDebugBT_VertexBillboarding_SizeFloat2_C2)
+		if ((bbType >= ParticleDebugBT_VertexBillboarding_SizeFloat2_C0 &&
+			 bbType <= ParticleDebugBT_VertexBillboarding_SizeFloat2_C2) ||
+			(bbType >= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C0 &&
+			 bbType <= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2))
 		{
 			bindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "HAS_SizeFloat2"));
 			sizeType = RHI::TypeFloat2;
 		}
-		if (rendererType == Renderer_Billboard)
+		if (!rendererTriangle)
 		{
 			if (gpuStorage)
 			{
@@ -313,7 +334,9 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 		}
 
 		if (bbType == ParticleDebugBT_VertexBillboarding_C0 || bbType == ParticleDebugBT_VertexBillboarding_C2 ||
-			bbType == ParticleDebugBT_VertexBillboarding_SizeFloat2_C0 || bbType == ParticleDebugBT_VertexBillboarding_SizeFloat2_C2)
+			bbType == ParticleDebugBT_VertexBillboarding_SizeFloat2_C0 || bbType == ParticleDebugBT_VertexBillboarding_SizeFloat2_C2 ||
+			bbType == ParticleDebugBT_VertexBillboarding_Trimming_C0 || bbType == ParticleDebugBT_VertexBillboarding_Trimming_C2 ||
+			bbType == ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C0 || bbType == ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2)
 		{
 			if (gpuStorage)
 				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("RotationsOffsets"));
@@ -323,7 +346,9 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 
 		// If > C1
 		if ((bbType >= ParticleDebugBT_VertexBillboarding_C1 && bbType <= ParticleDebugBT_VertexBillboarding_C2) ||
-			(bbType >= ParticleDebugBT_VertexBillboarding_SizeFloat2_C1 && bbType <= ParticleDebugBT_VertexBillboarding_SizeFloat2_C2))
+			(bbType >= ParticleDebugBT_VertexBillboarding_SizeFloat2_C1 && bbType <= ParticleDebugBT_VertexBillboarding_SizeFloat2_C2) ||
+			(bbType >= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C1 && bbType <= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2) ||
+			(bbType >= ParticleDebugBT_VertexBillboarding_Trimming_C1 && bbType <= ParticleDebugBT_VertexBillboarding_Trimming_C2))
 		{
 			bindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_FeatureC1"));
 
@@ -332,12 +357,8 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 			else
 				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Axis0s"));
 
-			if (bbType == ParticleDebugBT_VertexBillboarding_C1_Capsule || bbType == ParticleDebugBT_VertexBillboarding_SizeFloat2_C1_Capsule)
-			{
-				bindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_FeatureC1_Capsule"));
-			}
-
-			if (bbType == ParticleDebugBT_VertexBillboarding_SizeFloat2_C2 || bbType == ParticleDebugBT_VertexBillboarding_C2)
+			if (bbType == ParticleDebugBT_VertexBillboarding_SizeFloat2_C2 || bbType == ParticleDebugBT_VertexBillboarding_C2 ||
+				bbType == ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2 || bbType == ParticleDebugBT_VertexBillboarding_Trimming_C2)
 			{
 				bindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_FeatureC2"));
 				if (gpuStorage)
@@ -345,6 +366,30 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 				else
 					simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Axis1s"));
 			}
+		}
+
+		if (bbType >= ParticleDebugBT_VertexBillboarding_Trimming_C0 &&
+			bbType <= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2)
+		{
+			bindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "HAS_Trimming"));
+			if (gpuStorage)
+			{
+				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("TextureIDsOffsets"));
+			}
+			else
+			{
+				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("TextureIDs"));
+			}
+		}
+
+		if (bbType == ParticleDebugBT_VertexBillboarding_Ribbon_C1)
+		{
+			bindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_FeatureC1"));
+
+			if (gpuStorage)
+				streamOffsetsSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Axis0sOffsets"));
+			else
+				simDataSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Axis0s"));
 		}
 	}
 	else
@@ -417,11 +462,6 @@ void	FillEditorDebugParticleShaderBindings(	RHI::SShaderBindings &bindings,
 				shaderDescription->m_VertexOutput.PushBack(RHI::SVertexOutput("geomAxis0", RHI::TypeFloat3));
 			++shaderLocationBinding;
 			++vBufferLocationBinding;
-
-			if (bbType == ParticleDebugBT_GeomBillboarding_C1_Capsule || bbType == ParticleDebugBT_GeomBillboarding_SizeFloat2_C1_Capsule)
-			{
-				bindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::GeometryShaderStage, "BB_FeatureC1_Capsule"));
-			}
 
 			if (bbType == ParticleDebugBT_GeomBillboarding_SizeFloat2_C2 || bbType == ParticleDebugBT_GeomBillboarding_C2)
 			{
@@ -620,7 +660,23 @@ void	AddEditorDebugVertexBBParticleDefinition(TArray<SShaderCombination> &shader
 	shaders.Last().m_VertexShader = "DebugParticleVertexBB.vert";
 	shaders.Last().m_FragmentShader = "DebugDrawColor.frag";
 
-	for (u32 bbType = ParticleDebugBT_VertexBillboarding_C0; bbType <= ParticleDebugBT_VertexBillboarding_SizeFloat2_C2; ++bbType)
+	for (u32 bbType = ParticleDebugBT_VertexBillboarding_C0; bbType <= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2; ++bbType)
+	{
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_White, static_cast<EParticleDebugBillboarderType>(bbType), false, &description);
+		PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Color, static_cast<EParticleDebugBillboarderType>(bbType), false, &description);
+		PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Selection, static_cast<EParticleDebugBillboarderType>(bbType), false, &description);
+		PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Error, static_cast<EParticleDebugBillboarderType>(bbType), false, &description);
+		PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
+	}
+
+	PK_VERIFY(shaders.PushBack().Valid());
+	shaders.Last().m_VertexShader = "DebugParticleVertexRibbon.vert";
+	shaders.Last().m_FragmentShader = "DebugDrawColor.frag";
+
+	for (u32 bbType = ParticleDebugBT_VertexBillboarding_Ribbon_C0; bbType <= ParticleDebugBT_VertexBillboarding_Ribbon_C1; ++bbType)
 	{
 		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_White, static_cast<EParticleDebugBillboarderType>(bbType), false, &description);
 		PK_VERIFY(shaders.Last().m_ShaderDescriptions.PushBack(description).Valid()); // PUSH SHADER DESCRIPTION
@@ -651,7 +707,23 @@ void	AddEditorDebugVertexBBParticleDefinition(TArray<SShaderCombination> &shader
 	shaders.Last().m_VertexShader = "DebugParticleVertexBB.vert";
 	shaders.Last().m_FragmentShader = "DebugDrawColor.frag";
 
-	for (u32 bbType = ParticleDebugBT_VertexBillboarding_C0; bbType <= ParticleDebugBT_VertexBillboarding_SizeFloat2_C2; ++bbType)
+	for (u32 bbType = ParticleDebugBT_VertexBillboarding_C0; bbType <= ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2; ++bbType)
+	{
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_White, static_cast<EParticleDebugBillboarderType>(bbType), true, &description);
+		shaders.Last().m_ShaderDescriptions.PushBack(description); // PUSH SHADER DESCRIPTION
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Color, static_cast<EParticleDebugBillboarderType>(bbType), true, &description);
+		shaders.Last().m_ShaderDescriptions.PushBack(description); // PUSH SHADER DESCRIPTION
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Selection, static_cast<EParticleDebugBillboarderType>(bbType), true, &description);
+		shaders.Last().m_ShaderDescriptions.PushBack(description); // PUSH SHADER DESCRIPTION
+		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_Error, static_cast<EParticleDebugBillboarderType>(bbType), true, &description);
+		shaders.Last().m_ShaderDescriptions.PushBack(description); // PUSH SHADER DESCRIPTION
+	}
+
+	shaders.PushBack();
+	shaders.Last().m_VertexShader = "DebugParticleVertexRibbon.vert";
+	shaders.Last().m_FragmentShader = "DebugDrawColor.frag";
+
+	for (u32 bbType = ParticleDebugBT_VertexBillboarding_Ribbon_C0; bbType <= ParticleDebugBT_VertexBillboarding_Ribbon_C1; ++bbType)
 	{
 		FillEditorDebugParticleShaderBindings(description.m_Bindings, ParticleDebugShader_White, static_cast<EParticleDebugBillboarderType>(bbType), true, &description);
 		shaders.Last().m_ShaderDescriptions.PushBack(description); // PUSH SHADER DESCRIPTION

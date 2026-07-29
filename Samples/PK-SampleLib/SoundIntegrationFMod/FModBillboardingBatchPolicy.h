@@ -12,6 +12,8 @@
 
 #include "PK-SampleLib/PKSample.h"
 
+#include <pk_render_helpers/include/batches/rh_particle_batch_policy_data.h>
+
 #include <pk_render_helpers/include/batch_jobs/rh_batch_jobs_sound_std.h>
 
 #include "PK-SampleLib/SoundIntegrationFMod/SoundPoolCache.h"

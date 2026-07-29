@@ -35,15 +35,17 @@ struct	SRHIDrawCall
 	{
 		// Indices fetched in vertex shader
 		DebugDrawGPUBuffer_Indices,
-		// Geometry shader billboarding (billboards):
+		// Vertices fetched in vertex shader
 		DebugDrawGPUBuffer_Position,
 		DebugDrawGPUBuffer_Size,
 		DebugDrawGPUBuffer_Rotation,
 		DebugDrawGPUBuffer_Axis0,
 		DebugDrawGPUBuffer_Axis1,
-		// Vertex shader billboarding (billboards):
+		// Vertex-billboarding (billboards/ribbons):
 		DebugDrawGPUBuffer_Texcoords,
-		// Vertex shader billboarding (triangles):
+		// Vertex-billboarding (ribbons):
+		DebugDrawGPUBuffer_RibbonConnectivity,
+		// Vertex-billboarding (triangles):
 		DebugDrawGPUBuffer_VertexPosition0,
 		DebugDrawGPUBuffer_VertexPosition1,
 		DebugDrawGPUBuffer_VertexPosition2,
@@ -52,16 +54,14 @@ struct	SRHIDrawCall
 		DebugDrawGPUBuffer_InstanceScales,
 		// Meshes:
 		DebugDrawGPUBuffer_InstanceTransforms,
+		DebugDrawGPUBuffer_Indirection,
 		// Enabled:
 		DebugDrawGPUBuffer_Enabled,
 		// Additional field:
 		DebugDrawGPUBuffer_Color,
+		DebugDrawGPUBuffer_TextureID,
 		// Is selected:
 		DebugDrawGPUBuffer_IsParticleSelected,
-		// For GPU storage:
-		DebugDrawGPUBuffer_ColorsOffsets,
-		DebugDrawGPUBuffer_TransformsOffsets, // mesh only
-		DebugDrawGPUBuffer_IndirectionOffsets, // mesh only
 
 		_DebugDrawGPUBuffer_Count
 	};
@@ -88,11 +88,11 @@ struct	SRHIDrawCall
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 	RHI::PConstantSet											m_SelectionConstantSet;
-#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
 
 	// Additional buffers info:
 	TStaticArray<RHI::PGpuBuffer, _DebugDrawGPUBuffer_Count>	m_DebugDrawGPUBuffers;
 	TStaticArray<u32, _DebugDrawGPUBuffer_Count>				m_DebugDrawGPUBufferOffsets;
+#endif
 
 	// Uniform buffers
 	TStaticArray<RHI::PGpuBuffer, _UBSemantic_Count>			m_UBSemanticsPtr;
@@ -122,10 +122,8 @@ struct	SRHIDrawCall
 
 	// Editor viewport debug
 	bool								m_SelectedDrawCall; // Whether the draw call is selected
-	bool								m_SlicedDC; // Whether or not it's a sliced draw call
 	bool								m_Valid; // Whether or not the draw call is valid for rendering. If false, fallbacks on the debug materials
-	CAABB								m_BBox; // Drawcall bbox (Contains the CameraSortOffset, if any)
-	CAABB								m_TotalBBox; // Drawcall's owning batch total bbox (Doesn't contain the CameraSortOffset, this is the batch's total bounding box)
+	CAABB								m_BBox; // Drawcall bbox
 
 	ERendererClass						m_RendererType;
 
@@ -147,18 +145,17 @@ struct	SRHIDrawCall
 	,	m_EstimatedParticleCount(0)
 	,	m_ShaderOptions(0)
 	,	m_SelectedDrawCall(false)
-	,	m_SlicedDC(false)
 	,	m_Valid(true)
 	,	m_BBox(CAABB::DEGENERATED)
-	,	m_TotalBBox(CAABB::DEGENERATED)
 	,	m_RendererType(Renderer_Invalid)
 	{
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
 		for (u32 i = 0; i < _DebugDrawGPUBuffer_Count; ++i)
 		{
 			m_DebugDrawGPUBuffers[i] = null;
 			m_DebugDrawGPUBufferOffsets[i] = 0;
 		}
-
+#endif
 		Mem::Clear(m_PushConstants.Begin(), sizeof(CFloat4) * 4);
 	}
 };

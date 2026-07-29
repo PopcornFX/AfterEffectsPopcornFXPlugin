@@ -1,8 +1,19 @@
 #pragma once
 
+//----------------------------------------------------------------------------
+// This program is the property of Persistant Studios SARL.
+//
+// You may not redistribute it and/or modify it under any conditions
+// without written permission from Persistant Studios SARL, unless
+// otherwise stated in the latest Persistant Studios Code License.
+//
+// See the Persistant Studios Code License for further details.
+//----------------------------------------------------------------------------
+
 #include <pk_kernel/include/kr_threads.h>
 
 __PK_API_BEGIN
+//----------------------------------------------------------------------------
 
 class	CPreprocessor
 {
@@ -30,5 +41,5 @@ private:
 	static Threads::CCriticalSection	m_Lock;
 };
 
-
+//----------------------------------------------------------------------------
 __PK_API_END

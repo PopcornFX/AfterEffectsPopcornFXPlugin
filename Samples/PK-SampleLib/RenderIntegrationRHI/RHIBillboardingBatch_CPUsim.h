@@ -49,6 +49,7 @@ struct	SRHICommonCPUBillboardBuffers
 	SGpuBuffer				m_UVFactors;
 	SGpuBuffer				m_UVRemap;
 	SGpuBuffer				m_UV1Remap;
+	SGpuBuffer				m_RawUVRemap;
 
 	// View dependent buffers:
 	struct	SPerView
@@ -147,6 +148,7 @@ private:
 
 	SRHIAdditionalFieldBatch	m_AdditionalFieldsBatch;
 	CGuid						m_ColorStreamIdx;
+	CGuid						m_TextureIDStreamIdx;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 	CCopyStream_Exec_WireframeDiscard		m_CopyCustomParticleSelectTask;
@@ -198,6 +200,7 @@ private:
 
 	SRHIAdditionalFieldBatch			m_AdditionalFieldsBatch;
 	CGuid								m_ColorStreamIdx;
+	CGuid								m_TextureIDStreamIdx;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 	CCopyStream_Exec_WireframeDiscard		m_GeomBillboardCustomParticleSelectTask;
@@ -277,7 +280,7 @@ private:
 	CGuid							m_ColorStreamIdx;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-	CRibbon_Exec_WireframeDiscard			m_RibbonCustomParticleSelectTask;
+	CCopyStream_Exec_WireframeDiscard		m_GeomBillboardCustomParticleSelectTask;
 	SGpuBuffer								m_IsParticleSelected;
 	RHI::PConstantSet						m_SelectionConstantSet;
 #endif	// (PK_HAS_PARTICLES_SELECTION != 0)

@@ -1,3 +1,13 @@
+//----------------------------------------------------------------------------
+// This program is the property of Persistant Studios SARL.
+//
+// You may not redistribute it and/or modify it under any conditions
+// without written permission from Persistant Studios SARL, unless
+// otherwise stated in the latest Persistant Studios Code License.
+//
+// See the Persistant Studios Code License for further details.
+//----------------------------------------------------------------------------
+
 #include "precompiled.h"
 
 #include "RHIRenderParticleSceneHelpers.h"
@@ -1818,12 +1828,6 @@ void	CRHIParticleSceneRenderHelper::_RenderParticles(bool											debugMode,
 		const bool								gpuStorage = (shaderOptions & PKSample::Option_GPUStorage) != 0;
 		const bool								GPUMesh = (shaderOptions & PKSample::Option_GPUMesh) != 0;
 
-		if (debugMode && gpuStorage)
-		{
-			if ((shaderOptions & Option_RibbonVertexBillboarding) != 0)
-				continue; // Ribbon GPU particles debug draw not currently supported
-		}
-
 		for (ESampleLibGraphicResources_RenderPass renderPass : renderPasses)
 		{
 			//------------------------------------------------------
@@ -1955,6 +1959,13 @@ void	CRHIParticleSceneRenderHelper::_RenderParticles(bool											debugMode,
 				{
 					if (debugMode)
 					{
+						if (shaderOptions & Option_Trimming)
+						{
+							if (cacheInstance->m_Atlas != null)
+								constantSets.PushBack(cacheInstance->m_Atlas->m_AtlasConstSet);
+							else
+								constantSets.PushBack(m_DummyAtlas.m_AtlasConstSet);
+						}
 						if (!_BindDebugConstantSets(renderState, dc, constantSets))
 							return;
 					}

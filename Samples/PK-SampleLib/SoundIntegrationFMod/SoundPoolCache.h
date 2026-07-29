@@ -13,6 +13,7 @@
 #include "PK-SampleLib/PKSample.h"
 
 #include "pk_render_helpers/include/frame_collector/rh_particle_render_data_factory.h"
+#include "pk_render_helpers/include/frame_collector/rh_frame_data.h"
 
 // Forward declaration of fmod
 namespace FMOD

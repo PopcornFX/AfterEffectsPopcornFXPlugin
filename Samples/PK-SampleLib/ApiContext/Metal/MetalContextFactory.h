@@ -1,5 +1,15 @@
 #pragma once
 
+//----------------------------------------------------------------------------
+// This program is the property of Persistant Studios SARL.
+//
+// You may not redistribute it and/or modify it under any conditions
+// without written permission from Persistant Studios SARL, unless
+// otherwise stated in the latest Persistant Studios Code License.
+//
+// See the Persistant Studios Code License for further details.
+//----------------------------------------------------------------------------
+
 #if	(PK_BUILD_WITH_METAL_SUPPORT != 0)
 
 __PK_RHI_API_BEGIN

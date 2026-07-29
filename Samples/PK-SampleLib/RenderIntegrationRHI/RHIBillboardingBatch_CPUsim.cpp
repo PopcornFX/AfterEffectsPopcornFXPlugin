@@ -68,10 +68,8 @@ static u32	_GetGeomBillboardShaderOptions(const Drawers::SBillboard_Billboarding
 		break;
 	case BillboardMode_AxisAligned:
 	case BillboardMode_AxisAlignedSpheroid:
-		shaderOptions |= Option_Axis_C1;
-		break;
 	case BillboardMode_AxisAlignedCapsule:
-		shaderOptions |= Option_Axis_C1 | Option_Capsule;
+		shaderOptions |= Option_Axis_C1;
 		break;
 	case BillboardMode_PlaneAligned:
 		shaderOptions |= Option_Axis_C2;
@@ -83,6 +81,7 @@ static u32	_GetGeomBillboardShaderOptions(const Drawers::SBillboard_Billboarding
 	}
 	if (bbRequest.m_SizeFloat2)
 		shaderOptions |= Option_BillboardSizeFloat2;
+
 	return shaderOptions;
 }
 
@@ -117,6 +116,8 @@ static u32	_GetVertexBillboardShaderOptions(const Drawers::SBillboard_Billboardi
 	}
 	if (bbRequest.m_SizeFloat2)
 		shaderOptions |= Option_BillboardSizeFloat2;
+	if (bbRequest.m_HasTrimming)
+		shaderOptions |= Option_Trimming;
 	return shaderOptions;
 }
 
@@ -172,21 +173,21 @@ static bool	_CreateOrResizeGpuBufferIf(const RHI::SRHIResourceInfos &infos, bool
 
 //----------------------------------------------------------------------------
 
-CGuid	_GetDrawDebugColorIndex(const SRHIAdditionalFieldBatch &bufferBatch, const SGeneratedInputs &toGenerate)
+static CGuid	_GetDrawDebugColorIndex(const SRHIAdditionalFieldBatch &bufferBatch, const TMemoryView<const SRendererFeatureFieldDefinition> &additionalInputs)
 {
 	CGuid	ret;
 	for (u32 j = 0; j < bufferBatch.m_Fields.Count(); ++j)
 	{
 		const u32	i = bufferBatch.m_Fields[j].m_AdditionalInputIndex;
-		if (toGenerate.m_AdditionalGeneratedInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
-			(toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_Color() ||
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_DiffuseColor()))
+		if (additionalInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
+			(additionalInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_Color() ||
+				additionalInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_DiffuseColor()))
 			ret = j;
 		else if (!ret.Valid() &&
-				toGenerate.m_AdditionalGeneratedInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
-				(toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Emissive_EmissiveColor() ||
-				toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color()  ||
-				toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_DistortionColor()))
+				additionalInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
+				(additionalInputs[i].m_Name == BasicRendererProperties::SID_Emissive_EmissiveColor() ||
+				additionalInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color()  ||
+				additionalInputs[i].m_Name == BasicRendererProperties::SID_Distortion_DistortionColor()))
 			ret = j;
 	}
 	return ret;
@@ -194,13 +195,27 @@ CGuid	_GetDrawDebugColorIndex(const SRHIAdditionalFieldBatch &bufferBatch, const
 
 //----------------------------------------------------------------------------
 
-CGuid	_GetDrawDebugRangeIndex(const SRHIAdditionalFieldBatch &bufferBatch, const SGeneratedInputs &toGenerate)
+static CGuid	_GetDrawDebugTextureIDIndex(const SRHIAdditionalFieldBatch &bufferBatch, const TMemoryView<const SRendererFeatureFieldDefinition> &additionalInputs)
 {
 	for (u32 j = 0; j < bufferBatch.m_Fields.Count(); ++j)
 	{
 		const u32	i = bufferBatch.m_Fields[j].m_AdditionalInputIndex;
-		if (toGenerate.m_AdditionalGeneratedInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float &&
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_LightAttenuation_Range())
+		if (additionalInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float &&
+			additionalInputs[i].m_Name == BasicRendererProperties::SID_Atlas_TextureID())
+			return j;
+	}
+	return CGuid::INVALID;
+}
+
+//----------------------------------------------------------------------------
+
+static CGuid	_GetDrawDebugRangeIndex(const SRHIAdditionalFieldBatch &bufferBatch, const TMemoryView<const SRendererFeatureFieldDefinition> &additionalInputs)
+{
+	for (u32 j = 0; j < bufferBatch.m_Fields.Count(); ++j)
+	{
+		const u32	i = bufferBatch.m_Fields[j].m_AdditionalInputIndex;
+		if (additionalInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float &&
+			additionalInputs[i].m_Name == BasicRendererProperties::SID_LightAttenuation_Range())
 			return j;
 	}
 	return CGuid::INVALID;
@@ -242,6 +257,8 @@ bool	SRHICommonCPUBillboardBuffers::AllocBuffers(u32 indexCount, u32 vertexCount
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("UVRemaps Vertex Buffer"), (viewIndependentInputs & Drawers::GenInput_UVRemap) != 0, manager, m_UVRemap, RHI::VertexBuffer, vertexCountAligned * sizeof(CFloat4), vertexCount * sizeof(CFloat4)))
 		return false;
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("UV1Remaps Vertex Buffer"), (viewIndependentInputs & Drawers::GenInput_UV1Remap) != 0, manager, m_UV1Remap, RHI::VertexBuffer, vertexCountAligned * sizeof(CFloat4), vertexCount * sizeof(CFloat4)))
+		return false;
+	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("Raw UVRemaps Vertex Buffer"), (viewIndependentInputs & Drawers::GenInput_RawUVRemap) != 0, manager, m_RawUVRemap, RHI::VertexBuffer, vertexCountAligned * sizeof(CFloat4), vertexCount * sizeof(CFloat4)))
 		return false;
 	if (!_CreateOrResizeGpuBufferIf(RHI::SRHIResourceInfos("UVFactors Vertex Buffer"), (viewIndependentInputs & Drawers::GenInput_UVFactors) != 0, manager, m_UVFactors, RHI::VertexBuffer, vertexCountAligned * sizeof(CFloat4), vertexCount * sizeof(CFloat4)))
 		return false;
@@ -290,6 +307,7 @@ void	SRHICommonCPUBillboardBuffers::UnmapBuffers(RHI::PApiManager manager)
 	m_RawTexCoords0.UnmapIFN(manager);
 	m_UVRemap.UnmapIFN(manager);
 	m_UV1Remap.UnmapIFN(manager);
+	m_RawUVRemap.UnmapIFN(manager);
 	m_UVFactors.UnmapIFN(manager);
 
 	for (u32 i = 0; i < m_PerViewBuffers.Count(); ++i)
@@ -372,8 +390,7 @@ bool	CRHIRendererBatch_Billboard_CPUBB::Setup(const CRendererDataBase *renderer,
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
@@ -382,11 +399,11 @@ bool	CRHIRendererBatch_Billboard_CPUBB::Setup(const CRendererDataBase *renderer,
 	{
 		// no ignored field
 
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -636,9 +653,6 @@ bool	CRHIRendererBatch_Billboard_CPUBB::EmitDrawCall(SRenderContext &ctx, const 
 	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
@@ -675,10 +689,9 @@ bool	CRHIRendererBatch_Billboard_CPUBB::EmitDrawCall(SRenderContext &ctx, const 
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_TexCoords0.m_Buffer).Valid()))
 			return false;
 
-		// Atlas renderer feature enabled: None/Linear atlas blending share the same vertex declaration, so we just push empty buffers when blending is disabled
-		if (hasAtlas || m_CommonBuffers.m_TexCoords1.Used())
+		if (hasAtlas)
 		{
-			// If we have invalid m_TexCoords1/m_AtlasIDs, bind a dummy vertex buffer, here m_TexCoords0
+			// If we have invalid m_TexCoords1, bind a dummy vertex buffer, here m_TexCoords0
 			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_TexCoords1.Used() ? m_CommonBuffers.m_TexCoords1.m_Buffer : m_CommonBuffers.m_TexCoords0.m_Buffer).Valid()))
 				return false;
 		}
@@ -704,10 +717,6 @@ bool	CRHIRendererBatch_Billboard_CPUBB::EmitDrawCall(SRenderContext &ctx, const 
 			return false;
 	}
 
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
-	if (m_ColorStreamIdx.Valid())
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
-
 	// Push additional inputs vertex buffers:
 	for (const auto &additionalField : m_AdditionalFieldsBatch.m_Fields)
 	{
@@ -717,6 +726,10 @@ bool	CRHIRendererBatch_Billboard_CPUBB::EmitDrawCall(SRenderContext &ctx, const 
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
@@ -742,8 +755,7 @@ bool	CRHIRendererBatch_Billboard_GeomBB::Setup(const CRendererDataBase *renderer
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
@@ -752,11 +764,11 @@ bool	CRHIRendererBatch_Billboard_GeomBB::Setup(const CRendererDataBase *renderer
 	{
 		// no ignored field
 
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -1028,9 +1040,6 @@ bool	CRHIRendererBatch_Billboard_GeomBB::EmitDrawCall(SRenderContext &ctx, const
 	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
@@ -1048,46 +1057,34 @@ bool	CRHIRendererBatch_Billboard_GeomBB::EmitDrawCall(SRenderContext &ctx, const
 	{
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_GeomPositions.m_Buffer).Valid()))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_GeomPositions.m_Buffer;
-		PK_ASSERT(m_GeomConstants.Used());
 	}
 	if (m_GeomSizes.Used())
 	{
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_GeomSizes.m_Buffer).Valid()))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_GeomSizes.m_Buffer;
 	}
 	else if (m_GeomSizes2.Used())
 	{
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_GeomSizes2.m_Buffer).Valid()))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_GeomSizes2.m_Buffer;
 	}
 	if (m_GeomRotations.Used())
 	{
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_GeomRotations.m_Buffer).Valid()))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Rotation] = m_GeomRotations.m_Buffer;
 	}
 	if (m_GeomAxis0.Used())
 	{
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_GeomAxis0.m_Buffer).Valid()))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_GeomAxis0.m_Buffer;
 	}
 	if (m_GeomAxis1.Used())
 	{
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_GeomAxis1.m_Buffer).Valid()))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis1] = m_GeomAxis1.m_Buffer;
 	}
 
-	if (m_GeomConstants.Used())
-		outDrawCall.m_UBSemanticsPtr[SRHIDrawCall::UBSemantic_GPUBillboard] = m_GeomConstants.m_Buffer;
-
-	if (m_ColorStreamIdx.Valid())
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
-
+	outDrawCall.m_UBSemanticsPtr[SRHIDrawCall::UBSemantic_GPUBillboard] = m_GeomConstants.m_Buffer;
 
 	// Push additional inputs vertex buffers:
 	for (const auto &additionalField : m_AdditionalFieldsBatch.m_Fields)
@@ -1098,6 +1095,14 @@ bool	CRHIRendererBatch_Billboard_GeomBB::EmitDrawCall(SRenderContext &ctx, const
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_GeomPositions.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_GeomSizes.Used() ? m_GeomSizes.m_Buffer : m_GeomSizes2.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_GeomAxis0.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis1] = m_GeomAxis1.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Rotation] = m_GeomRotations.m_Buffer;
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
@@ -1129,19 +1134,19 @@ bool	CRHIRendererBatch_Billboard_VertexBB::Setup(const CRendererDataBase *render
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
 
 	for (u32 i = 0; i < additionalFieldsCount; ++i)
 	{
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
+	m_TextureIDStreamIdx = _GetDrawDebugTextureIDIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -1414,9 +1419,6 @@ bool	CRHIRendererBatch_Billboard_VertexBB::EmitDrawCall(SRenderContext &ctx, con
 	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
@@ -1425,7 +1427,6 @@ bool	CRHIRendererBatch_Billboard_VertexBB::EmitDrawCall(SRenderContext &ctx, con
 	PK_ASSERT(m_TexCoords.Used());
 	if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_TexCoords.m_Buffer).Valid()))
 		return false;
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
 
 	// GPUBillboardPushConstants
 	if (!PK_VERIFY(outDrawCall.m_PushConstants.PushBack().Valid()))
@@ -1433,23 +1434,22 @@ bool	CRHIRendererBatch_Billboard_VertexBB::EmitDrawCall(SRenderContext &ctx, con
 	u32		&indexOffset = *reinterpret_cast<u32*>(&outDrawCall.m_PushConstants.Last());
 	indexOffset = toEmit.m_IndexOffset; // == instanceOffset
 
+	// TODO: We only support a single view right now
+	SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
+	PK_ASSERT(indices.Used());
+
 	// Fill the constant-set with all SRVs
 	// TODO: update the constant-set only when buffers have been resized/changed.
 	{
 		u32 i = 0;
 
-		// TODO: We only support a single view right now
-		SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
-		PK_ASSERT(indices.Used());
 		if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(indices.m_Buffer, i++)))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indices] = indices.m_Buffer;
 
 		if (m_Positions.Used())
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Positions.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_Positions.m_Buffer;
 		}
 
 		SGpuBuffer	&sizes = m_Sizes.Used() ? m_Sizes : m_Sizes2;
@@ -1457,34 +1457,32 @@ bool	CRHIRendererBatch_Billboard_VertexBB::EmitDrawCall(SRenderContext &ctx, con
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(sizes.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = sizes.m_Buffer;
 		}
 
 		if (m_Rotations.Used())
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Rotations.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Rotation] = m_Rotations.m_Buffer;
 		}
 
 		if (m_Axis0s.Used())
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Axis0s.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_Axis0s.m_Buffer;
 		}
 
 		if (m_Axis1s.Used())
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Axis1s.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis1] = m_Axis1s.m_Buffer;
 		}
+		//if (m_TextureIDStreamIdx.Valid() && m_AdditionalFieldsBatch.m_Fields[m_TextureIDStreamIdx].m_Buffer.m_Buffer != null)
+		//{
+		//	if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_AdditionalFieldsBatch.m_Fields[m_TextureIDStreamIdx].m_Buffer.m_Buffer, i++)))
+		//		return false;
+		//}
 
 		outDrawCall.m_UBSemanticsPtr[SRHIDrawCall::UBSemantic_GPUBillboard] = m_DrawRequests.m_Buffer;
-
-		if (m_ColorStreamIdx.Valid())
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
 
 		for (SAdditionalInputs &addField : m_AdditionalFieldsBatch.m_Fields)
 		{
@@ -1499,6 +1497,18 @@ bool	CRHIRendererBatch_Billboard_VertexBB::EmitDrawCall(SRenderContext &ctx, con
 	outDrawCall.m_GPUStorageSimDataConstantSet = m_VertexBBSimDataConstantSet;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indices] = indices.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_Positions.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_Sizes.Used() ? m_Sizes.m_Buffer : m_Sizes2.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Rotation] = m_Rotations.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_Axis0s.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis1] = m_Axis1s.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+	if (m_TextureIDStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_TextureID] = m_AdditionalFieldsBatch.m_Fields[m_TextureIDStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if (ctxEditor.Selection().HasParticlesSelected())
 	{
@@ -1615,8 +1625,7 @@ bool	CRHIRendererBatch_Ribbon_CPU::Setup(const CRendererDataBase *renderer, cons
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
@@ -1625,11 +1634,11 @@ bool	CRHIRendererBatch_Ribbon_CPU::Setup(const CRendererDataBase *renderer, cons
 	{
 		// no ignored field
 
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -1754,6 +1763,16 @@ bool	CRHIRendererBatch_Ribbon_CPU::MapBuffers(SRenderContext &ctx)
 		if (!PK_VERIFY(mappedValue != null))
 			return false;
 		m_BBJobs_Ribbon.m_Exec_UVRemap.m_UV1Remap = TStridedMemoryView<CFloat4>(static_cast<CFloat4*>(mappedValue), totalVertexCount);
+		m_BBJobs_Ribbon.m_Exec_Texcoords.m_ForUVFactor = true;
+	}
+	if (toMap.m_GeneratedInputs & Drawers::GenInput_RawUVRemap)
+	{
+		PK_ASSERT(m_CommonBuffers.m_RawUVRemap.Used());
+		PK_ASSERT((toMap.m_GeneratedInputs & Drawers::GenInput_RawUV0) == 0);
+		void	*mappedValue = m_ApiManager->MapCpuView(m_CommonBuffers.m_RawUVRemap.m_Buffer, 0, totalVertexCount * sizeof(CFloat4));
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_BBJobs_Ribbon.m_Exec_UVRemap.m_RawUVRemap = TStridedMemoryView<CFloat4>(static_cast<CFloat4*>(mappedValue), totalVertexCount);
 		m_BBJobs_Ribbon.m_Exec_Texcoords.m_ForUVFactor = true;
 	}
 	if (toMap.m_GeneratedInputs & Drawers::GenInput_UVFactors)
@@ -1911,9 +1930,6 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
@@ -1950,14 +1966,13 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_TexCoords0.m_Buffer).Valid()))
 			return false;
 
-		// Atlas renderer feature enabled: None/Linear atlas blending share the same vertex declaration, so we just push empty buffers when blending is disabled
-		if ((hasAtlas && !hasCorrectDeformation) || m_CommonBuffers.m_TexCoords1.Used())
+		if (hasAtlas && !hasCorrectDeformation)
 		{
 			// If we have invalid m_TexCoords1, bind a dummy vertex buffer, here m_TexCoords0
 			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_TexCoords1.Used() ? m_CommonBuffers.m_TexCoords1.m_Buffer : m_CommonBuffers.m_TexCoords0.m_Buffer).Valid()))
 				return false;
 		}
-		if (hasRawUV0)
+		if (hasRawUV0 && !hasCorrectDeformation)
 		{
 			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_RawTexCoords0.Used() ? m_CommonBuffers.m_RawTexCoords0.m_Buffer : m_CommonBuffers.m_TexCoords0.m_Buffer).Valid()))
 				return false;
@@ -1968,9 +1983,16 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 	{
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_UVRemap.m_Buffer).Valid()))
 			return false;
+
 		if (hasAtlas)
 		{
+			// If we have invalid m_UV1Remap, bind a dummy vertex buffer, here m_UVRemap
 			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_UV1Remap.Used() ? m_CommonBuffers.m_UV1Remap.m_Buffer : m_CommonBuffers.m_UVRemap.m_Buffer).Valid()))
+				return false;
+		}
+		if (hasRawUV0)
+		{
+			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_CommonBuffers.m_RawUVRemap.Used() ? m_CommonBuffers.m_RawUVRemap.m_Buffer : m_CommonBuffers.m_UVRemap.m_Buffer).Valid()))
 				return false;
 		}
 	} 
@@ -1987,11 +2009,6 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 			return false;
 	}
 
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
-
-	if (m_ColorStreamIdx.Valid())
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
-
 	// Push additional inputs vertex buffers:
 	for (const auto &additionalField : m_AdditionalFieldsBatch.m_Fields)
 	{
@@ -2001,6 +2018,10 @@ bool	CRHIRendererBatch_Ribbon_CPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
@@ -2046,19 +2067,18 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::Setup(const CRendererDataBase *renderer,
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
 
 	for (u32 i = 0; i < additionalFieldsCount; ++i)
 	{
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -2199,7 +2219,7 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::MapBuffers(SRenderContext &ctx)
 		if (!PK_VERIFY(mappedValue != null))
 			return false;
 		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Connectivity = TMemoryView<CUint4>(static_cast<CUint4*>(mappedValue), totalParticleCount);
-		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Positions = TStridedMemoryView<CFloat3, 16>(static_cast<CFloat3*>(null), totalParticleCount, 16); // Hack FIXME.
+		m_BBJobs_Ribbon.m_Exec_Connectivity.m_Positions = TStridedMemoryView<CFloat3, 16>(static_cast<CFloat3*>(null), totalParticleCount, 16); // Hack: needed to have the "count", but not written in this code-path.
 	}
 
 	if (!m_AdditionalFieldsBatch.MapBuffers(totalParticleCount, m_ApiManager))
@@ -2210,6 +2230,13 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::MapBuffers(SRenderContext &ctx)
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if (ctxEditor.Selection().HasParticlesSelected())
 	{
+		m_GeomBillboardCustomParticleSelectTask.Clear();
+		PK_ASSERT(m_IsParticleSelected.Used());
+		void	*mappedValue = m_ApiManager->MapCpuView(m_IsParticleSelected.m_Buffer, 0, sizeof(float) * totalParticleCount);
+		if (!PK_VERIFY(mappedValue != null))
+			return false;
+		m_GeomBillboardCustomParticleSelectTask.m_DstSelectedParticles = TStridedMemoryView<float>(static_cast<float*>(mappedValue), totalParticleCount, sizeof(float));
+		m_GeomBillboardCustomParticleSelectTask.m_SrcParticleSelected = ctxEditor.Selection();
 	}
 #endif	// (PK_HAS_PARTICLES_SELECTION != 0)
 
@@ -2225,6 +2252,7 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::LaunchCustomTasks(SRenderContext &ctx)
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if (ctxEditor.Selection().HasParticlesSelected())
 	{
+		m_BB_Copy.AddExecAsyncPage(&m_GeomBillboardCustomParticleSelectTask);
 	}
 #endif	// (PK_HAS_PARTICLES_SELECTION != 0)
 	return true;
@@ -2298,9 +2326,6 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::EmitDrawCall(SRenderContext &ctx, const 
 	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
@@ -2309,7 +2334,10 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::EmitDrawCall(SRenderContext &ctx, const 
 	PK_ASSERT(m_TexCoords.Used());
 	if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_TexCoords.m_Buffer).Valid()))
 		return false;
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
+
+	// TODO: We only support a single view right now
+	SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
+	PK_ASSERT(indices.Used());
 
 	// GPUBillboardPushConstants
 	if (!PK_VERIFY(outDrawCall.m_PushConstants.PushBack().Valid()))
@@ -2322,18 +2350,13 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::EmitDrawCall(SRenderContext &ctx, const 
 	{
 		u32 i = 0;
 
-		// TODO: We only support a single view right now
-		SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
-		PK_ASSERT(indices.Used());
 		if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(indices.m_Buffer, i++)))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indices] = indices.m_Buffer;
 
 		if (m_Positions.Used())
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Positions.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_Positions.m_Buffer;
 		}
 
 		if (m_RibbonConnectivity.Used())
@@ -2346,20 +2369,15 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::EmitDrawCall(SRenderContext &ctx, const 
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Sizes.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_Sizes.m_Buffer;
 		}
 
 		if (m_Axis0s.Used())
 		{
 			if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_Axis0s.m_Buffer, i++)))
 				return false;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_Axis0s.m_Buffer;
 		}
 
 		outDrawCall.m_UBSemanticsPtr[SRHIDrawCall::UBSemantic_GPUBillboard] = m_DrawRequests.m_Buffer;
-
-		if (m_ColorStreamIdx.Valid())
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
 
 		for (SAdditionalInputs &addField : m_AdditionalFieldsBatch.m_Fields)
 		{
@@ -2374,6 +2392,15 @@ bool	CRHIRendererBatch_Ribbon_VertexBB::EmitDrawCall(SRenderContext &ctx, const 
 	outDrawCall.m_GPUStorageSimDataConstantSet = m_VertexBBSimDataConstantSet;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indices] = indices.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_Positions.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_Sizes.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_Axis0s.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_RibbonConnectivity] = m_RibbonConnectivity.m_Buffer;
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if (ctxEditor.Selection().HasParticlesSelected())
 	{
@@ -2567,23 +2594,22 @@ bool	CRHIRendererBatch_Mesh_CPU::Setup(const CRendererDataBase *renderer, const 
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
 
 	for (u32 i = 0; i < additionalFieldsCount; ++i)
 	{
-		if (toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_MeshLOD_LOD())
+		if (m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_MeshLOD_LOD())
 			continue; // ignored field
 
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -2764,9 +2790,6 @@ bool	CRHIRendererBatch_Mesh_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 		// Some meta-data (the Editor uses them)
 		{
 			outDrawCall.m_BBox = toEmit.m_BBox;
-			outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-			outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 			outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 									rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 		}
@@ -2833,6 +2856,7 @@ bool	CRHIRendererBatch_Mesh_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 		PK_ASSERT(vertexBuffDescView.Count() == outDrawCall.m_VertexBuffers.Count() ||
 				  (vertexBuffDescView.Empty() && !outDrawCall.m_Valid));
 
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
 		// Fill the semantics for the debug draws:
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = bufferView.m_VertexBuffers[Utils::MeshPositions];
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = 0;
@@ -2846,7 +2870,6 @@ bool	CRHIRendererBatch_Mesh_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 			outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Color] = particleOffset * m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_ByteSize;
 		}
 
-#if	(PK_HAS_PARTICLES_SELECTION != 0)
 		PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 		if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 		{
@@ -2893,22 +2916,21 @@ bool	CRHIRendererBatch_Decal_CPU::Setup(const CRendererDataBase *renderer, const
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
 
 	for (u32 i = 0; i < additionalFieldsCount; ++i)
 	{
-		if (toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_MeshLOD_LOD())
+		if (m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_MeshLOD_LOD())
 			continue; // ignored field
 
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -3102,19 +3124,6 @@ bool	CRHIRendererBatch_Decal_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawC
 		success &= outDrawCall.m_VertexBuffers.PushBack(additionalField.m_Buffer.m_Buffer).Valid();
 	}
 
-	// Fill the semantics for the debug draws:
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
-	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = 0;
-
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_InstanceTransforms] = m_Matrices.m_Buffer;
-	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_InstanceTransforms] = 0;
-
-	if (m_ColorStreamIdx.Valid())
-	{
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
-		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Color] = 0;
-	}
-
 	// Set index buffer
 	outDrawCall.m_IndexBuffer = bufferView.m_IndexBuffer;
 	if (bufferView.m_IndexBufferSize == RHI::IndexBuffer16Bit)
@@ -3132,6 +3141,19 @@ bool	CRHIRendererBatch_Decal_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawC
 	outDrawCall.m_InstanceCount = m_DrawPass->m_TotalParticleCount;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	// Fill the semantics for the debug draws:
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
+	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = 0;
+
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_InstanceTransforms] = m_Matrices.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_InstanceTransforms] = 0;
+
+	if (m_ColorStreamIdx.Valid())
+	{
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Color] = 0;
+	}
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
@@ -3163,27 +3185,26 @@ bool	CRHIRendererBatch_Triangle_CPUBB::Setup(const CRendererDataBase *renderer, 
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
 
 	for (u32 i = 0; i < additionalFieldsCount; ++i)
 	{
-		if (toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomNormals_Normal1() ||
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomNormals_Normal2() ||
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomNormals_Normal3() ||
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomUVs_UV1() ||
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomUVs_UV2() ||
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomUVs_UV3())
+		if (m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomNormals_Normal1() ||
+			m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomNormals_Normal2() ||
+			m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomNormals_Normal3() ||
+			m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomUVs_UV1() ||
+			m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomUVs_UV2() ||
+			m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_TriangleCustomUVs_UV3())
 			continue; // ignore the field (declared as additional-input but not given as vertex-buffer)
 
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -3402,9 +3423,6 @@ bool	CRHIRendererBatch_Triangle_CPUBB::EmitDrawCall(SRenderContext &ctx, const S
 	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
@@ -3423,11 +3441,6 @@ bool	CRHIRendererBatch_Triangle_CPUBB::EmitDrawCall(SRenderContext &ctx, const S
 	if (m_TexCoords0.Used() && !PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_TexCoords0.m_Buffer).Valid()))
 		return false;
 
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
-
-	if (m_ColorStreamIdx.Valid())
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
-
 	// Push additional inputs vertex buffers:
 	for (const auto &additionalField : m_AdditionalFieldsBatch.m_Fields)
 	{
@@ -3437,6 +3450,10 @@ bool	CRHIRendererBatch_Triangle_CPUBB::EmitDrawCall(SRenderContext &ctx, const S
 	}
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{
@@ -3462,19 +3479,18 @@ bool CRHIRendererBatch_Triangle_VertexBB::Setup(const CRendererDataBase *rendere
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
 
 	for (u32 i = 0; i < additionalFieldsCount; ++i)
 	{
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -3695,9 +3711,6 @@ bool	CRHIRendererBatch_Triangle_VertexBB::EmitDrawCall(SRenderContext &ctx, cons
 	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 		outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 								rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 	}
@@ -3708,34 +3721,28 @@ bool	CRHIRendererBatch_Triangle_VertexBB::EmitDrawCall(SRenderContext &ctx, cons
 	u32		&indexOffset = *reinterpret_cast<u32*>(&outDrawCall.m_PushConstants.Last());
 	indexOffset = toEmit.m_IndexOffset; // == instanceOffset
 
+	// TODO: We only support a single view right now
+	SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
+	PK_ASSERT(indices.Used());
+
 	// Fill the constant-set with all SRVs
 	// TODO: update the constant-set only when buffers have been resized/changed.
 	{
 		u32 i = 0;
 
-		// TODO: We only support a single view right now
-		SGpuBuffer	&indices = (!m_PerViewIndicesBuffers.Empty() && m_PerViewIndicesBuffers[0].Used()) ? m_PerViewIndicesBuffers[0] : m_Indices;
-		PK_ASSERT(indices.Used());
 		if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(indices.m_Buffer, i++)))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indices] = indices.m_Buffer;
 
 		if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_VertexPositions0.m_Buffer, i++)))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition0] = m_VertexPositions0.m_Buffer;
 
 		if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_VertexPositions1.m_Buffer, i++)))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition1] = m_VertexPositions1.m_Buffer;
 
 		if (!PK_VERIFY(m_VertexBBSimDataConstantSet->SetConstants(m_VertexPositions2.m_Buffer, i++)))
 			return false;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition2] = m_VertexPositions2.m_Buffer;
 
 		outDrawCall.m_UBSemanticsPtr[SRHIDrawCall::UBSemantic_GPUBillboard] = m_DrawRequests.m_Buffer;
-
-		if (m_ColorStreamIdx.Valid())
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
 
 		for (SAdditionalInputs &addField : m_AdditionalFieldsBatch.m_Fields)
 		{
@@ -3750,6 +3757,13 @@ bool	CRHIRendererBatch_Triangle_VertexBB::EmitDrawCall(SRenderContext &ctx, cons
 	outDrawCall.m_GPUStorageSimDataConstantSet = m_VertexBBSimDataConstantSet;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indices] = indices.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition0] = m_VertexPositions0.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition1] = m_VertexPositions1.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition2] = m_VertexPositions2.m_Buffer;
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if (ctxEditor.Selection().HasParticlesSelected())
 	{
@@ -3832,8 +3846,7 @@ bool	CRHIRendererBatch_Light_CPU::Setup(const CRendererDataBase *renderer, const
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsBatch.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
@@ -3842,12 +3855,12 @@ bool	CRHIRendererBatch_Light_CPU::Setup(const CRendererDataBase *renderer, const
 	{
 		// no field to ignore.
 
-		const u32	typeSize = CBaseTypeTraits::Traits(toGenerate.m_AdditionalGeneratedInputs[i].m_Type).Size;
+		const u32	typeSize = CBaseTypeTraits::Traits(m_AdditionalInputs[i].m_Type).Size;
 		m_AdditionalFieldsBatch.m_Fields.PushBackUnsafe(SAdditionalInputs(typeSize, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, toGenerate);
-	m_RangeStreamIdx = _GetDrawDebugRangeIndex(m_AdditionalFieldsBatch, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
+	m_RangeStreamIdx = _GetDrawDebugRangeIndex(m_AdditionalFieldsBatch, m_AdditionalInputs);
 
 	return true;
 }
@@ -4012,11 +4025,10 @@ bool	CRHIRendererBatch_Light_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawC
 	outDrawCall.m_ShaderOptions = PKSample::Option_VertexPassThrough;
 	outDrawCall.m_RendererType = Renderer_Light;
 
-	// Editor only: for debugging purposes, we'll remove that from samples code later
+	// Some meta-data (the Editor uses them)
 	{
 		outDrawCall.m_BBox = toEmit.m_BBox;
-		outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-		outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
+		outDrawCall.m_Valid = true;
 	}
 
 	if (rCacheInstance->m_Cache == null)
@@ -4052,20 +4064,6 @@ bool	CRHIRendererBatch_Light_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawC
 		success &= outDrawCall.m_VertexBuffers.PushBack(additionalField.m_Buffer.m_Buffer).Valid();
 	}
 
-	// Fill the semantics for the debug draws:
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
-	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = 0;
-
-	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_InstancePositions] = m_LightsPositions.m_Buffer;
-	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_InstancePositions] = 0;
-
-	if (m_ColorStreamIdx.Valid())
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
-
-	if (m_RangeStreamIdx.Valid())
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_InstanceScales] =  m_AdditionalFieldsBatch.m_Fields[m_RangeStreamIdx].m_Buffer.m_Buffer;
-
-
 	// Set index buffer
 	outDrawCall.m_IndexBuffer = bufferView.m_IndexBuffer;
 	if (bufferView.m_IndexBufferSize == RHI::IndexBuffer16Bit)
@@ -4082,6 +4080,19 @@ bool	CRHIRendererBatch_Light_CPU::EmitDrawCall(SRenderContext &ctx, const SDrawC
 	outDrawCall.m_InstanceCount = toEmit.m_TotalParticleCount;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+	// Fill the semantics for the debug draws:
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = outDrawCall.m_VertexBuffers.First();
+	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = 0;
+
+	outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_InstancePositions] = m_LightsPositions.m_Buffer;
+	outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_InstancePositions] = 0;
+
+	if (m_ColorStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] =  m_AdditionalFieldsBatch.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
+	if (m_RangeStreamIdx.Valid())
+		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_InstanceScales] =  m_AdditionalFieldsBatch.m_Fields[m_RangeStreamIdx].m_Buffer.m_Buffer;
+
 	PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
 	if ((ctxEditor.Selection().HasParticlesSelected()) && m_IsParticleSelected.Used())
 	{

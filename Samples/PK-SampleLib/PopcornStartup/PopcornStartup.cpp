@@ -79,6 +79,11 @@ PK_LOG_MODULE_DEFINE();
 #		define	USE_COMPILER_BACKEND_UNKNOWN2
 #	endif
 #endif
+#if !defined(USE_COMPILER_BACKEND_VULKAN)
+#	if	(PK_COMPILER_BUILD_COMPILER_VULKAN != 0)
+#		define	USE_COMPILER_BACKEND_VULKAN
+#	endif
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -91,6 +96,9 @@ PK_PLUGIN_DECLARE(CCompilerBackendCPU_VM);
 #endif
 #if defined(USE_COMPILER_BACKEND_UNKNOWN2)
 	PK_PLUGIN_DECLARE(CCompilerBackendGPU_PSSLC);
+#endif
+#if defined(USE_COMPILER_BACKEND_VULKAN)
+	PK_PLUGIN_DECLARE(CCompilerBackendGPU_Vulkan);
 #endif
 PK_PLUGIN_DECLARE(CImagePKIMCodec);
 PK_PLUGIN_DECLARE(CImageDDSCodec);
