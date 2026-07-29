@@ -13,6 +13,8 @@
 
 #include "pk_render_helpers/include/render_features/rh_features_basic.h"
 
+#include "pk_kernel/include/kr_containers_onstack.h"
+
 #include <pk_rhi/include/interfaces/IApiManager.h>
 #include <pk_rhi/include/interfaces/IGpuBuffer.h>
 
@@ -177,10 +179,8 @@ static u32	_GetGeomBillboardShaderOptions(const Drawers::SBillboard_Billboarding
 		break;
 	case BillboardMode_AxisAligned:
 	case BillboardMode_AxisAlignedSpheroid:
-		shaderOptions |= Option_Axis_C1;
-		break;
 	case BillboardMode_AxisAlignedCapsule:
-		shaderOptions |= Option_Axis_C1 | Option_Capsule;
+		shaderOptions |= Option_Axis_C1;
 		break;
 	case BillboardMode_PlaneAligned:
 		shaderOptions |= Option_Axis_C2;
@@ -246,6 +246,8 @@ static u32	_GetVertexBillboardShaderOptions(const Drawers::SBillboard_Billboardi
 	}
 	if (bbRequest.m_SizeFloat2)
 		shaderOptions |= Option_BillboardSizeFloat2;
+	if (bbRequest.m_HasTrimming)
+		shaderOptions |= Option_Trimming;
 	if (needGPUSort)
 		shaderOptions |= Option_GPUSort;
 	return shaderOptions;
@@ -283,24 +285,38 @@ static u32	_GetVertexRibbonShaderOptions(const Drawers::SRibbon_BillboardingRequ
 
 //----------------------------------------------------------------------------
 
-CGuid	_GetDrawDebugColorIndex(const SRHIAdditionalFieldBatchGPU &bufferBatch, const SGeneratedInputs &toGenerate)
+static CGuid	_GetDrawDebugColorIndex(const SRHIAdditionalFieldBatchGPU &bufferBatch, const TMemoryView<const SRendererFeatureFieldDefinition> &additionalInputs)
 {
 	CGuid	ret;
 	for (u32 j = 0; j < bufferBatch.m_Fields.Count(); ++j)
 	{
 		const u32	i = bufferBatch.m_Fields[j].m_AdditionalInputIndex;
-		if (toGenerate.m_AdditionalGeneratedInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
-			(toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_Color() ||
-			toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_DiffuseColor()))
+		if (additionalInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
+			(additionalInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_Color() ||
+			additionalInputs[i].m_Name == BasicRendererProperties::SID_Diffuse_DiffuseColor()))
 			ret = j;
 		else if (!ret.Valid() &&
-				toGenerate.m_AdditionalGeneratedInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
-				(toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Emissive_EmissiveColor() ||
-					toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color() ||
-					toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_Distortion_DistortionColor()))
+				additionalInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
+				(additionalInputs[i].m_Name == BasicRendererProperties::SID_Emissive_EmissiveColor() ||
+				additionalInputs[i].m_Name == BasicRendererProperties::SID_Distortion_Color() ||
+				additionalInputs[i].m_Name == BasicRendererProperties::SID_Distortion_DistortionColor()))
 			ret = j;
 	}
 	return ret;
+}
+
+//----------------------------------------------------------------------------
+
+CGuid	_GetDrawDebugTextureIDIndex(const SRHIAdditionalFieldBatchGPU &bufferBatch, const TMemoryView<const SRendererFeatureFieldDefinition> &additionalInputs)
+{
+	for (u32 j = 0; j < bufferBatch.m_Fields.Count(); ++j)
+	{
+		const u32	i = bufferBatch.m_Fields[j].m_AdditionalInputIndex;
+		if (additionalInputs[i].m_Type == PopcornFX::EBaseTypeID::BaseType_Float &&
+			additionalInputs[i].m_Name == BasicRendererProperties::SID_Atlas_TextureID())
+			return j;
+	}
+	return CGuid::INVALID;
 }
 
 //----------------------------------------------------------------------------
@@ -476,9 +492,6 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 		// Some meta-data (the Editor uses them)
 		{
 			outDrawCall.m_BBox = toEmit.m_BBox;
-			outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-			outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 			outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 									rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 		}
@@ -527,11 +540,8 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 			PK_ASSERT(axis1s != null);
 		}
 
-		RHI::PGpuBuffer		bufferIsSelected = null;
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 		PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
-#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
 
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = positions;
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = sizes;
@@ -539,7 +549,8 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = axis0s;
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis1] = axis1s;
 		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Enabled] = enableds;
-		outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = bufferIsSelected;
+		if (ctxEditor.Selection().HasGPUParticlesSelected())
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = GetIsSelectedBuffer(ctxEditor.Selection(), *dr);
 
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = posOffset;
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Size] = sizeOffset;
@@ -548,6 +559,7 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Axis1] = axis1Offset;
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Enabled] = enabledOffset;
 		outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = 0;
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
 
 		if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(positions).Valid()) ||
 			!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(sizes).Valid()) ||
@@ -587,7 +599,8 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 				!PK_VERIFY(outDrawCall.m_VertexOffsets.PushBack(offset).Valid()))
 				return false;
 
-			// Semantic for the RHI draw-call (used by the editor)
+			// Semantic for the debug draw-call
+#if	(PK_HAS_PARTICLES_SELECTION != 0)
 			if (bbRequest->m_AdditionalInputs[iInput].m_Type == PopcornFX::EBaseTypeID::BaseType_Float4 &&
 				(bbRequest->m_AdditionalInputs[iInput].m_Name == BasicRendererProperties::SID_Diffuse_Color() ||
 				bbRequest->m_AdditionalInputs[iInput].m_Name == BasicRendererProperties::SID_Diffuse_DiffuseColor()))
@@ -604,6 +617,7 @@ bool	CRHIRendererBatch_BillboardGPU_GeomBB::EmitDrawCall(SRenderContext &ctx, co
 				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = buffer;
 				outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Color] = offset;
 			}
+#endif
 		}
 
 		outDrawCall.m_IndirectBuffer = m_IndirectDraw.m_Buffer;
@@ -658,8 +672,7 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::Setup(const CRendererDataBase *ren
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsSimStreamOffsets.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
@@ -671,7 +684,8 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::Setup(const CRendererDataBase *ren
 		m_AdditionalFieldsSimStreamOffsets.m_Fields.PushBackUnsafe(SAdditionalInputs(sizeof(u32) /* it contains the sim buffer offsets */, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, m_AdditionalInputs);
+	m_TextureIDStreamIdx = _GetDrawDebugTextureIDIndex(m_AdditionalFieldsSimStreamOffsets, m_AdditionalInputs);
 
 	return true;
 }
@@ -1072,9 +1086,6 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::EmitDrawCall(SRenderContext &ctx, 
 			// Some meta-data (the Editor uses them)
 			{
 				outDrawCall.m_BBox = toEmit.m_BBox;
-				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
@@ -1086,24 +1097,8 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::EmitDrawCall(SRenderContext &ctx, 
 			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_TexCoords.m_Buffer).Valid()))
 				return false;
 
-			{
+			
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-				PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-				RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
-				if (bufferIsSelected != null)
-				{
-					RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
-					selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
-					RHI::PConstantSet	selectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
-					if (PK_VERIFY(selectionConstantSet != null) && PK_VERIFY(selectionConstantSet->SetConstants(bufferIsSelected, 0)))
-					{
-						selectionConstantSet->UpdateConstantValues();
-						outDrawCall.m_SelectionConstantSet = selectionConstantSet;
-					}
-				}
-#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
-			}
-
 			// Fill the semantics for the debug draws:
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Enabled] = m_SimStreamOffsets_Enableds.m_Buffer;
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_SimStreamOffsets_Positions.m_Buffer;
@@ -1114,6 +1109,23 @@ bool	CRHIRendererBatch_BillboardGPU_VertexBB::EmitDrawCall(SRenderContext &ctx, 
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
 			if (m_ColorStreamIdx.Valid())
 				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsSimStreamOffsets.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+			if (m_TextureIDStreamIdx.Valid())
+				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_TextureID] = m_AdditionalFieldsSimStreamOffsets.m_Fields[m_TextureIDStreamIdx].m_Buffer.m_Buffer;
+
+			PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+			RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
+			if (bufferIsSelected != null)
+			{
+				RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
+				selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
+				RHI::PConstantSet	selectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
+				if (PK_VERIFY(selectionConstantSet != null) && PK_VERIFY(selectionConstantSet->SetConstants(bufferIsSelected, 0)))
+				{
+					selectionConstantSet->UpdateConstantValues();
+					outDrawCall.m_SelectionConstantSet = selectionConstantSet;
+				}
+			}
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
 
 			outDrawCall.m_IndexOffset = 0;
 			outDrawCall.m_IndexSize = RHI::IndexBuffer16Bit;
@@ -1310,8 +1322,7 @@ bool	CRHIRendererBatch_Ribbon_GPU::Setup(const CRendererDataBase *renderer, cons
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsSimStreamOffsets.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
@@ -1322,7 +1333,7 @@ bool	CRHIRendererBatch_Ribbon_GPU::Setup(const CRendererDataBase *renderer, cons
 		m_AdditionalFieldsSimStreamOffsets.m_Fields.PushBackUnsafe(SAdditionalInputs(sizeof(u32) /* it contains the sim buffer offsets */, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, m_AdditionalInputs);
 
 	return true;
 }
@@ -1808,9 +1819,6 @@ bool	CRHIRendererBatch_Ribbon_GPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 			// Some meta-data (the Editor uses them)
 			{
 				outDrawCall.m_BBox = toEmit.m_BBox;
-				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
@@ -1818,19 +1826,27 @@ bool	CRHIRendererBatch_Ribbon_GPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 			outDrawCall.m_GPUStorageOffsetsConstantSet = m_VertexBBOffsetsConstantSet;
 
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
+			// Fill the semantics for the debug draws:
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Enabled] = m_SimStreamOffsets_Enableds.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_SimStreamOffsets_Positions.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_RibbonConnectivity] = ribbonSortIndirection; // TMP Avoid crash
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_SimStreamOffsets_Sizes.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_SimStreamOffsets_Axis0s.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
+			if (m_ColorStreamIdx.Valid())
+				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsSimStreamOffsets.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
+			PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+			RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
+			if (bufferIsSelected != null)
 			{
-				PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-				RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
-				if (bufferIsSelected != null)
+				RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
+				selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
+				RHI::PConstantSet	selectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
+				if (PK_VERIFY(selectionConstantSet != null) && PK_VERIFY(selectionConstantSet->SetConstants(bufferIsSelected, 0)))
 				{
-					RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
-					selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
-					RHI::PConstantSet	selectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
-					if (PK_VERIFY(selectionConstantSet != null) && PK_VERIFY(selectionConstantSet->SetConstants(bufferIsSelected, 0)))
-					{
-						selectionConstantSet->UpdateConstantValues();
-						outDrawCall.m_SelectionConstantSet = selectionConstantSet;
-					}
+					selectionConstantSet->UpdateConstantValues();
+					outDrawCall.m_SelectionConstantSet = selectionConstantSet;
 				}
 			}
 #endif	// (PK_HAS_PARTICLES_SELECTION != 0)
@@ -1839,15 +1855,6 @@ bool	CRHIRendererBatch_Ribbon_GPU::EmitDrawCall(SRenderContext &ctx, const SDraw
 			PK_ASSERT(m_TexCoords.Used());
 			if (!PK_VERIFY(outDrawCall.m_VertexBuffers.PushBack(m_TexCoords.m_Buffer).Valid()))
 				return false;
-
-			// Fill the semantics for the debug draws:
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Enabled] = m_SimStreamOffsets_Enableds.m_Buffer;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = m_SimStreamOffsets_Positions.m_Buffer;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Size] = m_SimStreamOffsets_Sizes.m_Buffer;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Axis0] = m_SimStreamOffsets_Axis0s.m_Buffer;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Texcoords] = m_TexCoords.m_Buffer;
-			if (m_ColorStreamIdx.Valid())
-				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsSimStreamOffsets.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
 
 			outDrawCall.m_IndexOffset = 0;
 			outDrawCall.m_IndexSize = RHI::IndexBuffer16Bit;
@@ -2083,8 +2090,7 @@ bool	CRHIRendererBatch_Triangle_GPU::Setup(const CRendererDataBase *renderer, co
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsSimStreamOffsets.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
@@ -2095,7 +2101,7 @@ bool	CRHIRendererBatch_Triangle_GPU::Setup(const CRendererDataBase *renderer, co
 		m_AdditionalFieldsSimStreamOffsets.m_Fields.PushBackUnsafe(SAdditionalInputs(sizeof(u32) /* it contains the sim buffer offsets */, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, m_AdditionalInputs);
 
 	return true;
 }
@@ -2458,33 +2464,14 @@ bool	CRHIRendererBatch_Triangle_GPU::EmitDrawCall(SRenderContext &ctx, const SDr
 			// Some meta-data (the Editor uses them)
 			{
 				outDrawCall.m_BBox = toEmit.m_BBox;
-				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
 
 			outDrawCall.m_GPUStorageOffsetsConstantSet = m_VertexBBOffsetsConstantSet;
 
-			{
+			
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
-				PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
-				RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
-				if (bufferIsSelected != null)
-				{
-					RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
-					selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
-					RHI::PConstantSet	selectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
-					if (PK_VERIFY(selectionConstantSet != null) && PK_VERIFY(selectionConstantSet->SetConstants(bufferIsSelected, 0)))
-					{
-						selectionConstantSet->UpdateConstantValues();
-						outDrawCall.m_SelectionConstantSet = selectionConstantSet;
-					}
-				}
-#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
-			}
-
 			// Fill the semantics for the debug draws:
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Enabled] = m_SimStreamOffsets_Enableds.m_Buffer;
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition0] = m_SimStreamOffsets_Positions0.m_Buffer;
@@ -2492,6 +2479,21 @@ bool	CRHIRendererBatch_Triangle_GPU::EmitDrawCall(SRenderContext &ctx, const SDr
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_VertexPosition2] = m_SimStreamOffsets_Positions2.m_Buffer;
 			if (m_ColorStreamIdx.Valid())
 				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsSimStreamOffsets.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
+
+			PKSample::SRHIRenderContext	&ctxEditor = *static_cast<PKSample::SRHIRenderContext*>(&ctx);
+			RHI::PGpuBuffer		bufferIsSelected = ctxEditor.Selection().HasGPUParticlesSelected() ? GetIsSelectedBuffer(ctxEditor.Selection(), *dr) : null;
+			if (bufferIsSelected != null)
+			{
+				RHI::SConstantSetLayout	selectionSetLayout(RHI::VertexShaderMask);
+				selectionSetLayout.AddConstantsLayout(RHI::SRawBufferDesc("Selections"));
+				RHI::PConstantSet	selectionConstantSet = m_ApiManager->CreateConstantSet(RHI::SRHIResourceInfos("Selection Constant Set"), selectionSetLayout);
+				if (PK_VERIFY(selectionConstantSet != null) && PK_VERIFY(selectionConstantSet->SetConstants(bufferIsSelected, 0)))
+				{
+					selectionConstantSet->UpdateConstantValues();
+					outDrawCall.m_SelectionConstantSet = selectionConstantSet;
+				}
+			}
+#endif	// (PK_HAS_PARTICLES_SELECTION != 0)
 
 			outDrawCall.m_IndexOffset = 0;
 			outDrawCall.m_IndexSize = RHI::IndexBuffer16Bit;
@@ -2620,21 +2622,20 @@ bool	CRHIRendererBatch_Mesh_GPU::Setup(const CRendererDataBase *renderer, const 
 	// The additional fields are supposed to be the same for all renderers in a batch.
 	// If not, then you can recompute then on the "Bind()" method.
 
-	const auto		&toGenerate = m_DrawPass->m_ToGenerate;
-	const u32		additionalFieldsCount = toGenerate.m_AdditionalGeneratedInputs.Count();
+	const u32		additionalFieldsCount = m_AdditionalInputs.Count();
 
 	if (!PK_VERIFY(m_AdditionalFieldsSimStreamOffsets.m_Fields.Reserve(additionalFieldsCount)))
 		return false;
 
 	for (u32 i = 0; i < additionalFieldsCount; ++i)
 	{
-		if (toGenerate.m_AdditionalGeneratedInputs[i].m_Name == BasicRendererProperties::SID_MeshLOD_LOD())
+		if (m_AdditionalInputs[i].m_Name == BasicRendererProperties::SID_MeshLOD_LOD())
 			continue; // ignored field
 
 		m_AdditionalFieldsSimStreamOffsets.m_Fields.PushBackUnsafe(SAdditionalInputs(sizeof(u32) /* it contains the sim buffer offsets */, i));
 	}
 
-	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, toGenerate);
+	m_ColorStreamIdx = _GetDrawDebugColorIndex(m_AdditionalFieldsSimStreamOffsets, m_AdditionalInputs);
 
 	return true;
 }
@@ -3072,9 +3073,6 @@ bool	CRHIRendererBatch_Mesh_GPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 			// Some meta-data (the Editor uses them)
 			{
 				outDrawCall.m_BBox = toEmit.m_BBox;
-				outDrawCall.m_TotalBBox = m_DrawPass->m_TotalBBox;
-				outDrawCall.m_SlicedDC = toEmit.m_TotalParticleCount != m_DrawPass->m_TotalParticleCount;
-
 				outDrawCall.m_Valid =	rCacheInstance->m_Cache != null &&
 										rCacheInstance->m_Cache->GetRenderState(static_cast<PKSample::EShaderOptions>(outDrawCall.m_ShaderOptions)) != null;
 			}
@@ -3124,9 +3122,18 @@ bool	CRHIRendererBatch_Mesh_GPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 
 			outDrawCall.m_GPUStorageSimDataConstantSet = m_SimDataConstantSet;
 			outDrawCall.m_GPUStorageOffsetsConstantSet = m_OffsetsConstantSet;
+
 #if	(PK_HAS_PARTICLES_SELECTION != 0)
 			outDrawCall.m_SelectionConstantSet = selectionConstantSet;
 			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IsParticleSelected] = bufferIsSelected;
+
+			// Fill the semantics for the debug draws:
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = bufferView.m_VertexBuffers[Utils::MeshPositions];
+			outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = 0;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_InstanceTransforms] = m_MatricesOffsets.m_Buffer;
+			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Indirection] = m_IndirectionOffsets.m_Buffer;
+			if (m_ColorStreamIdx.Valid())
+				outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Color] = m_AdditionalFieldsSimStreamOffsets.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer;
 #endif
 			const u32	currentLOD = _SubmeshIDToLOD(*refCacheInstance, lodCount, iSubMesh);
 
@@ -3147,13 +3154,6 @@ bool	CRHIRendererBatch_Mesh_GPU::EmitDrawCall(SRenderContext &ctx, const SDrawCa
 			outDrawCall.m_IndirectBuffer = m_IndirectDraw.m_Buffer;
 			outDrawCall.m_IndirectBufferOffset = drawCallCurrentOffset;
 			outDrawCall.m_EstimatedParticleCount = dr->RenderedParticleCount();
-
-			// Fill the semantics for the debug draws:
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_Position] = bufferView.m_VertexBuffers[Utils::MeshPositions];
-			outDrawCall.m_DebugDrawGPUBufferOffsets[SRHIDrawCall::DebugDrawGPUBuffer_Position] = 0;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_TransformsOffsets] = m_MatricesOffsets.m_Buffer;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_IndirectionOffsets] = m_IndirectionOffsets.m_Buffer;
-			outDrawCall.m_DebugDrawGPUBuffers[SRHIDrawCall::DebugDrawGPUBuffer_ColorsOffsets] = m_ColorStreamIdx.Valid() ? m_AdditionalFieldsSimStreamOffsets.m_Fields[m_ColorStreamIdx].m_Buffer.m_Buffer : null;
 
 			drawCallCurrentOffset += sizeof(RHI::SDrawIndexedIndirectArgs);
 		} // end of draw call description setup

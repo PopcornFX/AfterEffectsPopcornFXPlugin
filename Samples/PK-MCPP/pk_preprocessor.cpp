@@ -1,3 +1,12 @@
+//----------------------------------------------------------------------------
+// This program is the property of Persistant Studios SARL.
+//
+// You may not redistribute it and/or modify it under any conditions
+// without written permission from Persistant Studios SARL, unless
+// otherwise stated in the latest Persistant Studios Code License.
+//
+// See the Persistant Studios Code License for further details.
+//----------------------------------------------------------------------------
 
 #include "precompiled.h"
 #include "pk_preprocessor.h"
@@ -221,7 +230,7 @@ bool	CPreprocessor::FindShaderDependencies(	const CString &input,
 						const CStringView	includePath = CStringView(pathStart, (u32)(src - pathStart));
 						const CString		actualPath = CFilePath::IsAbsolute(includePath) ? includePath.ToString() : execDirectory / includePath;
 						const CString		purePath = CFilePath::Purified(actualPath);
-						if (!outDep.Contains(purePath) && controller->Exists(purePath))
+						if (!outDep.Contains(purePath) && controller->Exists(purePath, CFilePath::IsAbsolute(actualPath)))
 						{
 							if (!outDep.PushBack(purePath).Valid())
 								return false;

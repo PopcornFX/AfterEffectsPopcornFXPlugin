@@ -219,7 +219,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CPU billboarding selection (geometry shader):
+// CPU selection with GPU billboarding (vertex or geometry shader):
 
 class	PK_EXPORT CCopyStream_Exec_WireframeDiscard
 {
@@ -232,7 +232,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Ribbon billboarding selection:
+// CPU Ribbon billboarding selection:
 
 class	PK_EXPORT CRibbon_Exec_WireframeDiscard
 {

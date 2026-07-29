@@ -12,13 +12,10 @@
 #	define NORMALIZER_EPSILON		1.0e-8f
 #	define BB_AxisAligned			3U
 #	define BB_AxisAlignedSpheroid	4U
+#	define BB_AxisAlignedCapsule	5U
 #	if !defined(GINPUT_geomAxis0)
 #		error missing input
 #	endif
-#endif
-
-#if BB_FeatureC1_Capsule
-#	define BB_AxisAlignedCapsule	5U
 #endif
 
 #if BB_FeatureC2
@@ -328,7 +325,7 @@ vec4	proj_position(vec3 position)
 //----------------------------------------------------------------------------
 
 #if 	defined(GOUTPUT_fragUV0) && defined(GOUTPUT_fragUV1)
-void	bb_billboardUV(in SPrimitives gInput, inout vec4 c00, inout vec4 c01, inout vec4 c10, inout vec4 c11, inout float atlasId, inout vec4 rectA, inout vec4 rectB)
+void	bb_billboardUV(in SPrimitives gInput, inout vec4 c00, inout vec4 c01, inout vec4 c10, inout vec4 c11, inout vec4 rectA, inout vec4 rectB)
 #else
 void	bb_billboardUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, inout vec2 c10, inout vec2 c11, inout vec4 rectA)
 #endif
@@ -339,14 +336,13 @@ void	bb_billboardUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, inout
 	float	idf = gInput.geomAtlas_TextureID;
 	uint	maxAtlasIdx = LOADU(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(0)) - 1U;
 	uint	idA = min(uint(floor(idf)), maxAtlasIdx);
-	rectA = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(idA * 4 + 1));
+	rectA = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(idA * 4 + 4));
 #	if defined(GOUTPUT_fragUV1)
 	uint	idB = min(idA + 1U, maxAtlasIdx);
-	rectB = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(idB * 4 + 1));
+	rectB = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(idB * 4 + 4));
 	vec4	maddm = vec4(rectA.xy, rectB.xy);
 	vec4	madda = vec4(rectA.zw, rectB.zw);
 	float	blendWeight = (flags & BB_Flag_SoftAnimBlend) != 0U ? 1.0f : 0.0f;
-	atlasId = fract(idf) * blendWeight;
 #	else
 	vec2	maddm = rectA.xy;
 	vec2	madda = rectA.zw;
@@ -392,92 +388,14 @@ void	bb_billboardRawUV(in SPrimitives gInput, inout vec2 c00, inout vec2 c01, in
 
 //----------------------------------------------------------------------------
 
-void	bb_billboardNormal(	float nFactor,
-							out vec3 n0, out vec3 n1, out vec3 n2, out vec3 n3,
-#if BB_AxisAlignedCapsule
-							out vec3 n4, out vec3 n5,
-#endif
-							in vec3 xAxis, in vec3 yAxis, in vec3 nAxis)
-{
-	float	nw = (1.0f - nFactor); // weight
-	vec3	xAxisNorm = normalize(xAxis);
-	vec3	yAxisNorm = normalize(yAxis);
-	vec3	n = nAxis * nw; // normal weighted
-
-	#if BB_AxisAlignedCapsule
-	float	rlen = rsqrt(nw * nw + nFactor * nFactor);
-	xAxisNorm *= nFactor * rlen;
-	yAxisNorm *= nFactor * rlen;
-	n *= rlen;
-	n0 = n + xAxisNorm;
-	n1 = n - xAxisNorm;
-	n2 = n + xAxisNorm;
-	n3 = n - xAxisNorm;
-	n4 = n - yAxisNorm;
-	n5 = n + yAxisNorm;
-	#else
-	vec3	xpy = (xAxisNorm + yAxisNorm) * nFactor;
-	vec3	xmy = (xAxisNorm - yAxisNorm) * nFactor;
-	n0 = normalize(n + xpy);
-	n1 = normalize(n + xmy);
-	n2 = normalize(n - xmy);
-	n3 = normalize(n - xpy);
-	#endif
-}
-
-//----------------------------------------------------------------------------
-
-void	bb_billboardTangent(float nFactor,
-							out vec4 t0, out vec4 t1, out vec4 t2, out vec4 t3,
-#if BB_AxisAlignedCapsule
-							out vec4 t4, out vec4 t5,
-#endif
-							in vec3 xAxis, in vec3 yAxis, in vec3 nAxis, in bool flipU, in bool flipV)
-{
-	float	nw = (1.0f - nFactor); // weight
-	vec3	xAxisNorm = normalize(xAxis);
-	vec3	yAxisNorm = normalize(yAxis);
-	vec3	n = nAxis; // normal
-
-#if BB_AxisAlignedCapsule
-	vec3	t = normalize(xAxisNorm + yAxisNorm) * nw;
-	float	rlen = rsqrt(nw * nw + 2.0f * nFactor * nFactor);
-	t *= rlen;
-	n *= nFactor * rlen;
-	xAxisNorm *= nFactor * rlen;
-	yAxisNorm *= nFactor * rlen;
-	float	tangentW = flipU != flipV ? -1.0f : 1.0f;
-	float	tangentDir = flipU ? -1.0f : 1.0f;
-	t0 = vec4(t - n + yAxisNorm * tangentDir, tangentW);
-	t2 = t0;
-	t1 = vec4(t + n + yAxisNorm * tangentDir, tangentW);
-	t3 = t1;
-	t4 = vec4(t + n + xAxisNorm * tangentDir, tangentW);
-	t5 = vec4(t - n + xAxisNorm * tangentDir, tangentW);
-#else
-	vec3	t = xAxisNorm * nw;
-	n *= nFactor;
-	xAxisNorm *= nFactor;
-	yAxisNorm *= nFactor;
-	float	tangentW = flipU != flipV ? 1.0f : -1.0f;
-	float	tangentDir = flipU ? -1.0f : 1.0f;
-	t0 = vec4(normalize(t - n + xAxisNorm - yAxisNorm) * tangentDir, tangentW);
-	t1 = vec4(normalize(t - n + xAxisNorm + yAxisNorm) * tangentDir, tangentW);
-	t2 = vec4(normalize(t + n + xAxisNorm + yAxisNorm) * tangentDir, tangentW);
-	t3 = vec4(normalize(t + n + xAxisNorm - yAxisNorm) * tangentDir, tangentW);
-#endif
-}
-
-//----------------------------------------------------------------------------
-
 void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARGS)
 {
 	uint	drId = asuint(gInput.Primitives[0].VertexPosition.w);
 	uint	flags = asuint(GET_CONSTANT(BillboardInfo, DrawRequest)[drId].x);
-	
+
+	uint	bbMode = flags & BB_Flag_BillboardMask;
 	bool	flipU = (flags & BB_Flag_FlipU) != 0U;
 	bool	flipV = (flags & BB_Flag_FlipV) != 0U;
-	float	tangentW = 1.0f;
 	// UV
 	vec2	rawC00 = vec2(0, 0);
 	vec2	rawC01 = vec2(0, 1);
@@ -497,7 +415,7 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	vec4	c11 = vec4(1, 1, 1, 1);
 	vec4	rect0 = vec4(0, 0, 0, 0);
 	vec4	rect1 = vec4(0, 0, 0, 0);
-	bb_billboardUV(gInput.Primitives[0], c00, c01, c10, c11, gOutput.fragAtlasID, rect0, rect1);
+	bb_billboardUV(gInput.Primitives[0], c00, c01, c10, c11, rect0, rect1);
 #	if	defined(GOUTPUT_fragRawUV0)
 	bb_billboardRawUV(gInput.Primitives[0], rawC00, rawC01, rawC10, rawC11);
 #	endif
@@ -522,13 +440,14 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	vec3	xAxis = vec3(0, 0, 0);
 	vec3	yAxis = vec3(0, 0, 0);
 	vec3	nAxis = vec3(0, 0, 0);
+	vec3	upVec = vec3(0, 0, 0);
 
 #if BB_AxisAlignedCapsule
-	vec3	upVec = vec3(0, 0, 0);
-	bb_VelocityCapsuleAlign(gInput.Primitives[0], xAxis, yAxis, upVec, nAxis);
-#else
-	billboard_quad(gInput.Primitives[0], flags & BB_Flag_BillboardMask, xAxis, yAxis, nAxis);
-#endif
+	if (bbMode == BB_AxisAlignedCapsule)
+		bb_VelocityCapsuleAlign(gInput.Primitives[0], xAxis, yAxis, upVec, nAxis);
+	else
+#endif // BB_AxisAlignedCapsule
+	billboard_quad(gInput.Primitives[0], bbMode, xAxis, yAxis, nAxis);
 
 	vec3	xpy = xAxis + yAxis;
 	vec3	xmy = xAxis - yAxis;
@@ -549,18 +468,44 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 
 #if	defined(GOUTPUT_fragNormal) || defined(GOUTPUT_fragTangent)
 	float	nFactor = GET_CONSTANT(BillboardInfo, DrawRequest)[drId].y;
+	float	nw = (1.0f - nFactor); // weight
+	vec3	xAxisNorm = normalize(xAxis);
+	vec3	yAxisNorm = normalize(yAxis);
 #endif
 
 	// Normals
 #if	defined(GOUTPUT_fragNormal)
 #	define	setNormal(_normal, _value)	_normal = _value;
-	vec3	n0, n1, n2, n3;
-#	if BB_AxisAlignedCapsule
-	vec3	n4, n5;
-	bb_billboardNormal(nFactor, n0, n1, n2, n3, n4, n5, xAxis, yAxis, nAxis);
-#	else
-	bb_billboardNormal(nFactor, n0, n1, n2, n3, xAxis, yAxis, nAxis);
-#	endif
+	vec3	n0, n1, n2, n3, n4, n5;
+
+#if BB_AxisAlignedCapsule
+	if (bbMode == BB_AxisAlignedCapsule)
+	{
+		float	rlen = rsqrt(nw * nw + nFactor * nFactor); // normalize by hand (all 3 vectors are orthogonal)
+		vec3	xAxisW = xAxisNorm * (nFactor * rlen);
+		vec3	yAxisW = yAxisNorm * (nFactor * rlen);
+		vec3	n = nAxis * (nw * rlen);
+		n0 = n + xAxisW;
+		n1 = n - xAxisW;
+		n2 = n + xAxisW;
+		n3 = n - xAxisW;
+		n4 = n - yAxisW;
+		n5 = n + yAxisW;
+	}
+	else
+#endif // BB_AxisAlignedCapsule
+	{
+		// Cannot normalize by hand because of the AxisAlignedSpheroid case
+		vec3	xpyW = (xAxisNorm + yAxisNorm) * nFactor;
+		vec3	xmyW = (xAxisNorm - yAxisNorm) * nFactor;
+		vec3	n = nAxis * nw;
+		n0 = normalize(n + xpyW);
+		n1 = normalize(n + xmyW);
+		n2 = normalize(n - xmyW);
+		n3 = normalize(n - xpyW);
+		n4 = vec3(0.f, 0.f, 0.f);
+		n5 = vec3(0.f, 0.f, 0.f);
+	}
 #else
 #	define	setNormal(_normal, _value)
 #endif
@@ -568,13 +513,42 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	// Tangent
 #if	defined(GOUTPUT_fragTangent)
 #	define	setTangent(_tangent, _value)	_tangent = _value;
-	vec4	t0, t1, t2, t3;
-#	if BB_AxisAlignedCapsule
-	vec4	t4, t5;
-	bb_billboardTangent(nFactor, t0, t1, t2, t3, t4, t5, xAxis, yAxis, nAxis, flipU, flipV);
-#	else
-	bb_billboardTangent(nFactor, t0, t1, t2, t3, xAxis, yAxis, nAxis, flipU, flipV);
-#	endif
+	vec4	t0, t1, t2, t3, t4, t5;
+
+#if BB_AxisAlignedCapsule
+	if (bbMode == BB_AxisAlignedCapsule)
+	{
+		float	rlen = rsqrt(nw * nw + 2.0f * nFactor * nFactor); // normalize by hand (all 3 vectors are orthogonal)
+		vec3	xAxisW = xAxisNorm * (nFactor * rlen);
+		vec3	yAxisW = yAxisNorm * (nFactor * rlen);
+		vec3	n = nAxis * (nFactor * rlen);
+		vec3	t = normalize(xAxisNorm + yAxisNorm) * (nw * rlen);
+		float	tangentW = flipU != flipV ? -1.0f : 1.0f;
+		float	tangentDir = flipU ? -1.0f : 1.0f;
+		t0 = vec4(t - n + yAxisW * tangentDir, tangentW);
+		t2 = t0;
+		t1 = vec4(t + n + yAxisW * tangentDir, tangentW);
+		t3 = t1;
+		t4 = vec4(t + n + xAxisW * tangentDir, tangentW);
+		t5 = vec4(t - n + xAxisW * tangentDir, tangentW);
+	}
+	else
+#endif // BB_AxisAlignedCapsule
+	{
+		// Cannot normalize by hand because of the AxisAlignedSpheroid case
+		vec3	xpyW = (xAxisNorm + yAxisNorm) * nFactor;
+		vec3	xmyW = (xAxisNorm - yAxisNorm) * nFactor;
+		vec3	n = nAxis * nFactor;
+		vec3	t = xAxisNorm * nw;
+		float	tangentW = flipU != flipV ? 1.0f : -1.0f;
+		float	tangentDir = flipU ? -1.0f : 1.0f;
+		t0 = vec4(normalize(t - n + xmyW) * tangentDir, tangentW);
+		t1 = vec4(normalize(t - n + xpyW) * tangentDir, tangentW);
+		t2 = vec4(normalize(t + n + xpyW) * tangentDir, tangentW);
+		t3 = vec4(normalize(t + n + xmyW) * tangentDir, tangentW);
+		t4 = vec4(0.f, 0.f, 0.f, 0.f);
+		t5 = vec4(0.f, 0.f, 0.f, 0.f);
+	}
 #else
 #	define	setTangent(_tangent, _value)
 #endif
@@ -592,16 +566,21 @@ void 	GeometryBillboard(in SGeometryInput gInput, SGeometryOutput gOutput GS_ARG
 	AppendVertex(gOutput GS_PARAMS);
 
 #if BB_AxisAlignedCapsule
-	emittr(center + yAxis + upVec, c10, n5, t5, rawC10);
-	emittr(center + xpy, c11, n0, t0, rawC11); // +x+y
-	emittr(center - xmy, c00, n1, t1, rawC00); // -x+y
-	emittr(center + xmy, c11, n2, t2, rawC11); // +x-y
-	emittr(center - xpy, c00, n3, t3, rawC00); // -x-y
-	emittr(center - yAxis - upVec, c01, n4, t4, rawC00);
-#else
-	emittr(center + xpy, c11, n0, t0, rawC11); // +x+y
-	emittr(center + xmy, c10, n1, t1, rawC10); // +x-y
-	emittr(center - xmy, c01, n2, t2, rawC01); // -x+y
-	emittr(center - xpy, c00, n3, t3, rawC00); // -x-y
-#endif
+	if (bbMode == BB_AxisAlignedCapsule)
+	{
+		emittr(center + yAxis + upVec, c10, n5, t5, rawC10);
+		emittr(center + xpy, c11, n0, t0, rawC11); // +x+y
+		emittr(center - xmy, c00, n1, t1, rawC00); // -x+y
+		emittr(center + xmy, c11, n2, t2, rawC11); // +x-y
+		emittr(center - xpy, c00, n3, t3, rawC00); // -x-y
+		emittr(center - yAxis - upVec, c01, n4, t4, rawC00);
+	}
+	else
+#endif // BB_AxisAlignedCapsule
+	{
+		emittr(center + xpy, c11, n0, t0, rawC11); // +x+y
+		emittr(center + xmy, c10, n1, t1, rawC10); // +x-y
+		emittr(center - xmy, c01, n2, t2, rawC01); // -x+y
+		emittr(center - xpy, c00, n3, t3, rawC00); // -x-y
+	}
 }

@@ -293,7 +293,7 @@ RHI::PShaderModule	CShaderLoader::LoadShaderModule(const CString				&path,
 	if (controller == null)
 		controller = File::DefaultFileSystem();
 
-	char				_hashStorage[32+1];
+	char				_hashStorage[RHI::kShaderHashBufferLength];
 	const CStringView	finalHash = RHI::ShaderHashToStringView(hash, _hashStorage);
 	const CString		filePathNoExt = path + "." + finalHash;
 	const CString		filePath = filePathNoExt + GetShaderExtensionStringFromApi(apiManager->ApiName());

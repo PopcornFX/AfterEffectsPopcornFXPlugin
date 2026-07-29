@@ -175,7 +175,10 @@ CRendererBatchDrawer *CRHIParticleRenderDataFactory::CreateBillboardingBatch2(ER
 		}
 
 		case	Renderer_Ribbon:
-			return PK_NEW(CRHIRendererBatch_Ribbon_CPU(m_ApiManager));
+			if (m_BillboardingLocation == Drawers::BillboardingLocation_VertexShader && m_GPUCaps.m_SupportsShaderResourceViews)
+				return PK_NEW(CRHIRendererBatch_Ribbon_VertexBB(m_ApiManager));
+			else
+				return PK_NEW(CRHIRendererBatch_Ribbon_CPU(m_ApiManager));
 
 		case	Renderer_Mesh:
 			return PK_NEW(CRHIRendererBatch_Mesh_CPU(m_ApiManager));

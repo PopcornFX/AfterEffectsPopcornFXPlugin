@@ -198,7 +198,7 @@ namespace	MaterialToRHI
 					shaderOptions_Vertex |= Option_Axis_C1;
 					break;
 				case BillboardMode_AxisAlignedCapsule:
-					shaderOptions_Geom |= Option_Axis_C1 | Option_Capsule;
+					shaderOptions_Geom |= Option_Axis_C1;
 					shaderOptions_Vertex |= Option_Axis_C1 | Option_Capsule;
 					break;
 				case BillboardMode_PlaneAligned:
@@ -216,6 +216,13 @@ namespace	MaterialToRHI
 				{
 					shaderOptions_Geom |= Option_BillboardSizeFloat2;
 					shaderOptions_Vertex |= Option_BillboardSizeFloat2;
+				}
+
+				const SRendererFeaturePropertyValue	*trimming = rendererBillboard->m_Declaration.FindProperty(BasicRendererProperties::SID_Atlas_Trimming());
+				const bool							trimmingEnabled = trimming != null && trimming->ValueB();
+				if (trimmingEnabled)
+				{
+					shaderOptions_Vertex |= Option_Trimming;
 				}
 
 				// TODO: would be better to know if atlas would needed or not
@@ -265,6 +272,7 @@ namespace	MaterialToRHI
 					break;
 				}
 
+				success &= m_OptionsOverride.PushBack(static_cast<EShaderOptions>(shaderOptions_Vertex)).Valid();
 				success &= m_OptionsOverride.PushBack(static_cast<EShaderOptions>(shaderOptions_Vertex | Option_GPUStorage)).Valid();
 				success &= m_OptionsOverride.PushBack(static_cast<EShaderOptions>(shaderOptions_Vertex | Option_GPUStorage | Option_GPUSort)).Valid();
 			}
@@ -931,7 +939,6 @@ namespace	MaterialToRHI
 		const bool	gpuStorage = (options & Option_GPUStorage) ||
 								 (options & Option_GPUMesh);
 		const bool	gpuSortCamera = options & Option_GPUSort;
-		const bool	gpuSortRibbon = (args.m_RendererType == Renderer_Ribbon) && vertexBB && gpuStorage;
 
 		PK_ASSERT(!vertexBB || simDataConstantSet != null);
 		PK_ASSERT(!vertexBB || !gpuStorage || streamOffsetsConstantSet != null);
@@ -1019,30 +1026,23 @@ namespace	MaterialToRHI
 				{
 					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("PositionsOffsets"));
 				}
-				// Ribbon mandatory stream offsets
-				if (gpuSortRibbon)
-					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("ParentIDsOffsets"));
 
 				// Sort indirection buffers
 				if (gpuSortCamera)
 					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Indirection"));
-				if (gpuSortRibbon)
-					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("RibbonIndirection"));
-
-				// For ribbon we need the effective particle count contained in the indirect draw buffer.
-				if (gpuSortRibbon)
-					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("IndirectDraw"));
 			}
 			else
 			{
 				success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Indices")); // Right now, always add the indices raw buffer. Later, shader permutation
-				if (args.m_RendererType == Renderer_Billboard)
-					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Positions"));
-				else if (args.m_RendererType == Renderer_Triangle)
+				if (args.m_RendererType == Renderer_Triangle)
 				{
 					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("VertexPosition0"));
 					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("VertexPosition1"));
 					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("VertexPosition2"));
+				}
+				else
+				{
+					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Positions"));
 				}
 			}
 			if (args.m_RendererType != Renderer_Triangle)
@@ -1173,14 +1173,9 @@ namespace	MaterialToRHI
 						if (uv)
 							success &= outShaderDesc->m_GeometryOutput.m_GeometryOutput.PushBack(RHI::SVertexOutput("fragUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 						if (atlas)
-						{
 							success &= outShaderDesc->m_GeometryOutput.m_GeometryOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
-							success &= outShaderDesc->m_GeometryOutput.m_GeometryOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth)).Valid();
-						}
 						if (rawUV0)
-						{
 							success &= outShaderDesc->m_GeometryOutput.m_GeometryOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
-						}
 					}
 					else
 					{
@@ -1191,10 +1186,7 @@ namespace	MaterialToRHI
 						if (uv)
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 						if (atlas)
-						{
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth)).Valid();
-						}
 						if (rawUV0)
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
 					}
@@ -1259,6 +1251,10 @@ namespace	MaterialToRHI
 					++shaderLocationBinding;
 					++vBufferLocationBinding;
 				}
+				if (vertexBB && (options & Option_Trimming))
+				{
+					outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(shaderStage, "HAS_Trimming"));
+				}
 			}
 			else // No geom billboard
 			{
@@ -1269,56 +1265,67 @@ namespace	MaterialToRHI
 		{
 			if (vertexBB)
 			{
-				const bool	isC1 = options & Option_Axis_C1;
 				success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_FeatureC0")).Valid();
 
 				if (gpuStorage)
 				{
-					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("SizesOffsets"));
-					if (isC1)
-					{
-						success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Axis0sOffsets"));
-						success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_FeatureC1")).Valid();
-					}
-					if (outShaderDesc != null)
-					{
-						if (normal)
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragNormal", RHI::TypeFloat3, RHI::InterpolationSmooth)).Valid();
-						if (tangent)
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragTangent", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
-						if (uv)
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
-						if (atlas)
-						{
-							if (!correctDeformation)
-								success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragAtlasID", RHI::TypeFloat, RHI::InterpolationSmooth)).Valid();
-						}
-						if (rawUV0)
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
-						if (correctDeformation)
-						{
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
-							if (atlas)
-								success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1ScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
-							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVFactors", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
-						}
-					}
-					if (uv && atlas)
-						success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_Atlas")).Valid();
-					if (uv && correctDeformation)
-						success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_CorrectDeformation")).Valid();
-					if (customTextureU)
-						success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_CustomTextureU")).Valid();
+					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("ParentIDsOffsets"));
+					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("RibbonIndirection"));
+					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("IndirectDraw"));
 				}
 				else
 				{
-					PK_ASSERT_NOT_REACHED_MESSAGE("GPU Ribbons have only Vertex-BB implemented");
+					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Connectivities"));
 				}
+
+				if (gpuStorage)
+					success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("SizesOffsets"));
+				else
+					success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Sizes"));
+
+				if (options & Option_Axis_C1)
+				{
+					success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_FeatureC1")).Valid();
+					if (gpuStorage)
+						success &= streamOffsetsConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Axis0sOffsets"));
+					else
+						success &= simDataConstantSet->AddConstantsLayout(RHI::SRawBufferDesc("Axis0s"));
+				}
+				if (outShaderDesc != null)
+				{
+					if (normal)
+						success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragNormal", RHI::TypeFloat3, RHI::InterpolationSmooth)).Valid();
+					if (tangent)
+						success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragTangent", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
+					if (uv)
+						success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
+					if (atlas)
+					{
+						if (!correctDeformation)
+							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
+					}
+					if (rawUV0 && !correctDeformation)
+						success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUV0", RHI::TypeFloat2, RHI::InterpolationSmooth)).Valid();
+					if (correctDeformation)
+					{
+						success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
+						if (atlas)
+							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1ScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
+						if (rawUV0)
+							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUVScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
+						success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUVFactors", RHI::TypeFloat4, RHI::InterpolationSmooth)).Valid();
+					}
+				}
+				if (uv && atlas)
+					success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_Atlas")).Valid();
+				if (uv && correctDeformation)
+					success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_CorrectDeformation")).Valid();
+				if (customTextureU)
+					success &= outShaderBindings.m_Defines.PushBack(RHI::SShaderDefine(RHI::VertexShaderStage, "BB_Feature_CustomTextureU")).Valid();
 			}
 			else
 			{
-				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas && !correctDeformation, normal, tangent, rawUV0, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
+				success &= _CommonBillboardRibbonGeneratedInputs(uv, atlas && !correctDeformation, normal, tangent, rawUV0 && !correctDeformation, shaderLocationBinding, vBufferLocationBinding, outShaderBindings, outVertexInputBuffer, outShaderDesc);
 				if (correctDeformation)
 				{
 					success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("UVScaleAndOffset", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding)).Valid();
@@ -1332,6 +1339,15 @@ namespace	MaterialToRHI
 						success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("UV1ScaleAndOffset", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding)).Valid();
 						if (outShaderDesc != null)
 							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragUV1ScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth, shaderLocationBinding)).Valid();
+						++shaderLocationBinding;
+						++vBufferLocationBinding;
+						success &= outVertexInputBuffer.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat4))).Valid();
+					}
+					if (rawUV0)
+					{
+						success &= outShaderBindings.m_InputAttributes.PushBack(RHI::SVertexAttributeDesc("rawUVScaleAndOffset", shaderLocationBinding, RHI::TypeFloat4, vBufferLocationBinding)).Valid();
+						if (outShaderDesc != null)
+							success &= outShaderDesc->m_VertexOutput.PushBack(RHI::SVertexOutput("fragRawUVScaleAndOffset", RHI::TypeFloat4, RHI::InterpolationSmooth, shaderLocationBinding)).Valid();
 						++shaderLocationBinding;
 						++vBufferLocationBinding;
 						success &= outVertexInputBuffer.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat4))).Valid();
@@ -1998,24 +2014,20 @@ namespace	MaterialToRHI
 		// Basic geoms:
 		Option_VertexPassThrough | Option_GeomBillboarding,
 		Option_VertexPassThrough | Option_GeomBillboarding | Option_Axis_C1,
-		Option_VertexPassThrough | Option_GeomBillboarding | Option_Axis_C1 | Option_Capsule,
 		Option_VertexPassThrough | Option_GeomBillboarding | Option_Axis_C2,
 		// Geoms size float2:
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding,
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding | Option_Axis_C1,
-		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding | Option_Axis_C1 | Option_Capsule,
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding | Option_Axis_C2,
 
 #if (PK_PARTICLES_UPDATER_USE_GPU != 0)
 		// Basic geoms:
 		Option_VertexPassThrough | Option_GeomBillboarding | Option_GPUStorage,
 		Option_VertexPassThrough | Option_GeomBillboarding | Option_Axis_C1 | Option_GPUStorage,
-		Option_VertexPassThrough | Option_GeomBillboarding | Option_Axis_C1 | Option_Capsule | Option_GPUStorage,
 		Option_VertexPassThrough | Option_GeomBillboarding | Option_Axis_C2 | Option_GPUStorage,
 		// Geoms size float2:
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding | Option_GPUStorage,
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding | Option_Axis_C1 | Option_GPUStorage,
-		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding | Option_Axis_C1 | Option_Capsule | Option_GPUStorage,
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_GeomBillboarding | Option_Axis_C2 | Option_GPUStorage,
 #endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
 	};
@@ -2037,6 +2049,18 @@ namespace	MaterialToRHI
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1,
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule,
 		Option_VertexPassThrough | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C2,
+
+		// Geom trimming:
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding,
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding | Option_Axis_C1,
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule,
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding | Option_Axis_C2,
+
+		// Geoms size float2:
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding,
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1,
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule,
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C2,
 
 #if (PK_PARTICLES_UPDATER_USE_GPU != 0)
 		// Basic geoms:
@@ -2060,6 +2084,28 @@ namespace	MaterialToRHI
 		Option_VertexPassThrough | Option_GPUSort | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_GPUStorage,
 		Option_VertexPassThrough | Option_GPUSort | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule | Option_GPUStorage,
 		Option_VertexPassThrough | Option_GPUSort | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C2 | Option_GPUStorage,
+
+		// Basic geoms:
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding | Option_Axis_C1 | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_VertexBillboarding | Option_Axis_C2 | Option_GPUStorage,
+		// Geoms size float2:
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C2 | Option_GPUStorage,
+
+		// Basic geoms:
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_VertexBillboarding | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_VertexBillboarding | Option_Axis_C1 | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_VertexBillboarding | Option_Axis_C2 | Option_GPUStorage,
+		// Geoms size float2:
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C1 | Option_Capsule | Option_GPUStorage,
+		Option_VertexPassThrough | Option_Trimming | Option_GPUSort | Option_BillboardSizeFloat2 | Option_VertexBillboarding | Option_Axis_C2 | Option_GPUStorage,
 
 #endif // (PK_PARTICLES_UPDATER_USE_GPU != 0)
 	};
@@ -2091,6 +2137,9 @@ namespace	MaterialToRHI
 	static const EShaderOptions	kShaderOptions_RibbonVertexBB[] =
 	{
 		Option_VertexPassThrough,
+
+		Option_VertexPassThrough | Option_RibbonVertexBillboarding,
+		Option_VertexPassThrough | Option_RibbonVertexBillboarding | Option_Axis_C1,
 
 #if (PK_PARTICLES_UPDATER_USE_GPU != 0)
 		Option_VertexPassThrough | Option_GPUStorage,

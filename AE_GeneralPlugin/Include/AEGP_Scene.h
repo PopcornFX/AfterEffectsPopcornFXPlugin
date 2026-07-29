@@ -12,13 +12,12 @@
 #include "AEGP_RenderContext.h"
 
 #include <pk_base_object/include/hbo_object.h>
-
 #include <pk_kernel/include/kr_refptr.h>
-
+#include <pk_particles/include/Updaters/D3D12/updater_d3d12.h>
+#include <pk_render_helpers/include/frame_collector/rh_frame_collector.h>
 #include <pk_rhi/include/FwdInterfaces.h>
 
 #include <PK-SampleLib/RenderIntegrationRHI/RHIParticleRenderDataFactory.h>
-#include <pk_particles/include/Updaters/D3D12/updater_d3d12.h>
 #include <PK-SampleLib/Camera.h>
 
 #include "AEGP_Attribute.h"

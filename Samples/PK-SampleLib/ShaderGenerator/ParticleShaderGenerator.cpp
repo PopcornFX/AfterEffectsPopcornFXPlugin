@@ -35,6 +35,7 @@ SPerStageShaderName			g_OptionsShaderNames[] =
 	{ Option_GPUStorage, "GPU", "GPU", "GPU" },
 	{ Option_GPUMesh, "GPUMesh", null, "GPUMesh" },
 	{ Option_GPUSort, "GPUSort", null, "GPUSort" },
+	{ Option_Trimming, "Trim", null, null },
 };
 
 // FIXME:
@@ -136,7 +137,7 @@ namespace
 			}
 		}
 		else
-			shaderCode += "	const uint	particleID = LOADU(GET_RAW_BUFFER(Indices), RAW_BUFFER_INDEX(indicesOffset) + RAW_BUFFER_INDEX(vInput.InstanceId));\n";
+			shaderCode += "	uint	particleID = LOADU(GET_RAW_BUFFER(Indices), RAW_BUFFER_INDEX(indicesOffset) + RAW_BUFFER_INDEX(vInput.InstanceId));\n";
 
 		// Initialize vertex outputs to 0
 		for (const RHI::SVertexOutput &vOutput : description.m_VertexOutput)
@@ -188,8 +189,6 @@ namespace
 					PK_ASSERT_NOT_REACHED();
 			}
 		}
-
-		const CString	sizeZero = (options & Option_BillboardSizeFloat2) ? CString("vec2(0.f, 0.f)") : CString("0.f");
 
 		shaderCode += "}\n";
 
@@ -318,8 +317,8 @@ namespace
 						"	const float	textureID = LOADF(GET_RAW_BUFFER(GPUSimData), LOADU(GET_RAW_BUFFER(Atlas_TextureIDsOffsets), RAW_BUFFER_INDEX(storageID)) + RAW_BUFFER_INDEX(particleID));\n"
 						"	const uint	atlasID0 = min(uint(textureID), maxAtlasID);\n"
 						"	const uint	atlasID1 = min(uint(textureID + 1), maxAtlasID);\n"
-						"	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 1));\n"
-						"	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 1));\n"
+						"	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 4));\n"
+						"	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 4));\n"
 						"	vOutput.fragUV0 = vInput.UV0 * rect0.xy + rect0.zw;\n"
 						"#	if !defined(MESH_USE_UV1)\n" // #12340
 						"	vOutput.fragUV1 = vInput.UV0 * rect1.xy + rect1.zw;\n"
@@ -477,8 +476,8 @@ CString		ParticleShaderGenerator::GenVertexPassThrough(const RHI::SShaderDescrip
 					"	const float	textureID = vInput.Atlas_TextureID;\n"
 					"	const uint	atlasID0 = min(uint(textureID), maxAtlasID);\n"
 					"	const uint	atlasID1 = min(uint(textureID + 1), maxAtlasID);\n"
-					"	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 1));\n"
-					"	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 1));\n"
+					"	const vec4	rect0 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID0 * 4 + 4));\n"
+					"	const vec4	rect1 = LOADF4(GET_RAW_BUFFER(Atlas), RAW_BUFFER_INDEX(atlasID1 * 4 + 4));\n"
 					"	vOutput.fragUV0 = vInput.UV0 * rect0.xy + rect0.zw;\n"
 					"#	if !defined(MESH_USE_UV1)\n" // #12340
 					"	vOutput.fragUV1 = vInput.UV0 * rect1.xy + rect1.zw;\n"

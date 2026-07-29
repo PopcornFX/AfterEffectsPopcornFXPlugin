@@ -31,29 +31,32 @@ enum	ParticleDebugShader
 	ParticleDebugShader_Error,
 };
 
-// All the possible geometry billboarding:
 enum	EParticleDebugBillboarderType
 {
-	ParticleDebugBT_Billboard,									// Billboards/Ribbons (CPU streams)
-	ParticleDebugBT_Mesh,										// Meshes
-	ParticleDebugBT_Light,										// Lights (just like meshes but with just a position instead of a transform mat4)
-	ParticleDebugBT_VertexBillboarding_C0,						// No axis constraint, 4 vertex generated
-	ParticleDebugBT_VertexBillboarding_C1,						// 1 axis constraint, 4 vertex generated
-	ParticleDebugBT_VertexBillboarding_C1_Capsule,				// 1 axis constraint, 6 vertex generated
-	ParticleDebugBT_VertexBillboarding_C2,						// 2 axis constraint, 4 vertex generated
-	ParticleDebugBT_VertexBillboarding_SizeFloat2_C0,			// No axis constraint, 4 vertex generated, size float2
-	ParticleDebugBT_VertexBillboarding_SizeFloat2_C1,			// 1 axis constraint, 4 vertex generated, size float2
-	ParticleDebugBT_VertexBillboarding_SizeFloat2_C1_Capsule,	// 1 axis constraint, 6 vertex generated, size float2
-	ParticleDebugBT_VertexBillboarding_SizeFloat2_C2,			// 2 axis constraint, 4 vertex generated, size float2
-	ParticleDebugBT_TriangleVertexBillboarding,					// Triangles
-	ParticleDebugBT_GeomBillboarding_C0,						// No axis constraint, 4 vertex generated
-	ParticleDebugBT_GeomBillboarding_C1,						// 1 axis constraint, 4 vertex generated
-	ParticleDebugBT_GeomBillboarding_C1_Capsule,				// 1 axis constraint, 6 vertex generated
-	ParticleDebugBT_GeomBillboarding_C2,						// 2 axis constraint, 4 vertex generated
-	ParticleDebugBT_GeomBillboarding_SizeFloat2_C0,				// No axis constraint, 4 vertex generated, size float2
-	ParticleDebugBT_GeomBillboarding_SizeFloat2_C1,				// 1 axis constraint, 4 vertex generated, size float2
-	ParticleDebugBT_GeomBillboarding_SizeFloat2_C1_Capsule,		// 1 axis constraint, 6 vertex generated, size float2
-	ParticleDebugBT_GeomBillboarding_SizeFloat2_C2,				// 2 axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_Billboard,											// Billboards/Ribbons (CPU streams)
+	ParticleDebugBT_Mesh,												// Meshes
+	ParticleDebugBT_Light,												// Lights (just like meshes but with just a position instead of a transform mat4)
+	ParticleDebugBT_VertexBillboarding_C0,								// No axis constraint, 4 vertex generated
+	ParticleDebugBT_VertexBillboarding_C1,								// 1 axis constraint, 4 vertex generated
+	ParticleDebugBT_VertexBillboarding_C2,								// 2 axis constraint, 4 vertex generated
+	ParticleDebugBT_VertexBillboarding_SizeFloat2_C0,					// No axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_VertexBillboarding_SizeFloat2_C1,					// 1 axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_VertexBillboarding_SizeFloat2_C2,					// 2 axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_VertexBillboarding_Trimming_C0,						// No axis constraint, 4 vertex generated
+	ParticleDebugBT_VertexBillboarding_Trimming_C1,						// 1 axis constraint, 4 vertex generated
+	ParticleDebugBT_VertexBillboarding_Trimming_C2,						// 2 axis constraint, 4 vertex generated
+	ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C0,			// No axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C1,			// 1 axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_VertexBillboarding_Trimming_SizeFloat2_C2,			// 2 axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_VertexBillboarding_Ribbon_C0,						// No axis constraint
+	ParticleDebugBT_VertexBillboarding_Ribbon_C1,						// 1 axis constraint
+	ParticleDebugBT_TriangleVertexBillboarding,							// Triangles
+	ParticleDebugBT_GeomBillboarding_C0,								// No axis constraint, 4 vertex generated
+	ParticleDebugBT_GeomBillboarding_C1,								// 1 axis constraint, 4/6 vertex generated
+	ParticleDebugBT_GeomBillboarding_C2,								// 2 axis constraint, 4 vertex generated
+	ParticleDebugBT_GeomBillboarding_SizeFloat2_C0,						// No axis constraint, 4 vertex generated, size float2
+	ParticleDebugBT_GeomBillboarding_SizeFloat2_C1,						// 1 axis constraint, 4/6 vertex generated, size float2
+	ParticleDebugBT_GeomBillboarding_SizeFloat2_C2,						// 2 axis constraint, 4 vertex generated, size float2
 	_ParticleDebugBT_Count
 };
 

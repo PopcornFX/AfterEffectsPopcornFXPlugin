@@ -17,18 +17,6 @@
 __PK_SAMPLE_API_BEGIN
 //----------------------------------------------------------------------------
 
-// TODO: This needs refactoring, we should only need:
-// - Option_None
-// - Option_VertexPassThrough
-// - Option_Billboard_VertexBillboarding
-// - Option_Billboard_GeomBillboarding
-// - Option_Triangle_VertexBillboarding
-// Everything else is deduced from the .pkma and activated features
-
-/*!
-*	@brief enum to select options needed in shader pass.
-*	 Helper operators: enum | enum -> enum // enum & enum -> bool
-*/
 enum	EShaderOptions
 {
 	Option_None = 0,
@@ -44,8 +32,7 @@ enum	EShaderOptions
 	Option_BillboardSizeFloat2						= 0x1 << 9, // Size as a float2 instead of float
 	Option_GPUStorage								= 0x1 << 10, // GPU storage (= GPU simulation)
 	Option_GPUSort									= 0x1 << 11, // Uses a compute shader sort (ex: alpha blended GPU simulated particles)
-
-	//Option_CorrectDeformation				= 0x1 << 8,
+	Option_Trimming									= 0x1 << 12, // Geometry is trimmed with the atlas uv
 };
 
 //----------------------------------------------------------------------------
