@@ -1,3 +1,13 @@
+//----------------------------------------------------------------------------
+// This program is the property of Persistant Studios SARL.
+//
+// You may not redistribute it and/or modify it under any conditions
+// without written permission from Persistant Studios SARL, unless
+// otherwise stated in the latest Persistant Studios Code License.
+//
+// See the Persistant Studios Code License for further details.
+//----------------------------------------------------------------------------
+
 unsigned char MetalFinalBlitShader_metallib[] = {
   0x4d, 0x54, 0x4c, 0x42, 0x01, 0x80, 0x02, 0x00, 0x03, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x5e, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
