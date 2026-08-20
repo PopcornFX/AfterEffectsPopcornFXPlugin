@@ -236,9 +236,9 @@ static struct {
 } replacing[ RESCAN_LIMIT];         /* Macros currently replacing   */
 static int      has_pragma = FALSE;     /* Flag of _Pragma() operator       */
 
-static int      print_macro_inf( int c, char ** cpp, char ** opp);
+static int      print_macro_inf( int c, char ** cpp, char ** opp, char * opp_end);
                 /* Embed macro infs into comments   */
-static char *   print_macro_arg( char *out, MACRO_INF * m_inf, int argn
+static char *   print_macro_arg( char *out, char * out_end, MACRO_INF * m_inf, int argn
         , int real_arg, int start);
                 /* Embed macro arg inf into comments*/
 static char *   chk_magic_balance( char * buf, char * buf_end, int move
@@ -362,7 +362,7 @@ static char *   expand_std(
             } else if (trace_macro && (c == MAC_INF)) {
                 /* Embed macro expansion informations into comments */
                 c = *cp++;
-                c1 = print_macro_inf( c, &cp, &out_p);
+                c1 = print_macro_inf( c, &cp, &out_p, out_end);
                 if (out_end <= out_p) {
                     cerror( macbuf_overflow, g_internal_data->macro_name, 0, out);
                     g_internal_data->macro_line = MACRO_ERROR;
@@ -401,7 +401,8 @@ exp_end:
 static int  print_macro_inf(
     int     c,
     char ** cpp,                    /* Magic character sequence     */
-    char ** opp                     /* Output for macro information */
+    char ** opp,                    /* Output for macro information */
+    char *  opp_end                 /* End of the *opp buffer       */
 )
 /*
  * Embed macro expansion information into comments.
@@ -424,10 +425,12 @@ static int  print_macro_inf(
     }
     switch (c) {
     case MAC_CALL_START :           /* Start of a macro expansion   */
-        *opp += sprintf( *opp, "/*<%s", m_inf->defp->name); /* Macro name   */
+        *opp += snprintf( *opp, (size_t) (opp_end > *opp ? opp_end - *opp : 0)
+                , "/*<%s", m_inf->defp->name); /* Macro name   */
         if (m_inf->locs.start_line) {
             /* Location of the macro call in source file        */
-            *opp += sprintf( *opp, " %ld:%d-%ld:%d"
+            *opp += snprintf( *opp, (size_t) (opp_end > *opp ? opp_end - *opp : 0)
+                    , " %ld:%d-%ld:%d"
                     , m_inf->locs.start_line, (int) m_inf->locs.start_col
                     , m_inf->locs.end_line, (int) m_inf->locs.end_col);
         }
@@ -435,16 +438,17 @@ static int  print_macro_inf(
         if ((num_args = m_inf->num_args) >= 1) {
             /* The macro has arguments.  Show the locations.    */
             for (i = 0; i < num_args; i++)  /* Arg num begins at 0  */
-                *opp = print_macro_arg( *opp, m_inf, i, TRUE, TRUE);
+                *opp = print_macro_arg( *opp, opp_end, m_inf, i, TRUE, TRUE);
         }
         break;
     case MAC_ARG_START  :                   /* Start of an argument */
         i = (*(*cpp)++ & UCHARMAX) - 1;     /* Argument number      */
-        *opp = print_macro_arg( *opp, m_inf, i, FALSE, TRUE);
+        *opp = print_macro_arg( *opp, opp_end, m_inf, i, FALSE, TRUE);
         break;
     case MAC_CALL_END   :               /* End of a macro expansion */
         if (g_internal_data->option_flags.v) {               /* Verbose mode         */
-            *opp += sprintf( *opp, "/*%s>*/", m_inf->defp->name);
+            *opp += snprintf( *opp, (size_t) (opp_end > *opp ? opp_end - *opp : 0)
+                    , "/*%s>*/", m_inf->defp->name);
             break;
         }
         /* Else fall through    */
@@ -452,7 +456,7 @@ static int  print_macro_inf(
         if (g_internal_data->option_flags.v) {
             i = (*(*cpp)++ & UCHARMAX) - 1;
            /* Output verbose infs symmetrical to start of the arg infs  */
-            *opp = print_macro_arg( *opp, m_inf, i, FALSE, FALSE);
+            *opp = print_macro_arg( *opp, opp_end, m_inf, i, FALSE, FALSE);
         } else {
             *opp = stpcpy( *opp, "/*>*/");
         }
@@ -464,6 +468,7 @@ static int  print_macro_inf(
 
 static char *   print_macro_arg(
     char *  out,                                /* Output buffer    */
+    char *  out_end,                            /* End of 'out' buffer  */
     MACRO_INF *     m_inf,                      /* &mac_inf[ m_num] */
     int     argn,                               /* Argument number  */
     int     real_arg,       /* Real argument or expanded argument ? */
@@ -476,12 +481,14 @@ static char *   print_macro_arg(
 {
     LOCATION *  loc = m_inf->loc_args + argn;
 
-    out += sprintf( out, "/*%s%s:%d-%d", real_arg ? "!" : (start ? "<" : "")
+    out += snprintf( out, (size_t) (out_end > out ? out_end - out : 0)
+            , "/*%s%s:%d-%d", real_arg ? "!" : (start ? "<" : "")
             , m_inf->defp->name, m_inf->recur, argn);
 
     if (real_arg && m_inf->loc_args && loc->start_line) {
         /* Location of the argument in source file  */
-        out += sprintf( out, " %ld:%d-%ld:%d", loc->start_line
+        out += snprintf( out, (size_t) (out_end > out ? out_end - out : 0)
+                , " %ld:%d-%ld:%d", loc->start_line
                 , (int) loc->start_col, loc->end_line, (int) loc->end_col);
     }
     if (! start)            /* End of an argument in verbose mode   */
@@ -943,12 +950,12 @@ static DEFBUF * def_special(
             diag_macro( CWARN
                     , "Line number %.0s\"%ld\" is out of range"     /* _W1_ */
                     , NULL, g_internal_data->src_line, NULL, defp, NULL);
-        sprintf( defp->repl, "%ld", g_internal_data->src_line);      /* Re-define    */
+        snprintf( defp->repl, sizeof( "-1234567890"), "%ld", g_internal_data->src_line);      /* Re-define    */
         break;
     case DEF_NOARGS_DYNAMIC - 2:            /* __FILE__             */
         for (file = g_internal_data->infile; file != NULL; file = file->parent) {
             if (file->fp != NULL) {
-                sprintf( g_internal_data->work_buf, "\"%s\"", file->filename);
+                snprintf( g_internal_data->work_buf, sizeof( g_internal_data->work_buf), "\"%s\"", file->filename);
                 if (str_eq( g_internal_data->work_buf, defp->repl))
                     break;                          /* No change    */
                 defp->nargs = DEF_NOARGS;   /* Enable to redefine   */
