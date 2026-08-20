@@ -292,7 +292,9 @@ void    do_options(
 #if SYS_FAMILY == SYS_WIN
     bsl2sl( g_system_data->cur_work_dir);
 #endif
-    sprintf( g_system_data->cur_work_dir + strlen( g_system_data->cur_work_dir), "%c%c", PATH_DELIM, EOS);
+    snprintf( g_system_data->cur_work_dir + strlen( g_system_data->cur_work_dir)
+            , sizeof( g_system_data->cur_work_dir) - strlen( g_system_data->cur_work_dir)
+            , "%c%c", PATH_DELIM, EOS);
         /* Append trailing path-delimiter   */
 
 #if COMPILER == GNUC
@@ -1744,7 +1746,7 @@ static void init_predefines( void)
         un_predefine( FALSE);           /* Undefine "unix" or so    */
 #endif
     }
-    sprintf( tmp, "%ldL", g_internal_data->cplus_val ? g_internal_data->cplus_val : g_internal_data->stdc_ver);
+    snprintf( tmp, sizeof( tmp), "%ldL", g_internal_data->cplus_val ? g_internal_data->cplus_val : g_internal_data->stdc_ver);
     if (g_internal_data->cplus_val) {
         look_and_install( "__cplusplus", DEF_NOARGS_STANDARD, g_internal_data->empty_str, tmp);
     } else {
@@ -1789,13 +1791,13 @@ static void init_std_defines( void)
     /* Define __DATE__, __TIME__ as present date and time.          */
     time( &tvec);
     tstring = ctime( &tvec);
-    sprintf( timestr, "\"%.3s %c%c %.4s\"",
+    snprintf( timestr, sizeof( timestr), "\"%.3s %c%c %.4s\"",
         tstring + 4,
         *(tstring + 8) == '0' ? ' ' : *(tstring + 8),
         *(tstring + 9),
         tstring + 20);
     look_and_install( "__DATE__", DEF_NOARGS_DYNAMIC, g_internal_data->empty_str, timestr);
-    sprintf( timestr, "\"%.8s\"", tstring + 11);
+    snprintf( timestr, sizeof( timestr), "\"%.8s\"", tstring + 11);
     look_and_install( "__TIME__", DEF_NOARGS_DYNAMIC, g_internal_data->empty_str, timestr);
 
     if (! look_id( "__STDC_HOSTED__")) {
@@ -1803,7 +1805,7 @@ static void init_std_defines( void)
          * Some compilers, e.g. GCC older than 3.3, define this macro by
          * -D option.
          */
-        sprintf( tmp, "%d", STDC_HOSTED);
+        snprintf( tmp, sizeof( tmp), "%d", STDC_HOSTED);
         look_and_install( "__STDC_HOSTED__", DEF_NOARGS_PREDEF, g_internal_data->empty_str, tmp);
     }
 #if COMPILER != GNUC        /* GCC do not undefine __STDC__ on C++  */
@@ -1812,7 +1814,7 @@ static void init_std_defines( void)
 #endif
     /* Define __STDC__ as 1 or such for Standard conforming compiler.   */
     if (! look_id( "__STDC__")) {
-        sprintf( tmp, "%d", g_internal_data->stdc_val);
+        snprintf( tmp, sizeof( tmp), "%d", g_internal_data->stdc_val);
         look_and_install( "__STDC__", DEF_NOARGS_STANDARD, g_internal_data->empty_str, tmp);
     }
 }
@@ -1867,7 +1869,7 @@ static void set_pragma_op( void)
     const char *  name = "_Pragma";
     char    tmp[ 16];
 
-    sprintf( tmp, "%c%s ( %c%c )", DEF_MAGIC, name, MAC_PARM, 1);
+    snprintf( tmp, sizeof( tmp), "%c%s ( %c%c )", DEF_MAGIC, name, MAC_PARM, 1);
                                                 /* Replacement text */
     look_and_install( name, DEF_PRAGMA, "a", tmp);
 }
@@ -3646,10 +3648,13 @@ static int      search_subdir(
 {
     static const char *     subdir[] = { "Headers", "PrivateHeaders", NULL};
     int     j, n;
+    char * const    fullname_end = fullname + PATHMAX + 1;
 
-    cp += sprintf( cp, "%s%s%c", frame, dot_frame, PATH_DELIM);
+    cp += snprintf( cp, (size_t) (fullname_end > cp ? fullname_end - cp : 0)
+            , "%s%s%c", frame, dot_frame, PATH_DELIM);
     for (j = 0; subdir[ j] != NULL; j++) {
-        n = sprintf( cp, "%s%c%s", subdir[ j], PATH_DELIM, fname);
+        n = snprintf( cp, (size_t) (fullname_end > cp ? fullname_end - cp : 0)
+                , "%s%c%s", subdir[ j], PATH_DELIM, fname);
         /*
          * 'fullname' is for example:
          * /System/Library/Frameworks/Foundation.framework/Headers/
@@ -3780,7 +3785,7 @@ static void cur_file(
         if (sharp_file) {                       /* Main input file  */
             name = file->filename;
         } else if (str_eq( file->filename, file->real_fname)) {
-            sprintf( g_internal_data->work_buf, "%s%s", *(file->dirp), g_internal_data->cur_fname);
+            snprintf( g_internal_data->work_buf, sizeof( g_internal_data->work_buf), "%s%s", *(file->dirp), g_internal_data->cur_fname);
             name = g_internal_data->work_buf;
         } else {            /* Changed by '#line fname' directive   */
             name = file->filename;
