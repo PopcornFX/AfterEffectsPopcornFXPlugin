@@ -726,9 +726,12 @@ static void put_a_line(
     if (len >= 2)
         out_p -= 2;
     tp = out_p;
-    while (g_internal_data->char_type[ *out_p & UCHARMAX] & SPA)
+    while (out_p > out && (g_internal_data->char_type[ *out_p & UCHARMAX] & SPA))
         out_p--;                    /* Remove trailing white spaces */
-    if (out_p < tp) {
+    if (g_internal_data->char_type[ *out_p & UCHARMAX] & SPA) {
+        out[ 0] = '\n';            /* The line held only white spaces  */
+        out[ 1] = EOS;
+    } else if (out_p < tp) {
         *++out_p = '\n';
         *++out_p = EOS;
     }

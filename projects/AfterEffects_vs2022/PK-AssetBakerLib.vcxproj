@@ -159,6 +159,7 @@
     <ClInclude Include="..\..\ExternalLibs\DX\include\dxgi1_5.h" />
     <ClInclude Include="..\..\ExternalLibs\DX\include\dxgiformat.h" />
     <ClInclude Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Cookery.h" />
+    <ClInclude Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_EffectDisassembler.h" />
     <ClInclude Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Oven.h" />
     <ClInclude Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Oven_Font.h" />
     <ClInclude Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Oven_HBO.h" />
@@ -187,6 +188,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Cookery.cpp" />
+    <ClCompile Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_EffectDisassembler.cpp" />
     <ClCompile Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Oven.cpp" />
     <ClCompile Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Oven_Font.cpp" />
     <ClCompile Include="..\..\ExternalLibs\PK-AssetBakerLib\AssetBaker_Oven_HBO.cpp" />

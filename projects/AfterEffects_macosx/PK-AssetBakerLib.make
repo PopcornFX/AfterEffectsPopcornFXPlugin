@@ -81,6 +81,7 @@ GENERATED :=
 OBJECTS :=
 
 GENERATED += $(OBJDIR)/AssetBaker_Cookery.o
+GENERATED += $(OBJDIR)/AssetBaker_EffectDisassembler.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven_Font.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven_HBO.o
@@ -111,6 +112,7 @@ GENERATED += $(OBJDIR)/ConvexHull.o
 GENERATED += $(OBJDIR)/TextureTrimmer.o
 GENERATED += $(OBJDIR)/precompiled.o
 OBJECTS += $(OBJDIR)/AssetBaker_Cookery.o
+OBJECTS += $(OBJDIR)/AssetBaker_EffectDisassembler.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven_Font.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven_HBO.o
@@ -204,6 +206,9 @@ endif
 # #############################################
 
 $(OBJDIR)/AssetBaker_Cookery.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_Cookery.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_EffectDisassembler.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_EffectDisassembler.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/AssetBaker_Oven.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_Oven.cpp
