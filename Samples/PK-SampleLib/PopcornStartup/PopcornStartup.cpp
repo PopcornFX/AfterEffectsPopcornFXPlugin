@@ -236,11 +236,15 @@ bool	PopcornStartup(bool logOnStdOut, File::FnNewFileSystem newFileSys, Schedule
 #	endif
 #endif
 
+	static HBO::CSerializerPKBO		kSerializerPKBO;
+#if defined(PK_USE_JSONSERIALIZER)
+	static JsonHBO::CSerializerJSON	kSerializerJSON;
+#endif
 	HBO::ISerializer *serializers[] =
 	{
-		new (HBO::CSerializerPKBO),
+		&kSerializerPKBO,
 #if defined(PK_USE_JSONSERIALIZER)
-		new (JsonHBO::CSerializerJSON),
+		&kSerializerJSON,
 #endif
 	};
 	CPKBaseObject::Config  configBaseObject;
@@ -281,13 +285,6 @@ bool	PopcornStartup(bool logOnStdOut, File::FnNewFileSystem newFileSys, Schedule
 	}
 
 	PopcornShutdown();	// shutdown the modules we were able to load...
-
-	if (serializers[0] != null)
-		delete serializers[0];
-#if defined(PK_USE_JSONSERIALIZER)
-	if (serializers[1] != null)
-		delete serializers[1];
-#endif
 
 	return false;
 }
