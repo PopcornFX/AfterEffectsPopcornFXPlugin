@@ -54,16 +54,16 @@ TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
 TARGET = $(TARGETDIR)/libPK-AssetBakerLib_d.a
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Debug/PK-AssetBakerLib
 DEFINES += -D_DEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-finite-math-only -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-finite-math-only -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 
 else ifeq ($(config),release_x64)
 TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64
 TARGET = $(TARGETDIR)/libPK-AssetBakerLib_r.a
 OBJDIR = ../intermediate/AfterEffects/GM/x64/Release/PK-AssetBakerLib
 DEFINES += -DNDEBUG -DPK_COMPILER_BUILD_COMPILER_D3D11=1 -DPK_COMPILER_BUILD_COMPILER_D3D12=1
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fhonor-infinities -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -Winvalid-pch -Wno-pragma-pack -fno-finite-math-only -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-exceptions -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-finite-math-only -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path`
 
 #else
 #  $(error "invalid configuration $(config)")
@@ -81,6 +81,7 @@ GENERATED :=
 OBJECTS :=
 
 GENERATED += $(OBJDIR)/AssetBaker_Cookery.o
+GENERATED += $(OBJDIR)/AssetBaker_EffectDisassembler.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven_Font.o
 GENERATED += $(OBJDIR)/AssetBaker_Oven_HBO.o
@@ -115,6 +116,7 @@ GENERATED += $(OBJDIR)/ConvexHull.o
 GENERATED += $(OBJDIR)/TextureTrimmer.o
 GENERATED += $(OBJDIR)/precompiled.o
 OBJECTS += $(OBJDIR)/AssetBaker_Cookery.o
+OBJECTS += $(OBJDIR)/AssetBaker_EffectDisassembler.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven_Font.o
 OBJECTS += $(OBJDIR)/AssetBaker_Oven_HBO.o
@@ -212,6 +214,9 @@ endif
 # #############################################
 
 $(OBJDIR)/AssetBaker_Cookery.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_Cookery.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/AssetBaker_EffectDisassembler.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_EffectDisassembler.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/AssetBaker_Oven.o: ../../ExternalLibs/PK-AssetBakerLib/AssetBaker_Oven.cpp
