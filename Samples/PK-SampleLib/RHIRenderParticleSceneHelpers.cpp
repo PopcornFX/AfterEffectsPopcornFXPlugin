@@ -2818,9 +2818,6 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 
 		FillDebugShaderBindings(m_MeshRenderStateOverdrawStrips->m_RenderState.m_ShaderBindings, false);
 
-		m_MeshRenderStateOverdrawStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
-		m_MeshRenderStateOverdrawStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
-
 		m_MeshRenderStateOverdrawStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
 		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateOverdrawStrips->m_RenderState, debugShadersPaths, m_ApiManager))
 			return false;
@@ -2856,9 +2853,6 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 
 		FillDebugShaderBindings(m_MeshRenderStateWireframeStrips->m_RenderState.m_ShaderBindings, false);
 
-		m_MeshRenderStateWireframeStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
-		m_MeshRenderStateWireframeStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
-
 		m_MeshRenderStateWireframeStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
 		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateWireframeStrips->m_RenderState, debugShadersPaths, m_ApiManager))
 			return false;
@@ -2891,9 +2885,6 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderStateSolidWhite->m_RenderState.m_InputVertexBuffers;
 
 		FillDebugShaderBindings(m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_ShaderBindings, false);
-
-		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
-		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
 
 		m_MeshRenderStateSolidWhiteStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
 		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateSolidWhiteStrips->m_RenderState, debugShadersPaths, m_ApiManager))
@@ -2929,10 +2920,6 @@ bool	CRHIParticleSceneRenderHelper::_CreateOpaqueBackdropRenderStates(TMemoryVie
 		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers = m_MeshRenderStateSolidColor->m_RenderState.m_InputVertexBuffers;
 
 		FillDebugShaderBindings(m_MeshRenderStateSolidColorStrips->m_RenderState.m_ShaderBindings, true);
-
-		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat3)));
-		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerInstanceInput, sizeof(CFloat4x4)));
-		m_MeshRenderStateSolidColorStrips->m_RenderState.m_InputVertexBuffers.PushBack(RHI::SVertexInputBufferDesc(RHI::PerVertexInput, sizeof(CFloat4)));
 
 		m_MeshRenderStateSolidColorStrips->m_RenderState.m_PipelineState.m_DrawMode = RHI::DrawModeTriangleStrip;
 		if (!m_ShaderLoader->LoadShader(m_MeshRenderStateSolidColorStrips->m_RenderState, debugShadersPaths, m_ApiManager))

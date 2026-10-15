@@ -17,6 +17,7 @@
 
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
+#import <QuartzCore/CATransaction.h>
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -359,14 +360,24 @@ bool 	CMetalContext::EndFrame(id<MTLCommandQueue> queue,
 
 bool 	CMetalContext::MetalCreateView(NSView *currentView, PKMetalView *&pkView, bool highDPI)
 {
+	// This can be called from a thread without a run-loop (ie. the editor's render thread):
+	// explicitly commit and flush the view hierarchy changes, otherwise they are never displayed.
+	// FIXME: AppKit views should only be created/modified on the main thread.
+	[CATransaction begin];
 	MetalRemoveView(pkView);
-	pkView = [[PKMetalView alloc] initWithFrame:currentView.frame highDPI:highDPI];
+	pkView = [[PKMetalView alloc] initWithFrame:currentView.bounds highDPI:highDPI];
 
 	if (!PK_VERIFY(pkView != nil))
+	{
+		[CATransaction commit];
+		[CATransaction flush];
 		return false;
+	}
 
 	[pkView retain];
 	[currentView addSubview:pkView];
+	[CATransaction commit];
+	[CATransaction flush];
 	return true;
 }
 
@@ -376,8 +387,12 @@ void 	CMetalContext::MetalRemoveView(PKMetalView *&pkView)
 {
 	if (pkView != null)
 	{
+		// See MetalCreateView()
+		[CATransaction begin];
 		[pkView removeFromSuperview];
 		[pkView autorelease];
+		[CATransaction commit];
+		[CATransaction flush];
 	}
 }
 

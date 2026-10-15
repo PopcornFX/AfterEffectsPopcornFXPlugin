@@ -18,8 +18,8 @@
 #	define PLATFORM_SURFACE_EXTENSION_NAME		VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_WIN32_KHR
 #elif	defined(PK_LINUX)
-#	define PLATFORM_SURFACE_EXTENSION_NAME		VK_KHR_XLIB_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_XLIB_KHR
+#	define VK_USE_PLATFORM_WAYLAND_KHR
 #elif	defined(PK_MACOSX)
 #	define PLATFORM_SURFACE_EXTENSION_NAME		VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_USE_PLATFORM_MACOS_MVK
@@ -110,14 +110,17 @@ public:
 													PFN_vkDestroyDebugUtilsMessengerEXT &vkDestroyDebugMessengerCallback,
 													VkDebugUtilsMessengerEXT &debugMessenger);
 	// Creates the window surface
+	// swapChainIdx invalid appends a new swap-chain slot
+	// passing the slot of a surface released with DestroySwapChain(..., releaseSlot = false) rebuilds it in place
 #if		defined(PK_WINDOWS)
-	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, HINSTANCE moduleHandle, HWND windowHandle);
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, HINSTANCE moduleHandle, HWND windowHandle, CGuid swapChainIdx = CGuid::INVALID);
 #elif	defined(PK_LINUX)
-	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg window);
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg window, CGuid swapChainIdx = CGuid::INVALID);
+	static bool		CreateWindowSurfaceWayland(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg surface, CGuid swapChainIdx = CGuid::INVALID);
 #elif	defined(PK_MACOSX)
-	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *view);
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *view, CGuid swapChainIdx = CGuid::INVALID);
 #elif	defined(PK_NX)
-	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *window);
+	static bool		CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *window, CGuid swapChainIdx = CGuid::INVALID);
 #else
 #	error not implemented
 #endif
@@ -139,7 +142,7 @@ public:
 
 	static void		DestroyApiData(	RHI::SVulkanBasicContext &basicCtx);
 
-	static bool		DestroySwapChain(RHI::SVulkanBasicContext &basicCtx, u32 idx);
+	static bool		DestroySwapChain(RHI::SVulkanBasicContext &basicCtx, u32 idx, bool releaseSlot = true);
 
 	//
 	// Utils:

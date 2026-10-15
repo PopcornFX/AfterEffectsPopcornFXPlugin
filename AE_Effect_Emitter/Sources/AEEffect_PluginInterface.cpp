@@ -93,7 +93,7 @@ PF_Err	CPluginInterface::GlobalSetup(	SAAEIOData		&AAEData,
 																							AAEData.m_OutData,
 																							"PopcornFX suite was not found.");
 
-	AAEData.m_OutData->my_version =	PF_VERSION(AEPOPCORNFX_MAJOR_VERSION, AEPOPCORNFX_MINOR_VERSION, AEPOPCORNFX_BUG_VERSION, AEPOPCORNFX_STAGE_VERSION, AEPOPCORNFX_BUILD_VERSION);
+	AAEData.m_OutData->my_version =	AEPOPCORNFX_PIPL_VERSION;
 
 	//PF_OutFlag_DEEP_COLOR_AWARE				-> To support 16bit per chan format. 
 	//PF_OutFlag_SEND_UPDATE_PARAMS_UI			-> To be notified when PF_ParamFlag_SUPERVISE is set on parameters

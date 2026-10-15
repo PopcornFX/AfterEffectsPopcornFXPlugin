@@ -502,7 +502,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\Native\debugger\qt5.natvis">
+    <Natvis Include="..\..\Native\debugger\qt6.natvis">
       <Filter>_Natvis</Filter>
     </Natvis>
     <Natvis Include="..\..\PopcornFX\documentation\debugger\PopcornFX.natvis">
