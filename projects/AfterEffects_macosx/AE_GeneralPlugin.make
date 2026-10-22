@@ -49,7 +49,7 @@ ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-o
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -fPIC -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-finite-math-only -fsigned-zeros -mrecip=!sqrt -ggdb -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path` -F$(QTDIR)/lib
 LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_d.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_d.a -framework quartzcore -framework cocoa -framework metal -framework Cocoa -framework QtCore -framework QtWidgets -framework QtNetwork -framework QtXml -framework QtGui -liconv -lm -lpthread -ldl -lPK-RenderHelpers_d -lPK-RHI_d -lPK-Discretizers_d -lPK-MCPP_d -lPK-Plugin_CompilerBackend_CPU_VM_d -lPK-Plugin_CodecImage_PKIM_d -lPK-Plugin_CodecImage_DDS_d -lPK-Plugin_CodecImage_JPG_d -lPK-Plugin_CodecImage_PKM_d -lPK-Plugin_CodecImage_PNG_d -lPK-Plugin_CodecImage_PVR_d -lPK-Plugin_CodecImage_TGA_d -lPK-Plugin_CodecImage_TIFF_d -lPK-Plugin_CodecImage_HDR_d -lPK-Plugin_CodecImage_EXR_d -lPK-Plugin_CodecMesh_FBX_d -lPK-ZLib_d -lfbxsdk_d -lxml2 -lz -lPK-ParticlesToolbox_d -lPK-Runtime_d
 LDDEPS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_d.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_d.a
-ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/CodecMesh_FBX/libs/macosx/legacy_clang -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -L"$(QTDIR)/lib" -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_GeneralPlugin_macosx_d -Wl,-undefined,error -target x86_64-apple-macos10.15 -framework OpenGL -F$(QTDIR)/lib -Wl,-rpath,$(QTDIR)/lib
+ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/CodecMesh_FBX/libs/macosx/legacy_clang -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -L"$(QTDIR)/lib" -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_GeneralPlugin_macosx_d -target x86_64-apple-macos10.15 -framework OpenGL -F$(QTDIR)/lib -Wl,-rpath,$(QTDIR)/lib
 
 else ifeq ($(config),release_x64)
 TARGETDIR = ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_x64
@@ -60,7 +60,7 @@ ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-o
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Wshadow -Wundef -ffast-math -fno-omit-frame-pointer -O3 -fPIC -fno-strict-aliasing -g -msse2 -fvisibility=hidden -Wall -Wextra -std=c++17 -fno-rtti -Winvalid-pch -Wno-pragma-pack -fno-finite-math-only -fsigned-zeros -mrecip=!sqrt -mfpmath=sse -target x86_64-apple-macos10.15 -iwithsysroot `xcrun --show-sdk-path` -F$(QTDIR)/lib
 LIBS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_r.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_r.a -framework quartzcore -framework cocoa -framework metal -framework Cocoa -framework QtCore -framework QtWidgets -framework QtNetwork -framework QtXml -framework QtGui -liconv -lm -lpthread -ldl -lPK-RenderHelpers_r -lPK-RHI_r -lPK-Discretizers_r -lPK-MCPP_r -lPK-Plugin_CompilerBackend_CPU_VM_r -lPK-Plugin_CodecImage_PKIM_r -lPK-Plugin_CodecImage_DDS_r -lPK-Plugin_CodecImage_JPG_r -lPK-Plugin_CodecImage_PKM_r -lPK-Plugin_CodecImage_PNG_r -lPK-Plugin_CodecImage_PVR_r -lPK-Plugin_CodecImage_TGA_r -lPK-Plugin_CodecImage_TIFF_r -lPK-Plugin_CodecImage_HDR_r -lPK-Plugin_CodecImage_EXR_r -lPK-Plugin_CodecMesh_FBX_r -lPK-ZLib_r -lfbxsdk_r -lxml2 -lz -lPK-ParticlesToolbox_r -lPK-Runtime_r
 LDDEPS += ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-AssetBakerLib_r.a ../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64/libPK-SampleLib_r.a
-ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/CodecMesh_FBX/libs/macosx/legacy_clang -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -L"$(QTDIR)/lib" -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_GeneralPlugin_macosx_r -Wl,-undefined,error -target x86_64-apple-macos10.15 -framework OpenGL -F$(QTDIR)/lib -Wl,-rpath,$(QTDIR)/lib
+ALL_LDFLAGS += $(LDFLAGS) -L../../ExternalLibs/CodecMesh_FBX/libs/macosx/legacy_clang -L../../ExternalLibs/Runtime/bin/AfterEffects/gmake_macosx_x64 -L"$(QTDIR)/lib" -m64 -dynamiclib -Wl,-install_name,@rpath/libAE_GeneralPlugin_macosx_r -target x86_64-apple-macos10.15 -framework OpenGL -F$(QTDIR)/lib -Wl,-rpath,$(QTDIR)/lib
 
 #else
 #  $(error "invalid configuration $(config)")
@@ -341,10 +341,10 @@ $(OBJDIR)/AEGP_MetalContext.o: ../../AE_GeneralPlugin/Sources/RenderApi/AEGP_Met
 ifeq ($(config),debug_x64)
 Qt/x64/Debug/moc_AEGP_GraphicalResourcesTreeModel.cpp: ../../AE_GeneralPlugin/Include/Panels/AEGP_GraphicalResourcesTreeModel.h
 	@echo "Moc AEGP_GraphicalResourcesTreeModel.h"
-	$(SILENT) QT_SELECT=5 $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_GraphicalResourcesTreeModel.h" -o "Qt/x64/Debug/moc_AEGP_GraphicalResourcesTreeModel.cpp" @"Qt/x64/Debug/moc_AEGP_GraphicalResourcesTreeModel.args"
+	$(SILENT) $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_GraphicalResourcesTreeModel.h" -o "Qt/x64/Debug/moc_AEGP_GraphicalResourcesTreeModel.cpp" @"Qt/x64/Debug/moc_AEGP_GraphicalResourcesTreeModel.args"
 Qt/x64/Debug/moc_AEGP_PanelQT.cpp: ../../AE_GeneralPlugin/Include/Panels/AEGP_PanelQT.h
 	@echo "Moc AEGP_PanelQT.h"
-	$(SILENT) QT_SELECT=5 $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_PanelQT.h" -o "Qt/x64/Debug/moc_AEGP_PanelQT.cpp" @"Qt/x64/Debug/moc_AEGP_PanelQT.args"
+	$(SILENT) $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_PanelQT.h" -o "Qt/x64/Debug/moc_AEGP_PanelQT.cpp" @"Qt/x64/Debug/moc_AEGP_PanelQT.args"
 $(OBJDIR)/moc_AEGP_GraphicalResourcesTreeModel.o: Qt/x64/Debug/moc_AEGP_GraphicalResourcesTreeModel.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -355,10 +355,10 @@ $(OBJDIR)/moc_AEGP_PanelQT.o: Qt/x64/Debug/moc_AEGP_PanelQT.cpp
 else ifeq ($(config),release_x64)
 Qt/x64/Release/moc_AEGP_GraphicalResourcesTreeModel.cpp: ../../AE_GeneralPlugin/Include/Panels/AEGP_GraphicalResourcesTreeModel.h
 	@echo "Moc AEGP_GraphicalResourcesTreeModel.h"
-	$(SILENT) QT_SELECT=5 $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_GraphicalResourcesTreeModel.h" -o "Qt/x64/Release/moc_AEGP_GraphicalResourcesTreeModel.cpp" @"Qt/x64/Release/moc_AEGP_GraphicalResourcesTreeModel.args"
+	$(SILENT) $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_GraphicalResourcesTreeModel.h" -o "Qt/x64/Release/moc_AEGP_GraphicalResourcesTreeModel.cpp" @"Qt/x64/Release/moc_AEGP_GraphicalResourcesTreeModel.args"
 Qt/x64/Release/moc_AEGP_PanelQT.cpp: ../../AE_GeneralPlugin/Include/Panels/AEGP_PanelQT.h
 	@echo "Moc AEGP_PanelQT.h"
-	$(SILENT) QT_SELECT=5 $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_PanelQT.h" -o "Qt/x64/Release/moc_AEGP_PanelQT.cpp" @"Qt/x64/Release/moc_AEGP_PanelQT.args"
+	$(SILENT) $(QTDIR)/libexec/moc "../../AE_GeneralPlugin/Include/Panels/AEGP_PanelQT.h" -o "Qt/x64/Release/moc_AEGP_PanelQT.cpp" @"Qt/x64/Release/moc_AEGP_PanelQT.args"
 $(OBJDIR)/moc_AEGP_GraphicalResourcesTreeModel1.o: Qt/x64/Release/moc_AEGP_GraphicalResourcesTreeModel.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(PERFILE_FLAGS_0) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
