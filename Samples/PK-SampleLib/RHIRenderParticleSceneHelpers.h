@@ -586,14 +586,14 @@ protected:
 
 	enum	EFinalFrameBuffer
 	{
-		kMaxSwapChainSize = 3,
+		kMaxSwapChainSize = RHI::kMaxSwapChainImages,
 	};
 
 	// -> Pass 3: Final and blit in screen
 	TArray<RHI::SFrameBufferClearValue>										m_FinalClearValues;
 	RHI::PRenderPass														m_FinalRenderPass;
-	TStaticCountedArray<RHI::PFrameBuffer, kMaxSwapChainSize>				m_FinalFrameBuffers;
-	TStaticCountedArray<RHI::PRenderTarget, kMaxSwapChainSize>				m_FinalRenderTargets;
+	TSemiDynamicArray<RHI::PFrameBuffer, kMaxSwapChainSize>					m_FinalFrameBuffers;
+	TSemiDynamicArray<RHI::PRenderTarget, kMaxSwapChainSize>				m_FinalRenderTargets;
 
 protected:
 	RHI::PRenderState				m_OverdrawHeatmapRenderState;		// Overdraw

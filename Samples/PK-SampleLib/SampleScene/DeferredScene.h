@@ -173,7 +173,7 @@ private:
 
 	enum	EFinalFrameBuffer
 	{
-		kMaxSwapChainSize = 3,
+		kMaxSwapChainSize = RHI::kMaxSwapChainImages,
 	};
 
 	TArray<RHI::SFrameBufferClearValue>									m_FinalClearValues;

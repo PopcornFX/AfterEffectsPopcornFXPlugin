@@ -557,6 +557,15 @@ bool	CDirectionalShadows::FinalizeFrameUpdateSceneInfo()
 		slice.m_ShadowSliceViewAABB.Min() = centerFloor - frustumSliceBSphereRadius;
 		slice.m_ShadowSliceViewAABB.Max() = centerFloor + frustumSliceBSphereRadius;
 
+		// Extend the slice's Z range to prevent shadow clipping:
+		for (u32 j = 0; j < 8; ++j)
+		{
+			const CFloat3	worldCorner = m_CasterWorldAlignedBBox.ExtractCorner(j);
+			const CFloat3	lightCorner = m_LightTransform.TransformVector(worldCorner);
+			slice.m_ShadowSliceViewAABB.Min().z() = PKMin(slice.m_ShadowSliceViewAABB.Min().z(), lightCorner.z());
+			slice.m_ShadowSliceViewAABB.Max().z() = PKMax(slice.m_ShadowSliceViewAABB.Max().z(), lightCorner.z());
+		}
+
 		// Compute the light camera position as the center of the BBox in X/Y and the min value of Z:
 		CFloat3	lightCamPos = slice.m_ShadowSliceViewAABB.Center();
 		lightCamPos.z() = slice.m_ShadowSliceViewAABB.Min().z();

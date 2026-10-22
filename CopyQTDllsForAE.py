@@ -67,7 +67,7 @@ def main():
         print("Error: Could not found:" + qt_dll_override_manifest)
         sys.exit(1)
     
-    path_qt_folder = QT_BIN_PATH_OVERRIDE if QT_BIN_PATH_OVERRIDE else str(get_qt_bin_path(True))
+    path_qt_folder = QT_BIN_PATH_OVERRIDE if QT_BIN_PATH_OVERRIDE else str(get_qt_bin_path(True, print_skipped=True))
     if not os.path.exists(path_qt_folder):
         print("Error: Could not found Qt folder: " + path_qt_folder)
         sys.exit(1)

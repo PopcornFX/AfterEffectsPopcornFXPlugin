@@ -332,7 +332,7 @@ cl /nologo /D "MSWindows" /EP "$(IntDir)/%(Filename).rrc" &gt; "../../projects/i
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\Native\debugger\qt5.natvis" />
+    <Natvis Include="..\..\Native\debugger\qt6.natvis" />
     <Natvis Include="..\..\PopcornFX\documentation\debugger\PopcornFX.natvis" />
   </ItemGroup>
   <ItemGroup>

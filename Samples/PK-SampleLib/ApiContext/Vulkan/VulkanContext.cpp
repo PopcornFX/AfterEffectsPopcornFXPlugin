@@ -326,12 +326,27 @@ bool	CVulkanContext::InitRenderApiContext(bool debug, PAbstractWindowContext win
 		SDL_Window		*window = static_cast<CSdlContext*>(windowApi.Get())->SdlGetWindow();
 
 		SDL_VERSION(&info.version);
-		SDL_GetWindowWMInfo(window, &info);
+		if (SDL_GetWindowWMInfo(window, &info) != SDL_TRUE)
+		{
+			CLog::Log(PK_ERROR, "SDL_GetWindowWMInfo failed: %s", SDL_GetError());
+			return false;
+		}
 
 #	if		defined(PK_WINDOWS)
 		err = CreateWindowSurface(m_ApiData, GetModuleHandle(null), info.info.win.window);
 #	elif	defined(PK_LINUX)
-		err = CreateWindowSurface(m_ApiData, (ureg)info.info.x11.display, (ureg)info.info.x11.window);
+#		if	defined(SDL_VIDEO_DRIVER_WAYLAND)
+		if (info.subsystem == SDL_SYSWM_WAYLAND)
+			err = CreateWindowSurfaceWayland(m_ApiData, (ureg)info.info.wl.display, (ureg)info.info.wl.surface);
+		else
+#		endif
+		if (info.subsystem == SDL_SYSWM_X11)
+			err = CreateWindowSurface(m_ApiData, (ureg)info.info.x11.display, (ureg)info.info.x11.window);
+		else
+		{
+			CLog::Log(PK_ERROR, "Vulkan does not handle this SDL video driver (subsystem %d)", (int)info.subsystem);
+			return false;
+		}
 #	elif	defined(PK_MACOSX)
 		err = CreateWindowSurface(m_ApiData, MacOSxUtils::SDLViewFromWindow(info.info.cocoa.window));
 #	else
@@ -640,17 +655,26 @@ bool	CVulkanContext::CreateValidationLayerCallback(	RHI::SVulkanBasicContext &ba
 
 //----------------------------------------------------------------------------
 
-static bool	_BeforeSurfaceCreation(RHI::SVulkanBasicContext &basicCtx)
+static CGuid	_BeforeSurfaceCreation(RHI::SVulkanBasicContext &basicCtx, CGuid swapChainIdx)
 {
+	// swapChainIdx invalid appends a new slot, valid rebuilds that one in place
+	if (swapChainIdx.Valid())
+	{
+		if (!PK_VERIFY(swapChainIdx < basicCtx.m_SwapChains.Count()))
+			return CGuid::INVALID;
+		if (!PK_VERIFY(basicCtx.m_SwapChains[swapChainIdx].m_Surface == VK_NULL_HANDLE))
+			return CGuid::INVALID;
+		return swapChainIdx;
+	}
 	if (!basicCtx.m_SwapChains.PushBack().Valid())
-		return false;
+		return CGuid::INVALID;
 	basicCtx.m_SwapChainCount = basicCtx.m_SwapChains.Count();
-	return true;
+	return basicCtx.m_SwapChains.Count() - 1;
 }
 
 //----------------------------------------------------------------------------
 
-static bool	_AfterSurfaceCreation(RHI::SVulkanBasicContext &basicCtx)
+static bool	_AfterSurfaceCreation(RHI::SVulkanBasicContext &basicCtx, CGuid swapChainIdx)
 {
 	// If the physical device was already chosen
 	if (basicCtx.m_PhysicalDevice != VK_NULL_HANDLE)
@@ -660,7 +684,7 @@ static bool	_AfterSurfaceCreation(RHI::SVulkanBasicContext &basicCtx)
 
 		if (PK_VK_FAILED(vkGetPhysicalDeviceSurfaceSupportKHR(	basicCtx.m_PhysicalDevice,
 																basicCtx.m_GraphicalQueueFamily,
-																basicCtx.m_SwapChains.Last().m_Surface,
+																basicCtx.m_SwapChains[swapChainIdx].m_Surface,
 																&supported)))
 			return false;
 		return supported == VK_TRUE;
@@ -672,9 +696,10 @@ static bool	_AfterSurfaceCreation(RHI::SVulkanBasicContext &basicCtx)
 
 #if	defined(PK_WINDOWS)
 
-bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, HINSTANCE moduleHandle, HWND windowHandle)
+bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, HINSTANCE moduleHandle, HWND windowHandle, CGuid swapChainIdx /* = CGuid::INVALID */)
 {
-	if (!_BeforeSurfaceCreation(basicCtx))
+	swapChainIdx = _BeforeSurfaceCreation(basicCtx, swapChainIdx);
+	if (!swapChainIdx.Valid())
 		return false;
 	VkWin32SurfaceCreateInfoKHR		createInfo;
 
@@ -684,16 +709,17 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, HIN
 	createInfo.hinstance = moduleHandle;
 	createInfo.hwnd = windowHandle;
 
-	if (PK_VK_FAILED(vkCreateWin32SurfaceKHR(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains.Last().m_Surface)))
+	if (PK_VK_FAILED(vkCreateWin32SurfaceKHR(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains[swapChainIdx].m_Surface)))
 		return false;
-	return _AfterSurfaceCreation(basicCtx);
+	return _AfterSurfaceCreation(basicCtx, swapChainIdx);
 }
 
 #elif	defined(PK_LINUX)
 
-bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg window)
+bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg window, CGuid swapChainIdx /* = CGuid::INVALID */)
 {
-	if (!_BeforeSurfaceCreation(basicCtx))
+	swapChainIdx = _BeforeSurfaceCreation(basicCtx, swapChainIdx);
+	if (!swapChainIdx.Valid())
 		return false;
 	VkXlibSurfaceCreateInfoKHR	createInfo;
 
@@ -703,16 +729,41 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, ure
 	createInfo.dpy = (Display *)display;
 	createInfo.window = (Window)window;
 
-	if (PK_VK_FAILED(vkCreateXlibSurfaceKHR(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains.Last().m_Surface)))
+	if (PK_VK_FAILED(vkCreateXlibSurfaceKHR(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains[swapChainIdx].m_Surface)))
 		return false;
-	return _AfterSurfaceCreation(basicCtx);
+	return _AfterSurfaceCreation(basicCtx, swapChainIdx);
+}
+
+//----------------------------------------------------------------------------
+
+bool	CVulkanContext::CreateWindowSurfaceWayland(RHI::SVulkanBasicContext &basicCtx, ureg display, ureg surface, CGuid swapChainIdx /* = CGuid::INVALID */)
+{
+	PFN_vkCreateWaylandSurfaceKHR	vkCreateWaylandSurface = reinterpret_cast<PFN_vkCreateWaylandSurfaceKHR>(vkGetInstanceProcAddr(basicCtx.m_Instance, "vkCreateWaylandSurfaceKHR"));
+
+	if (!PK_VERIFY_MESSAGE(vkCreateWaylandSurface != null, "GetProcAddr: Unable to find vkCreateWaylandSurfaceKHR"))
+		return false;
+	swapChainIdx = _BeforeSurfaceCreation(basicCtx, swapChainIdx);
+	if (!swapChainIdx.Valid())
+		return false;
+	VkWaylandSurfaceCreateInfoKHR	createInfo;
+
+	createInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+	createInfo.pNext = null;
+	createInfo.flags = 0;
+	createInfo.display = reinterpret_cast<struct wl_display *>(display);
+	createInfo.surface = reinterpret_cast<struct wl_surface *>(surface);
+
+	if (PK_VK_FAILED(vkCreateWaylandSurface(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains[swapChainIdx].m_Surface)))
+		return false;
+	return _AfterSurfaceCreation(basicCtx, swapChainIdx);
 }
 
 #elif	defined(PK_MACOSX)
 
-bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *view)
+bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *view, CGuid swapChainIdx /* = CGuid::INVALID */)
 {
-	if (!_BeforeSurfaceCreation(basicCtx))
+	swapChainIdx = _BeforeSurfaceCreation(basicCtx, swapChainIdx);
+	if (!swapChainIdx.Valid())
 		return false;
 	VkMacOSSurfaceCreateInfoMVK	createInfo;
 
@@ -722,16 +773,17 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, voi
 	MacOSxUtils::MakeViewMetalCompatible(view);
 	createInfo.pView = view;
 
-	if (PK_VK_FAILED(vkCreateMacOSSurfaceMVK(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains.Last().m_Surface)))
+	if (PK_VK_FAILED(vkCreateMacOSSurfaceMVK(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains[swapChainIdx].m_Surface)))
 		return false;
-	return _AfterSurfaceCreation(basicCtx);
+	return _AfterSurfaceCreation(basicCtx, swapChainIdx);
 }
 
 #elif	defined(PK_NX)
 
-bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *window)
+bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, void *window, CGuid swapChainIdx /* = CGuid::INVALID */)
 {
-	if (!_BeforeSurfaceCreation(basicCtx))
+	swapChainIdx = _BeforeSurfaceCreation(basicCtx, swapChainIdx);
+	if (!swapChainIdx.Valid())
 		return false;
 
 	VkViSurfaceCreateInfoNN	createInfo;
@@ -741,10 +793,10 @@ bool	CVulkanContext::CreateWindowSurface(RHI::SVulkanBasicContext &basicCtx, voi
 	createInfo.flags = 0;
 	createInfo.window = window;
 
-	if (PK_VK_FAILED(vkCreateViSurfaceNN(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains.Last().m_Surface)))
+	if (PK_VK_FAILED(vkCreateViSurfaceNN(basicCtx.m_Instance, &createInfo, basicCtx.m_Allocator, &basicCtx.m_SwapChains[swapChainIdx].m_Surface)))
 		return false;
 
-	return _AfterSurfaceCreation(basicCtx);
+	return _AfterSurfaceCreation(basicCtx, swapChainIdx);
 }
 
 #else
@@ -881,13 +933,11 @@ CVulkanContext::ESwapChainOpResult	CVulkanContext::CreateSwapChain(RHI::SVulkanB
 	VkPresentModeKHR presentMode = GetOptimalPresentationMode(presentModes, vSync);
 	VkExtent2D extent = GetOptimalSwapChainExtent(capabilities, windowSize.x(), windowSize.y());
 
-	u32		imageCount = capabilities.minImageCount + 1;
+	// A minimum: the driver may create more images than requested
+	u32		imageCount = static_cast<u32>(RHI::kMaxSwapChainImages);
 	if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
-	{
 		imageCount = capabilities.maxImageCount;
-	}
-	PK_ASSERT(capabilities.minImageCount <= static_cast<u32>(RHI::kMaxSwapChainImages));
-	imageCount = PKMin(imageCount, static_cast<u32>(RHI::kMaxSwapChainImages));
+	imageCount = PKMax(capabilities.minImageCount, imageCount);
 
 	VkSwapchainKHR				newSwapChain;
 	PK_ASSERT(basicCtx.m_GraphicalQueueFamily >= 0 && basicCtx.m_PresentQueueFamily >= 0);
@@ -1110,7 +1160,7 @@ void	CVulkanContext::DestroyApiData(	RHI::SVulkanBasicContext &basicCtx)
 
 //----------------------------------------------------------------------------
 
-bool	CVulkanContext::DestroySwapChain(RHI::SVulkanBasicContext &basicCtx, u32 idx)
+bool	CVulkanContext::DestroySwapChain(RHI::SVulkanBasicContext &basicCtx, u32 idx, bool releaseSlot /* = true */)
 {
 	if (basicCtx.m_SwapChains[idx].m_SwapChainImageAvailable != VK_NULL_HANDLE)
 	{
@@ -1151,8 +1201,11 @@ bool	CVulkanContext::DestroySwapChain(RHI::SVulkanBasicContext &basicCtx, u32 id
 		basicCtx.m_SwapChains[idx].m_Surface = VK_NULL_HANDLE;
 	}
 
-	basicCtx.m_SwapChains.Remove(idx);
-	basicCtx.m_SwapChainCount = basicCtx.m_SwapChains.Count();
+	if (releaseSlot)
+	{
+		basicCtx.m_SwapChains.Remove(idx);
+		basicCtx.m_SwapChainCount = basicCtx.m_SwapChains.Count();
+	}
 	return true;
 }
 
@@ -1162,17 +1215,34 @@ bool	CVulkanContext::DestroySwapChain(RHI::SVulkanBasicContext &basicCtx, u32 id
 //
 //----------------------------------------------------------------------------
 
+static bool	_ExtensionNameExists(const char *toCheckName, const TMemoryView<const VkExtensionProperties> &extensions)
+{
+	for (u32 i = 0; i < extensions.Count(); ++i)
+	{
+		if (!strcmp(toCheckName, extensions[i].extensionName))
+			return true;
+	}
+	return false;
+}
+
+//----------------------------------------------------------------------------
+
 bool	CVulkanContext::GetInstanceExtensionsToEnable(TArray<const char *> &extensions, bool enableValidationLayer, bool enableDebugNames, bool isOffscreen /* = false*/)
 {
-	bool		instanceExtensionsFound = false;
-	u32			instanceExtensionCount = 0;
+	u32		instanceExtensionCount = 0;
 
 	TArray<const char*> requiredInstanceExtensions;
+	TArray<const char*> optionalInstanceExtensions;
 
 	if (!isOffscreen)
 	{
 		requiredInstanceExtensions.PushBack(VK_KHR_SURFACE_EXTENSION_NAME);
+#if	defined(PK_LINUX)
+		optionalInstanceExtensions.PushBack(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+		optionalInstanceExtensions.PushBack(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
+#else
 		requiredInstanceExtensions.PushBack(PLATFORM_SURFACE_EXTENSION_NAME);
+#endif
 	}
 	if (enableValidationLayer || enableDebugNames)
 	{
@@ -1181,30 +1251,41 @@ bool	CVulkanContext::GetInstanceExtensionsToEnable(TArray<const char *> &extensi
 
 	if (PK_VK_FAILED(vkEnumerateInstanceExtensionProperties(null, &instanceExtensionCount, null)))
 		return false;
-
-	if (instanceExtensionCount > 0)
-	{
-		TArray<VkExtensionProperties>	instanceExtensions;
-
-		if (!instanceExtensions.Resize(instanceExtensionCount))
-			return false;
-		if (PK_VK_FAILED(vkEnumerateInstanceExtensionProperties(null, &instanceExtensionCount, instanceExtensions.RawDataPointer())))
-			return false;
-		instanceExtensionsFound = CheckExtensionNamesExist(requiredInstanceExtensions, instanceExtensions);
-
-		if (instanceExtensionsFound)
-		{
-			if (!extensions.Resize(requiredInstanceExtensions.Count()))
-				return false;
-			for (u32 i = 0; i < extensions.Count(); ++i)
-			{
-					extensions[i] = requiredInstanceExtensions[i];
-			}
-		}
-	}
-	else
+	if (instanceExtensionCount == 0)
 	{
 		CLog::Log(PK_ERROR, "vkEnumerateInstanceExtensionProperties failed to find required extensions.");
+		return false;
+	}
+
+	TArray<VkExtensionProperties>	instanceExtensions;
+
+	if (!instanceExtensions.Resize(instanceExtensionCount))
+		return false;
+	if (PK_VK_FAILED(vkEnumerateInstanceExtensionProperties(null, &instanceExtensionCount, instanceExtensions.RawDataPointer())))
+		return false;
+	if (!CheckExtensionNamesExist(requiredInstanceExtensions, instanceExtensions))
+		return false;
+
+	if (!extensions.Resize(requiredInstanceExtensions.Count()))
+		return false;
+	for (u32 i = 0; i < extensions.Count(); ++i)
+	{
+		extensions[i] = requiredInstanceExtensions[i];
+	}
+
+	u32		optionalExtensionsFound = 0;
+
+	for (u32 i = 0; i < optionalInstanceExtensions.Count(); ++i)
+	{
+		if (!_ExtensionNameExists(optionalInstanceExtensions[i], instanceExtensions))
+			continue;
+		if (!extensions.PushBack(optionalInstanceExtensions[i]).Valid())
+			return false;
+		++optionalExtensionsFound;
+	}
+	if (!optionalInstanceExtensions.Empty() && optionalExtensionsFound == 0)
+	{
+		CLog::Log(PK_ERROR, "vkEnumerateInstanceExtensionProperties did not report any usable window surface extension.");
 		return false;
 	}
 	return true;

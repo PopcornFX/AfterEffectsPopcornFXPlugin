@@ -78,8 +78,8 @@ bool	CPostFxBloom::UpdateFrameBuffer(	const RHI::PConstantSampler &sampler,
 	m_InputRenderTarget = *inOut->m_InputRenderTarget;
 
 	// Layout:
-	m_FrameBufferBloomLayout[0] = m_TmpBlurRTs.First().m_RenderTarget->GetRenderTargetLayout();
-	m_FrameBufferBloomLayout[1] = m_DownSampledBrightPassRTs.First().m_RenderTarget->GetRenderTargetLayout();
+	m_FrameBufferBloomLayout[0] = m_DownSampledBrightPassRTs.First().m_RenderTarget->GetRenderTargetLayout();
+	m_FrameBufferBloomLayout[1] = m_TmpBlurRTs.First().m_RenderTarget->GetRenderTargetLayout();
 	m_FrameBufferMergeLayout[0] = m_SwapChainRTs.First()->GetRenderTargetLayout();
 	return true;
 }
@@ -136,7 +136,7 @@ bool	CPostFxBloom::CreateRenderPass()
 	result &= m_RenderPassMerge->AddRenderSubPass(finalBlit);
 
 	// Baking
-	const RHI::ELoadRTOperation		loadRt[] = { RHI::LoadDontCare, RHI::LoadDontCare };
+	const RHI::ELoadRTOperation		loadRt[] = { RHI::LoadKeepValue, RHI::LoadDontCare };
 	const RHI::ELoadRTOperation		keepRt[] = { RHI::LoadKeepValue };
 
 	result &= m_RenderPassBloom->BakeRenderPass(m_FrameBufferBloomLayout, loadRt);
