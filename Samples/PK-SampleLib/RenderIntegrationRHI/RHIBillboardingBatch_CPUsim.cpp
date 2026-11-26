@@ -156,7 +156,10 @@ static bool	_CreateOrResizeGpuBufferIf(const RHI::SRHIResourceInfos &infos, bool
 {
 	PK_ASSERT(sizeToAlloc >= requiredSize);
 	if (!condition)
+	{
+		buffer.Clear();
 		return true;
+	}
 	if (buffer.m_Buffer == null || buffer.m_Buffer->GetByteSize() < requiredSize)
 	{
 		RHI::PGpuBuffer	gpuBuffer = manager->CreateGpuBuffer(infos, type, sizeToAlloc);
