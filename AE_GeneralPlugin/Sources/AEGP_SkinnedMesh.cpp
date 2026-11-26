@@ -418,19 +418,25 @@ bool	CSkinnedMesh::WaitAsyncUpdateSkin()
 	if (m_SkeletonState == null)
 		return true;
 
+	bool	allWaited = true;
 	for (auto &mesh : m_SubMeshes)
 	{
 		if (mesh.Empty())
 			continue;
 		CAABB	dummy;
 		if (!CSkeletalSkinnerSimple::AsyncSkinWait(mesh.m_SkinUpdateContext, &dummy, true))
-			return false;
+		{
+			allWaited = false;
+			continue;
+		}
 
 		if (mesh.m_FirstFrame && !mesh.m_Velocities.Empty())
 			Mem::Clear(mesh.m_Velocities.Data(), mesh.m_Velocities.CoveredBytes());
 
 		mesh.m_FirstFrame = false;
 	}
+	if (!allWaited)
+		return false;
 
 	m_FirstFrame = false;
 	return true;
