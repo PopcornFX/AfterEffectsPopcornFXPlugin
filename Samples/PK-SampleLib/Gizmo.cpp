@@ -95,6 +95,8 @@ bool	CGizmo::PushBackObject(CFloat4x4 *transform, u32 allowedModesMask /*= Gizmo
 {
 	if (IsGrabbed())
 		return false; // when grabbed, you can't add objects (even if this object is already bound).
+	if (m_TargetObjects.Full())
+		return false;
 
 	{
 		m_AllowedModesMask |= allowedModesMask;
@@ -113,6 +115,8 @@ bool	CGizmo::PushBackObject(const CFloat4x4 &transform, const fnObjectUpdate &up
 {
 	if (IsGrabbed())
 		return false; // when grabbed, you can't add objects (even if this object is already bound).
+	if (m_TargetObjects.Full())
+		return false;
 
 	{
 		m_AllowedModesMask |= allowedModesMask;

@@ -2002,7 +2002,8 @@ void	CRHIParticleSceneRenderHelper::_RenderParticles(bool											debugMode,
 			for (u32 i = 0; i < dc.m_PushConstants.Count(); ++i)
 				cmdBuff->PushConstant(&dc.m_PushConstants[i], i);
 
-			cmdBuff->BindConstantSets(constantSets.View());
+			if (!cmdBuff->BindConstantSets(constantSets.View()))
+				continue;
 
 			//------------------------------------------------------
 			// Render
@@ -2283,7 +2284,7 @@ void	CRHIParticleSceneRenderHelper::_RenderMeshBackdrop(const RHI::PCommandBuffe
 		const u32	offsets[] = { curBatch.m_PositionsOffset, curBatch.m_NormalsOffset, curBatch.m_TangentsOffset, curBatch.m_TexCoordsOffset};
 		bool		hasOverriddenBaseVB = true;	// Set to true for first bind
 
-		const u32	instanceStop = curBatch.m_Instances.Empty() ? 1 : PKMin(instanceCount, curBatch.m_Instances.Count());
+		const u32	instanceStop = curBatch.m_Instances.Empty() ? instanceCount : PKMin(instanceCount, curBatch.m_Instances.Count());
 		for (u32 iInstance = 0; iInstance < instanceStop; ++iInstance)
 		{
 			// curBatch can be either static or skinned batch, most of the time it won't be animated
